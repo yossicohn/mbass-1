@@ -1,4 +1,5 @@
-  
+
+require('newrelic');
 const Seneca = require('seneca')
 const SenecaWeb = require('seneca-web')
 const Express = require('express')
