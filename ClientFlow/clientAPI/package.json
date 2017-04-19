@@ -9,7 +9,9 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@google-cloud/pubsub": "^0.10.0",
     "body-parser": "^1.17.1",
+    "bunyan": "^1.8.10",
     "express": "^4.15.2",
     "seneca": "^3.3.0",
     "seneca-web": "^2.0.0",

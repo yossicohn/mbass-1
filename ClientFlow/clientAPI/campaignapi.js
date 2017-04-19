@@ -6,8 +6,38 @@
 
 module.exports = function campaignapi(options) {
 
+    var bunyan = require('bunyan');
+
+
     var valid_ops = { create:'create', reschedule:'reschedule', abort: 'abort', update: 'update' }
 
+    // Imports the Google Cloud client library
+    const PubSub = require('@google-cloud/pubsub');
+
+// Your Google Cloud Platform project ID
+    const projectId = 'mobilepush-161510';
+
+    // Instantiates a client
+    var pubsubClient = {};
+
+    var log = bunyan.createLogger({
+        name: 'client-api',
+
+        streams: [
+            {
+                level: 'info',
+                path: 'client-api-logs.log'            // log INFO and above to stdout
+            },
+            {
+                level: 'warn',
+                path: 'client-api-logs.log'   // log ERROR and above to a file
+            },
+            {
+                level: 'error',
+                path: 'client-api-logs.log'  // log ERROR and above to a file
+            }
+        ]
+    });
 
     // request:
     // {
@@ -23,6 +53,8 @@ module.exports = function campaignapi(options) {
     //
     // }
    this.add('role:campaignapi, cmd:create', function (msg, respond) {
+
+       log.info("campaignapi: cmd:create enter");
             var command_name = msg.command_name;
             var campaign_mode = msg.campaign_mode;
             var target_types = msg.target_types;
@@ -33,20 +65,58 @@ module.exports = function campaignapi(options) {
             var schedule = msg.schedule;
             var time_to_live = msg.time_to_live;
 
-            var topic_name = 'topic_tid:' + tenant_id + '_cid:' + campaign_id + '_action_serial:' + action_serial;
-            var json_respond = {
-                command_name:   command_name,
-                tenant_id:              tenant_id,
-                campaign_id:    campaign_id,
-                action_serial:  action_serial,
-                topic_name:     topic_name,
-                schedule:               schedule,
-                response:               "scheduled"
-            }
-            respond( null, json_respond )
+            var topic_name = 'topic_tid_' + tenant_id + '_cid_' + campaign_id + '_action_serial_' + action_serial;
+       // Creates the new topic
+       var topicCreated = undefined;
+
+       pubsubClient.createTopic(topic_name)
+           .then((results) => {
+           const topic = results[0];
+       topicCreated = topic;
+       console.log(`Topic ${topic.name} created.`);
+       var json_respond = {
+           command_name:   command_name,
+           tenant_id:              tenant_id,
+           campaign_id:    campaign_id,
+           action_serial:  action_serial,
+           topic_name:     topic_name,
+           schedule:               schedule,
+           response:               "scheduled"
+       }
+       if(topicCreated != undefined)
+           respond( null, json_respond )
+   }).catch(function(error) {
+
+           var json_respond = {
+               command_name:   command_name,
+               tenant_id:      tenant_id,
+               campaign_id:    campaign_id,
+               action_serial:  action_serial,
+               topic_name:     topic_name,
+               schedule:       schedule,
+               response:        "failed",
+               error:           error.message
+           }
+           //console.log(`Failed: ${error.message}');
+           log.info("campaignapi: cmd:create exit");
+           respond( null, json_respond )
+       });
+
+
+
     })
 
     this.add('init:campaignapi', function (msg, respond) {
+        // Instantiates a client
+
+        log.info("init:campaignapi enter");
+
+
+        pubsubClient = PubSub({
+            projectId: projectId
+        });
+
+        log.info("init:campaignapi exit");
         respond();
     })
 
