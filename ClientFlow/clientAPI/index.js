@@ -8,8 +8,13 @@ seneca.use(SenecaWeb, {
   context: Express(),
   adapter: require('seneca-web-adapter-express')
 })
+
+
 seneca.ready(() => {
   const app = seneca.export('web/context')()
+        app.get('/', function (req, res) {
+        res.send('MBASS Client API is Active')
+    })
   app.listen(3000)
 })
 
