@@ -98,11 +98,12 @@ module.exports = function campaignapi(options) {
                error:           error.message
            }
            //console.log(`Failed: ${error.message}');
-           log.info("campaignapi: cmd:create exit");
-           respond( null, json_respond )
+           log.error("campaignapi: cmd:create failed error", error.message);
+           respond( null, json_respond );
+
        });
 
-
+       log.info("campaignapi: cmd:create exit");
 
     })
 
