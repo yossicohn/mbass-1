@@ -26,6 +26,7 @@
       var num_tgt_devices = msg.num_tgt_devices;
       var schedule =        msg.schedule;
       var time_to_live =    msg.time_to_live;
+      var schedule =        msg.schedule;
 
       this.act('role:campaignapi', {
           cmd:              'create',
