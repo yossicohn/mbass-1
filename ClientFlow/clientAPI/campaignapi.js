@@ -21,7 +21,7 @@ module.exports = function campaignapi(options) {
                 level: 'info',
                 path: 'client-api-logs.log'            // log INFO and above to stdout
             }
-            
+
             // {
             //     level: 'warn',
             //     path: 'client-api-logs.log'   // log ERROR and above to a file
