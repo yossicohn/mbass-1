@@ -20,16 +20,15 @@ module.exports = function campaignapi(options) {
             {
                 level: 'info',
                 path: 'client-api-logs.log'            // log INFO and above to stdout
+            },
+            {
+                level: 'warn',
+                path: 'client-api-logs.log'   // log ERROR and above to a file
+            },
+            {
+                level: 'error',
+                path: 'client-api-logs.log'  // log ERROR and above to a file
             }
-            
-            // {
-            //     level: 'warn',
-            //     path: 'client-api-logs.log'   // log ERROR and above to a file
-            // },
-            // {
-            //     level: 'error',
-            //     path: 'client-api-logs.log'  // log ERROR and above to a file
-            // }
         ]
     });
 
@@ -65,6 +64,9 @@ module.exports = function campaignapi(options) {
 // ------------------------------------------------------------------------
 // ----------------------- Create Campaign api ----------------------------
 // -------------------------------------------------------------------------
+    /**
+     * Created by yossi on 25/04/17.
+     */
     this.add('role:campaignapi, cmd:create', function (msg, respond) {
 
         log.info("campaignapi: cmd:create enter");
@@ -93,54 +95,9 @@ module.exports = function campaignapi(options) {
             status: 1,
             error: undefined
         };
+
+        // Creates the new topic
         var topicCreated = undefined;
-
-
-
-        MongoClient.connect(url).then(function (db) {
-                updateSchedulaCampaignInPromisify(db)
-                    .then(function (createdId) {
-                        log.info("campaignapi: cmd:create document Id =", createdId);
-                            pubsubClient.createTopic(topic_name)
-                                .then(function (result) {
-                                    log.info("campaignapi: cmd:create topic creaeted topic name =", topic_name);
-                                    log.info("campaignapi: cmd:create campaign succeeded, Exiting");
-                                    json_response.response = "scheduled";
-                                    json_response.status = 1;
-                                    json_response.topic_name = topic_name;
-                                    respond(null, json_response);
-
-                                    }
-                                ).catch(function(error) {
-
-                                json_response.error = "topic already exist";
-                                json_response.response = "failed";
-                                json_response.status = 100;
-                                log.error("campaignapi: cmd:create failed error", error.message);
-                                log.info("campaignapi: cmd:create , Exiting");
-                                respond(null, json_response);
-                            });
-                        }
-                    ).catch(function(error) {
-                    log.error(error.message);
-
-                    log.info("campaignapi: cmd:create , Exiting");
-                    json_response.error = "campaign  already exist";
-                    json_response.response = "failed";
-                    json_response.status = 100;
-                    respond(null, json_response);
-                });
-            }
-        ).catch(function (error) {
-
-            log.error("campaignapi: cmd:create connection to DB failed", error.message);
-            json_response.error = error.message;
-            json_response.response = "failed";
-            json_response.status = 100;
-            respond(null, json_response);
-
-            })
-
 
         function updateSchedulaCampaignInPromisify(db) {
             return new Promise(function (resolve, reject) {
@@ -180,22 +137,8 @@ module.exports = function campaignapi(options) {
                         "failed_devices": 0
                     };
 
+                    var promise =  collection.insertOne(tokenDocument);
 
-
-                   collection.insertOne(tokenDocument, function(err, result) {
-                  if(err == null)
-                  {
-                      resolve(id);
-                  }
-                    else{
-                      var error = new Error("campaignapi: cmd:create document insertion failed");
-                      error.message = "campaignapi: cmd:create document insertion failed";
-
-                      reject(error);
-                  }
-
-
-                   });
                 }
                 else {
 
@@ -205,7 +148,51 @@ module.exports = function campaignapi(options) {
                 }
 
             })
-        };
+        }
+
+        MongoClient.connect(url).then(function (db) {
+            updateSchedulaCampaignInPromisify(db)
+                .then(function (created) {
+                    log.info("campaignapi: cmd:create campaign meta data created successfuly");
+                    pubsubClient.createTopic(topic_name)
+                        .then(function (result) {
+                            log.info("campaignapi: cmd:create topic creaeted topic name =", topic_name);
+
+                            log.info("campaignapi: cmd:create succeeded, Exiting");
+                            json_response.error = error.message;
+                            json_response.response = "scheduled";
+                            json_response.status = 1;
+                            json_response.topic_name = topic_name;
+                            respond(null, json_response);
+                        })
+                        .catch(function (error) {
+                            json_response.error = error.message;
+                            json_response.response = "failed";
+                            json_response.status = 100;
+                            log.error("campaignapi: cmd:create failed error", error.message);
+                            respond(null, json_response);
+
+                        })
+                })
+                .catch(function (error) {
+                    json_response.error = error.message;
+                    json_response.response = "failed";
+                    json_response.status = 100;
+                    log.error("campaignapi: cmd:create failed error", error.message);
+                    respond(null, json_response);
+
+                })
+
+        })
+            .catch(function (error) {
+
+                json_response.error = error.message;
+                json_response.response = "failed";
+                json_response.status = 100;
+                log.error("campaignapi: cmd:create failed error", error.message);
+                respond(null, json_response);
+            })
+
 
     })
 
@@ -227,5 +214,7 @@ module.exports = function campaignapi(options) {
         respond();
     })
 
-
 }
+
+
+
