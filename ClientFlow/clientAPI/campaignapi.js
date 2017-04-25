@@ -94,17 +94,29 @@ module.exports = function campaignapi(options) {
         // Creates the new topic
         var topicCreated = undefined;
 
+        // MongoClient.connect(url).then( function(db) {
+        //     updateSchedulaCampaignInDB(db)
+        //     .then(function (created) {
+        //             console.log('created', created);
+        //             pubsubClient.createTopic(topic_name)
+        //                 .then(function(result){
+        //                     console.log(result[0])
+        //                 });
+        //         }
+        //     )}
+        //     )
+
         MongoClient.connect(url).then( function(db) {
-            updateSchedulaCampaignInDB(db)
-            .then(function (created) {
-                    console.log('created', created);
-                    pubsubClient.createTopic(topic_name)
-                        .then(function(result){
-                            console.log(result[0])
-                        });
-                }
-            )}
-            )
+            updateSchedulaCampaignInPromisify(db)
+                .then(function (created) {
+                        console.log('created', created);
+                        pubsubClient.createTopic(topic_name)
+                            .then(function(result){
+                                console.log(result[0])
+                            });
+                    }
+                )}
+        )
 
 
             //  pubsubClient.createTopic(topic_name)
@@ -150,51 +162,58 @@ module.exports = function campaignapi(options) {
             })
 
 
-        function updateSchedulaCampaignInDB (db){
+        function updateSchedulaCampaignInPromisify(db) {
+            return new Promise( function (resolve, reject)
+            {
 
-            var campaignsMetaData = 'CampaignsMetaData';
-            var t = campaign_name2;
-            if (db != undefined) {
+                var campaignsMetaData = 'CampaignsMetaData';
                 var collection = db.collection(campaignsMetaData);
-                log.info("campaignapi: updateSchedulaCampaignInDB -  connected correctly to collection");
-                var id = "campaign_tid:" + tenant_id + "_cpid:" + campaign_id + "_action_serial:" + action_serial;
-                var scheduledDate = new Date(parseInt(msg.schedule));
-                var create_date = new Date();
-                var schedule_date = scheduledDate.toISOString();
-                var status = 1; // 1=scheduled, 2=scheduled, 3=deleted, 4=aborted, 100=error
-                var dbUpdated = false;
-                var tokenDocument = {
-                    "_id": id,
-                    "create_date": create_date,
-                    "campaign_mode": campaign_mode,
-                    "target_types": target_types,
-                    "tenant_id": tenant_id,
-                    "campaign_id": campaign_id,
-                    "action_serial": action_serial,
-                    "num_tgt_devices": num_tgt_devices,
-                    "schedule": msg.schedule,
-                    "schedule_date": schedule_date,
-                    "time_to_live": time_to_live,
-                    "campaign_data": {
-                        "content": "1 The quick brown fox jumps over the lazy dog",
-                        "title": "CustomView Text Title",
-                        "imageurl": "https://s23.postimg.org/vx1yjnjx7/marketing_baby.jpg",
-                        "big_imageurl": "https://s27.postimg.org/6ym653mz7/finance_marketer_6501.jpg",
-                        "type": "CustomView"
-                    },
-                    "status": 1,
-                    "succeeded_devices": 0,
-                    "failed_devices": 0
-                };
+                if (collection != undefined) {
 
-                return collection.insertOne(tokenDocument)
+                    log.info("campaignapi: cmd:create - updateSchedulaCampaignInPromisify  connected correctly to collection");
+                    var id = "campaign_tid:" + tenant_id + "_cpid:" + campaign_id + "_action_serial:" + action_serial;
+                    var scheduledDate = new Date(parseInt(msg.schedule));
+                    var create_date = new Date();
+                    var schedule_date = scheduledDate.toISOString();
+                    var status = 1; // 1=scheduled, 2=scheduled, 3=deleted, 4=aborted, 100=error
+                    var dbUpdated = false;
+                    var tokenDocument = {
+                        "_id": id,
+                        "create_date": create_date,
+                        "campaign_mode": campaign_mode,
+                        "target_types": target_types,
+                        "tenant_id": tenant_id,
+                        "campaign_id": campaign_id,
+                        "action_serial": action_serial,
+                        "num_tgt_devices": num_tgt_devices,
+                        "schedule": msg.schedule,
+                        "schedule_date": schedule_date,
+                        "time_to_live": time_to_live,
+                        "campaign_data": {
+                            "content": "1 The quick brown fox jumps over the lazy dog",
+                            "title": "CustomView Text Title",
+                            "imageurl": "https://s23.postimg.org/vx1yjnjx7/marketing_baby.jpg",
+                            "big_imageurl": "https://s27.postimg.org/6ym653mz7/finance_marketer_6501.jpg",
+                            "type": "CustomView"
+                        },
+                        "status": 1,
+                        "succeeded_devices": 0,
+                        "failed_devices": 0
+                    };
 
-            }
-            else {
-                log.error("campaignapi: cmd:create failed Connecting MongoDB", err.message);
-                return false;
-            }
-        }
+                    return collection.insertOne(tokenDocument)
+
+                }
+                else {
+
+                    log.error("campaignapi: cmd:create failed fetch collection CampaignsMetaData");
+                    reject("campaignapi: cmd:create failed fetch collection CampaignsMetaData");
+
+                }
+
+            })
+        };
+
     })
 
 
@@ -215,11 +234,7 @@ module.exports = function campaignapi(options) {
         respond();
     })
 
-// -------------------------------------------------------------------------
-// --------------------- updateSchedulaCampaignInDB ------------------------
-// -------------------------------------------------------------------------
 
-}
 
 
 
