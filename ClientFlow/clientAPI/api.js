@@ -28,16 +28,36 @@
       var time_to_live =    msg.time_to_live;
       var schedule =        msg.schedule;
 
-      this.act('role:campaignapi', {
-          cmd:              'create_campaign2',
-          command_name:         command_name,
-          tenant_id:            tenant_id,
-          campaign_id:      campaign_id,
-          action_serial:        action_serial,
-          num_tgt_devices:  num_tgt_devices,
-          schedule:             schedule,
-          time_to_live:     time_to_live
-      }, respond)
+      switch(command_name){
+
+          case 'create_campaign':
+              this.act('role:campaignapi', {
+                  cmd:                  command_name,
+                  command_name:         command_name,
+                  campaign_mode:        campaign_mode,
+                  target_types:         target_types,
+                  tenant_id:            tenant_id,
+                  campaign_id:          campaign_id,
+                  action_serial:        action_serial,
+                  num_tgt_devices:      num_tgt_devices,
+                  schedule:             schedule,
+                  time_to_live:         time_to_live
+              }, respond)
+              break;
+
+          case 'get_campaign_data':
+              this.act('role:campaignapi', {
+                  cmd:                  command_name,
+                  command_name:         command_name,
+                  tenant_id:            tenant_id,
+                  campaign_id:          campaign_id,
+                  action_serial:        action_serial
+
+              }, respond)
+              break;
+
+      }
+
   })
 
 

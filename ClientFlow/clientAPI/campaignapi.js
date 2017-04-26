@@ -64,18 +64,86 @@ module.exports = function campaignapi(options) {
 
 
     // ------------------------------------------------------------------------
-// ----------------------- Create Campaign api ----------------------------
+// ----------------------- get_campaign_data Campaign api ----------------------------
 // -------------------------------------------------------------------------
-    this.add('role:campaignapi, cmd:create_campaign', function (msg, respond) {
+    this.add('role:campaignapi, cmd:get_campaign_data', function (msg, respond) {
 
-        log.info("campaignapi: cmd:create_campaign enter");
-        respond(null , {answer: "yossi"});
+        log.info("campaignapi: cmd:get_campaign_data enter");
+
+        var command_name = msg.command_name;
+        var campaign_mode = msg.campaign_mode;
+        var target_types = msg.target_types;
+        var tenant_id = msg.tenant_id;
+        var campaign_id = msg.campaign_id;
+        var action_serial = msg.action_serial;
+
+
+        MongoClient.connect(url).then(function (db) {
+            getCampaiginDataPromisify(db)
+                    .then(function (campaign) {
+                        log.info("campaignapi: cmd:get_campaign_data found, Exiting");
+                        respond(null, campaign);
+                        }
+                    ).catch(function(error) {
+                    log.error(error.message);
+
+                    log.info("campaignapi: cmd:get_campaign_data , Exiting");
+                    json_response.error = "campaign could not be found";
+                    json_response.response = "failed";
+                    json_response.status = 100;
+                    respond(null, json_response);
+                });
+            }
+        ).catch(function (error) {
+
+            log.error("campaignapi: cmd:create connection to DB failed", error.message);
+            json_response.error = error.message;
+            json_response.response = "failed";
+            json_response.status = 100;
+            respond(null, json_response);
+
+        })
+
+
+        function getCampaiginDataPromisify(db) {
+            return new Promise(function (resolve, reject) {
+
+                var campaignsMetaData = 'CampaignsMetaData';
+                var collection = db.collection(campaignsMetaData);
+                if (collection != undefined) {
+
+                    log.info("campaignapi: cmd:get_campaign_data -  connected correctly to collection");
+                    var id = "campaign_tid:" + tenant_id + "_cpid:" + campaign_id + "_action_serial:" + action_serial;
+
+                     collection.findOne(  { _id : {    $eq: id } }  ,function(err, result) {
+                         if (err == null) {
+                             resolve(result);
+                         }
+                         else {
+                             var error = new Error("campaignapi: cmd:get_campaign_data  failed");
+                             error.message = "campaignapi: cmd:get_campaign_data failed ";
+
+                             reject(error);
+                         }
+                     });
+                }
+                else {
+
+                    log.error("campaignapi: cmd:get_campaign_data failed fetch collection CampaignsMetaData");
+                    reject("campaignapi: cmd:get_campaign_data failed fetch collection CampaignsMetaData");
+
+                }
+
+            })
+        };
+
+        //respond(null , {answer: "yossi"});
     });
 
 // ------------------------------------------------------------------------
 // ----------------------- Create Campaign api ----------------------------
 // -------------------------------------------------------------------------
-    this.add('role:campaignapi, cmd:create_campaign2', function (msg, respond) {
+    this.add('role:campaignapi, cmd:create_campaign', function (msg, respond) {
 
         log.info("campaignapi: cmd:create_campaign enter");
 
@@ -104,11 +172,14 @@ module.exports = function campaignapi(options) {
                                         log.info("campaignapi: cmd:create_campaign topic creaeted topic name =", topic_name);
                                     var json_response = {
                                         command_name:  "create_campaign",
+                                        campaign_mode: campaign_mode,
+                                        target_types: target_types,
                                         tenant_id: tenant_id,
                                         campaign_id: campaign_id,
                                         action_serial: action_serial,
                                         topic_name: topic_name,
                                         schedule: schedule,
+                                        time_to_live: time_to_live,
                                         response: "succeeded",
                                         status: 1,
                                         error: undefined
