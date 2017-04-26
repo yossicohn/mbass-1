@@ -20,23 +20,23 @@ module.exports = function campaignapi(options) {
             {
                 level: 'info',
                 path: 'client-api-logs.log'            // log INFO and above to stdout
-            }
+            },
 
             // {
             //     level: 'warn',
             //     path: 'client-api-logs.log'   // log ERROR and above to a file
             // },
-            // {
-            //     level: 'error',
-            //     path: 'client-api-logs.log'  // log ERROR and above to a file
-            // }
+            {
+                level: 'error',
+                path: 'client-api-logs.log'  // log ERROR and above to a file
+            }
         ]
     });
 
 
     log.info("campaignapi: enter");
 
-    var mongodbPrimaryUrl = '104.198.49.80:27017/';
+    var mongodbPrimaryUrl = '105.198.49.80:27017/';
     var mbassdb = 'mbassdb';
     var url = 'mongodb://' + mongodbPrimaryUrl + mbassdb;
 
@@ -189,33 +189,67 @@ module.exports = function campaignapi(options) {
                                     }
                                 ).catch(function(error) {
 
-                                json_response.error = "topic already exist";
-                                json_response.response = "failed";
-                                json_response.status = 100;
-                                log.error("campaignapi: cmd:create failed error", error.message);
+                                var json_response = {
+                                    command_name:  "create_campaign",
+                                    campaign_mode: campaign_mode,
+                                    target_types: target_types,
+                                    tenant_id: tenant_id,
+                                    campaign_id: campaign_id,
+                                    action_serial: action_serial,
+                                    topic_name: topic_name,
+                                    schedule: schedule,
+                                    time_to_live: time_to_live,
+                                    response: "failed",
+                                    status: 100,
+                                    error: error.message
+                                };
+
+                              //  log.error("campaignapi: cmd:create failed error", error.message);
                                 log.info("campaignapi: cmd:create , Exiting");
 
                                 respond(null, json_response);
                             });
                         }
                     ).catch(function(error) {
-                    log.error(error.message);
+                   log.error(error.message);
 
                     log.info("campaignapi: cmd:create , Exiting");
-                    json_response.error = "campaign  already exist";
-                    json_response.response = "failed";
-                    json_response.status = 100;
+                    var json_response = {
+                        command_name:  "create_campaign",
+                        campaign_mode: campaign_mode,
+                        target_types: target_types,
+                        tenant_id: tenant_id,
+                        campaign_id: campaign_id,
+                        action_serial: action_serial,
+                        topic_name: topic_name,
+                        schedule: schedule,
+                        time_to_live: time_to_live,
+                        response: "failed",
+                        status: 100,
+                        error: error.message
+                    };
+
                     respond(null, json_response);
                 });
             }
         ).catch(function (error) {
 
             log.error("campaignapi: cmd:create connection to DB failed", error.message);
-            json_response.error = error.message;
-            json_response.response = "failed";
-            json_response.status = 100;
+            var json_response = {
+                command_name:  "create_campaign",
+                campaign_mode: campaign_mode,
+                target_types: target_types,
+                tenant_id: tenant_id,
+                campaign_id: campaign_id,
+                action_serial: action_serial,
+                topic_name: topic_name,
+                schedule: schedule,
+                time_to_live: time_to_live,
+                response: "failed",
+                status: 100,
+                error: error.message
+            };
             respond(null, json_response);
-
             })
 
 
@@ -265,8 +299,8 @@ module.exports = function campaignapi(options) {
                       resolve(id);
                   }
                     else{
-                      var error = new Error("campaignapi: cmd:create document insertion failed");
-                      error.message = "campaignapi: cmd:create document insertion failed";
+                      var error = new Error("campaignapi: cmd:create_sfailed");
+                      error.message = "campaignapi: cmd:create_campaign document insertion failed";
 
                       reject(error);
                   }
