@@ -29,13 +29,12 @@
       var schedule =        msg.schedule;
 
       this.act('role:campaignapi', {
-          cmd:              'create',
+          cmd:              'create_campaign2',
           command_name:         command_name,
           tenant_id:            tenant_id,
           campaign_id:      campaign_id,
           action_serial:        action_serial,
           num_tgt_devices:  num_tgt_devices,
-          topic_name:       topic_name,
           schedule:             schedule,
           time_to_live:     time_to_live
       }, respond)
