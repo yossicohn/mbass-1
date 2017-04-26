@@ -22,10 +22,10 @@ module.exports = function campaignapi(options) {
                 path: 'client-api-logs.log'            // log INFO and above to stdout
             },
 
-            // {
-            //     level: 'warn',
-            //     path: 'client-api-logs.log'   // log ERROR and above to a file
-            // },
+            {
+                level: 'warn',
+                path: 'client-api-logs.log'   // log ERROR and above to a file
+            },
             {
                 level: 'error',
                 path: 'client-api-logs.log'  // log ERROR and above to a file
@@ -36,7 +36,7 @@ module.exports = function campaignapi(options) {
 
     log.info("campaignapi: enter");
 
-    var mongodbPrimaryUrl = '105.198.49.80:27017/';
+    var mongodbPrimaryUrl = '104.198.49.80:27017/';
     var mbassdb = 'mbassdb';
     var url = 'mongodb://' + mongodbPrimaryUrl + mbassdb;
 
@@ -78,6 +78,8 @@ module.exports = function campaignapi(options) {
         var action_serial = msg.action_serial;
 
 
+
+
         MongoClient.connect(url).then(function (db) {
             getCampaiginDataPromisify(db)
                     .then(function (campaign) {
@@ -88,18 +90,34 @@ module.exports = function campaignapi(options) {
                     log.error(error.message);
 
                     log.info("campaignapi: cmd:get_campaign_data , Exiting");
-                    json_response.error = "campaign could not be found";
-                    json_response.response = "failed";
-                    json_response.status = 100;
+                    var json_response = {
+                    command_name:  "create_campaign",
+                    campaign_mode: campaign_mode,
+                    target_types: target_types,
+                    tenant_id: tenant_id,
+                    campaign_id: campaign_id,
+                    action_serial: action_serial,
+                    response: "failed",
+                    status: 100,
+                    error: error.message
+                };
+                    db.close();
                     respond(null, json_response);
                 });
             }
         ).catch(function (error) {
 
             log.error("campaignapi: cmd:create connection to DB failed", error.message);
-            json_response.error = error.message;
-            json_response.response = "failed";
-            json_response.status = 100;
+            var json_response = {
+                command_name:  "create_campaign",
+                tenant_id: tenant_id,
+                campaign_id: campaign_id,
+                action_serial: action_serial,
+                response: "failed",
+                status: 100,
+                error: error.message
+            };
+
             respond(null, json_response);
 
         })
@@ -128,7 +146,7 @@ module.exports = function campaignapi(options) {
                      });
                 }
                 else {
-
+                    db.close()
                     log.error("campaignapi: cmd:get_campaign_data failed fetch collection CampaignsMetaData");
                     reject("campaignapi: cmd:get_campaign_data failed fetch collection CampaignsMetaData");
 

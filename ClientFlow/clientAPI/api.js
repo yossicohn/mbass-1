@@ -28,6 +28,7 @@
       var time_to_live =    msg.time_to_live;
       var schedule =        msg.schedule;
 
+      
       switch(command_name){
 
           case 'create_campaign':
