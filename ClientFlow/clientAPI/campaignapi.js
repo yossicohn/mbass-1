@@ -77,6 +77,7 @@ module.exports = function campaignapi(options) {
             var tenant_id = msg.tenant_id;
             var campaign_id = msg.campaign_id;
             var action_serial = msg.action_serial;
+            var template_name = msg.template_name;
 
 
             getCampaiginDataPromisify(dbMbass)
@@ -96,6 +97,7 @@ module.exports = function campaignapi(options) {
                                 tenant_id: tenant_id,
                                 campaign_id: campaign_id,
                                 action_serial: action_serial,
+                                template_name : template_name,
                                 response: "failed",
                                 status: 101,
                                 error: "campaign not found"
@@ -116,6 +118,7 @@ module.exports = function campaignapi(options) {
                             tenant_id: tenant_id,
                             campaign_id: campaign_id,
                             action_serial: action_serial,
+                            template_name : template_name,
                             response: "failed",
                             status: 100,
                             error: error.message
@@ -175,10 +178,11 @@ module.exports = function campaignapi(options) {
             var tenant_id = msg.tenant_id;
             var campaign_id = msg.campaign_id;
             var action_serial = msg.action_serial;
+            var template_name = msg.template_name;
             var num_tgt_devices = msg.num_tgt_devices;
             var schedule = msg.schedule;
             var time_to_live = msg.time_to_live;
-            var topic_name = 'topic_tid_' + tenant_id + '_cid_' + campaign_id + '_action_serial_' + action_serial;
+            var topic_name = 'topic_tid_' + tenant_id + '_cid_' + campaign_id + '_action_serial_' + action_serial + "_template_name_" + template_name;
 
 
             updateSchedulaCampaignInPromisify(dbMbass)
@@ -241,6 +245,7 @@ module.exports = function campaignapi(options) {
                             tenant_id: tenant_id,
                             campaign_id: campaign_id,
                             action_serial: action_serial,
+                            template_name : template_name,
                             topic_name: topic_name,
                             schedule: schedule,
                             time_to_live: time_to_live,
@@ -262,7 +267,7 @@ module.exports = function campaignapi(options) {
                         if (collection != undefined) {
 
                             log.info("campaignapi: cmd:create - updateSchedulaCampaignInPromisify  connected correctly to collection");
-                            var id = "campaign_tid:" + tenant_id + "_cpid:" + campaign_id + "_action_serial:" + action_serial;
+                            var id = "campaign_tid:" + tenant_id + "_cpid:" + campaign_id + "_action_serial:" + action_serial+ "_template_name:" + template_name;
                             var scheduledDate = new Date(parseInt(msg.schedule));
                             var create_date = new Date();
                             var schedule_date = scheduledDate.toISOString();
@@ -276,6 +281,7 @@ module.exports = function campaignapi(options) {
                                 "tenant_id": tenant_id,
                                 "campaign_id": campaign_id,
                                 "action_serial": action_serial,
+                                "template_name" :       template_name
                                 "num_tgt_devices": num_tgt_devices,
                                 "schedule": msg.schedule,
                                 "schedule_date": schedule_date,

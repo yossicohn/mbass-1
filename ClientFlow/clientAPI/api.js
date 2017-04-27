@@ -18,20 +18,26 @@
  this.add('role:api,path:campaignapi', function (msg, respond) {
 
       var command_name =    msg.command_name;
-      var campaign_mode =   msg.campaign_mode;
-      var target_types =    msg.target_types;
-      var tenant_id =       msg.tenant_id;
-      var campaign_id =     msg.campaign_id;
-      var action_serial =   msg.action_serial;
-      var num_tgt_devices = msg.num_tgt_devices;
-      var schedule =        msg.schedule;
-      var time_to_live =    msg.time_to_live;
-      var schedule =        msg.schedule;
 
       
       switch(command_name){
 
+
           case 'create_campaign':
+
+
+              var campaign_mode =   msg.campaign_mode;
+              var target_types =    msg.target_types;
+              var tenant_id =       msg.tenant_id;
+              var campaign_id =     msg.campaign_id;
+              var action_serial =   msg.action_serial;
+              var template_name =   msg.template_name;
+              var num_tgt_devices = msg.num_tgt_devices;
+              var schedule =        msg.schedule;
+              var time_to_live =    msg.time_to_live;
+              var schedule =        msg.schedule;
+
+
               this.act('role:campaignapi', {
                   cmd:                  command_name,
                   command_name:         command_name,
@@ -40,6 +46,7 @@
                   tenant_id:            tenant_id,
                   campaign_id:          campaign_id,
                   action_serial:        action_serial,
+                  template_name :       template_name,
                   num_tgt_devices:      num_tgt_devices,
                   schedule:             schedule,
                   time_to_live:         time_to_live
@@ -47,12 +54,25 @@
               break;
 
           case 'get_campaign_data':
+
+              var campaign_mode =   msg.campaign_mode;
+              var target_types =    msg.target_types;
+              var tenant_id =       msg.tenant_id;
+              var campaign_id =     msg.campaign_id;
+              var action_serial =   msg.action_serial;
+              var template_name =   msg.template_name;
+              var num_tgt_devices = msg.num_tgt_devices;
+              var schedule =        msg.schedule;
+              var time_to_live =    msg.time_to_live;
+              var schedule =        msg.schedule;
+
               this.act('role:campaignapi', {
                   cmd:                  command_name,
                   command_name:         command_name,
                   tenant_id:            tenant_id,
                   campaign_id:          campaign_id,
-                  action_serial:        action_serial
+                  action_serial:        action_serial,
+                  template_name :       template_name
 
               }, respond)
               break;
