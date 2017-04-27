@@ -21,8 +21,8 @@
       <file leaf-file-name="api.js" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/api.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="615">
-              <caret line="74" column="18" lean-forward="false" selection-start-line="74" selection-start-column="18" selection-end-line="74" selection-end-column="53" />
+            <state relative-caret-position="795">
+              <caret line="53" column="13" lean-forward="false" selection-start-line="53" selection-start-column="13" selection-end-line="53" selection-end-column="13" />
               <folding />
             </state>
           </provider>
@@ -32,7 +32,7 @@
         <entry file="file://$PROJECT_DIR$/index.js">
           <provider selected="true" editor-type-id="text-editor">
             <state relative-caret-position="495">
-              <caret line="33" column="0" lean-forward="true" selection-start-line="33" selection-start-column="0" selection-end-line="33" selection-end-column="0" />
+              <caret line="33" column="0" lean-forward="false" selection-start-line="33" selection-start-column="0" selection-end-line="33" selection-end-column="0" />
               <folding />
             </state>
           </provider>
@@ -41,10 +41,16 @@
       <file leaf-file-name="campaignapi.js" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/campaignapi.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="-24">
-              <caret line="99" column="62" lean-forward="false" selection-start-line="99" selection-start-column="62" selection-end-line="99" selection-end-column="62" />
+            <state relative-caret-position="105">
+              <caret line="178" column="23" lean-forward="false" selection-start-line="178" selection-start-column="23" selection-end-line="178" selection-end-column="23" />
               <folding>
-                <element signature="e#7064#9659#0" expanded="false" />
+                <element signature="e#332#833#0" expanded="false" />
+                <element signature="e#380#827#0" expanded="false" />
+                <element signature="e#1661#5630#0" expanded="false" />
+                <element signature="e#2162#3267#0" expanded="false" />
+                <element signature="e#3326#4144#0" expanded="false" />
+                <element signature="e#15837#16863#0" expanded="false" />
+                <element signature="e#16914#17668#0" expanded="false" />
               </folding>
             </state>
           </provider>
@@ -54,7 +60,7 @@
         <entry file="file://$PROJECT_DIR$/package.json">
           <provider selected="true" editor-type-id="text-editor">
             <state relative-caret-position="240">
-              <caret line="16" column="21" lean-forward="true" selection-start-line="16" selection-start-column="21" selection-end-line="16" selection-end-column="21" />
+              <caret line="16" column="21" lean-forward="false" selection-start-line="16" selection-start-column="21" selection-end-line="16" selection-end-column="21" />
               <folding />
             </state>
           </provider>
@@ -63,7 +69,7 @@
       <file leaf-file-name="mongo_client.js" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/node_modules/mongodb/lib/mongo_client.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="-120">
+            <state relative-caret-position="2880">
               <caret line="192" column="0" lean-forward="false" selection-start-line="192" selection-start-column="0" selection-end-line="192" selection-end-column="0" />
               <folding />
             </state>
@@ -83,7 +89,6 @@
     <findStrings>
       <find>createLogger</find>
       <find>clear</find>
-      <find>campaignsMetaData</find>
       <find>campaign_name</find>
       <find>updateSchedulaCampaignInDB</find>
       <find>collect</find>
@@ -93,8 +98,9 @@
       <find>&quot;code&quot;: &quot;ETIMEDOUT&quot;</find>
       <find>\n    if \(\!s\.running\) \{</find>
       <find>&quot;code&quot;: &quot;ETIMEDOUT&quot; }</find>
-      <find>topic_name</find>
       <find>topicCreated</find>
+      <find>campaignsMetaData</find>
+      <find>topic_name</find>
     </findStrings>
     <dirStrings>
       <dir>$PROJECT_DIR$</dir>
@@ -128,8 +134,8 @@
   <component name="ProjectFrameBounds">
     <option name="x" value="64" />
     <option name="y" value="-11" />
-    <option name="width" value="1857" />
-    <option name="height" value="1092" />
+    <option name="width" value="1297" />
+    <option name="height" value="675" />
   </component>
   <component name="ProjectView">
     <navigator currentView="ProjectPane" proportions="" version="1">
@@ -146,7 +152,6 @@
       <foldersAlwaysOnTop value="true" />
     </navigator>
     <panes>
-      <pane id="Scratches" />
       <pane id="ProjectPane">
         <subPane>
           <PATH>
@@ -161,6 +166,7 @@
           </PATH>
         </subPane>
       </pane>
+      <pane id="Scratches" />
       <pane id="Scope" />
     </panes>
   </component>
@@ -310,12 +316,13 @@
       <workItem from="1493222213168" duration="3091000" />
       <workItem from="1493225347023" duration="2086000" />
       <workItem from="1493276576197" duration="12000" />
-      <workItem from="1493276677161" duration="7573000" />
+      <workItem from="1493276677161" duration="11296000" />
+      <workItem from="1493319359921" duration="660000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="104218000" />
+    <option name="totallyTimeSpent" value="108601000" />
   </component>
   <component name="TodoView">
     <todo-panel id="selected-file">
@@ -327,19 +334,19 @@
     </todo-panel>
   </component>
   <component name="ToolWindowManager">
-    <frame x="64" y="-11" width="1857" height="1092" extended-state="6" />
+    <frame x="64" y="-11" width="1297" height="675" extended-state="6" />
     <editor active="true" />
     <layout>
-      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.20161726" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
+      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.2015444" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
       <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
       <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="7" side_tool="true" content_ui="tabs" />
-      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.24923703" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
       <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="false" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
+      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.24911661" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
       <window_info id="npm" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="2" side_tool="true" content_ui="tabs" />
       <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.36104783" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
-      <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.3092574" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="Favorites" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="2" side_tool="true" content_ui="tabs" />
+      <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.33745584" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="Cvs" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="4" side_tool="false" content_ui="tabs" />
       <window_info id="Message" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
       <window_info id="Commander" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.4" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
@@ -404,39 +411,61 @@
         </line-breakpoint>
         <line-breakpoint enabled="true" type="javascript">
           <url>file://$PROJECT_DIR$/campaignapi.js</url>
-          <line>347</line>
-          <properties />
-          <option name="timeStamp" value="313" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="javascript">
-          <url>file://$PROJECT_DIR$/campaignapi.js</url>
-          <line>351</line>
-          <properties />
-          <option name="timeStamp" value="314" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="javascript">
-          <url>file://$PROJECT_DIR$/campaignapi.js</url>
-          <line>261</line>
-          <properties />
+          <line>249</line>
           <option name="timeStamp" value="318" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="javascript">
           <url>file://$PROJECT_DIR$/campaignapi.js</url>
-          <line>69</line>
-          <properties />
-          <option name="timeStamp" value="320" />
+          <line>292</line>
+          <option name="timeStamp" value="323" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="javascript">
           <url>file://$PROJECT_DIR$/campaignapi.js</url>
-          <line>109</line>
+          <line>295</line>
+          <option name="timeStamp" value="324" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="javascript">
+          <url>file://$PROJECT_DIR$/campaignapi.js</url>
+          <line>291</line>
+          <option name="timeStamp" value="325" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="javascript">
+          <url>file://$PROJECT_DIR$/campaignapi.js</url>
+          <line>74</line>
+          <option name="timeStamp" value="330" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="javascript">
+          <url>file://$PROJECT_DIR$/campaignapi.js</url>
+          <line>80</line>
+          <option name="timeStamp" value="331" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="javascript">
+          <url>file://$PROJECT_DIR$/campaignapi.js</url>
+          <line>98</line>
+          <option name="timeStamp" value="332" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="javascript">
+          <url>file://$PROJECT_DIR$/campaignapi.js</url>
+          <line>157</line>
+          <option name="timeStamp" value="334" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="javascript">
+          <url>file://$PROJECT_DIR$/campaignapi.js</url>
+          <line>178</line>
           <properties />
-          <option name="timeStamp" value="321" />
+          <option name="timeStamp" value="335" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="javascript">
+          <url>file://$PROJECT_DIR$/campaignapi.js</url>
+          <line>175</line>
+          <properties />
+          <option name="timeStamp" value="336" />
         </line-breakpoint>
       </breakpoints>
       <breakpoints-dialog>
         <breakpoints-dialog />
       </breakpoints-dialog>
-      <option name="time" value="322" />
+      <option name="time" value="337" />
     </breakpoint-manager>
     <watches-manager>
       <configuration name="NodeJSConfigurationType">
@@ -472,7 +501,13 @@
         <state relative-caret-position="2688">
           <caret line="168" column="0" lean-forward="true" selection-start-line="168" selection-start-column="0" selection-end-line="168" selection-end-column="0" />
           <folding>
-            <element signature="e#7064#9659#0" expanded="false" />
+            <element signature="e#332#833#0" expanded="false" />
+            <element signature="e#380#827#0" expanded="false" />
+            <element signature="e#1661#5630#0" expanded="false" />
+            <element signature="e#2162#3267#0" expanded="false" />
+            <element signature="e#3326#4144#0" expanded="false" />
+            <element signature="e#15837#16863#0" expanded="false" />
+            <element signature="e#16914#17668#0" expanded="false" />
           </folding>
         </state>
       </provider>
@@ -533,7 +568,13 @@
         <state relative-caret-position="2430">
           <caret line="162" column="32" lean-forward="true" selection-start-line="162" selection-start-column="32" selection-end-line="162" selection-end-column="32" />
           <folding>
-            <element signature="e#7064#9659#0" expanded="false" />
+            <element signature="e#332#833#0" expanded="false" />
+            <element signature="e#380#827#0" expanded="false" />
+            <element signature="e#1661#5630#0" expanded="false" />
+            <element signature="e#2162#3267#0" expanded="false" />
+            <element signature="e#3326#4144#0" expanded="false" />
+            <element signature="e#15837#16863#0" expanded="false" />
+            <element signature="e#16914#17668#0" expanded="false" />
           </folding>
         </state>
       </provider>
@@ -587,7 +628,13 @@
         <state relative-caret-position="1740">
           <caret line="87" column="42" lean-forward="true" selection-start-line="87" selection-start-column="42" selection-end-line="87" selection-end-column="42" />
           <folding>
-            <element signature="e#7064#9659#0" expanded="false" />
+            <element signature="e#332#833#0" expanded="false" />
+            <element signature="e#380#827#0" expanded="false" />
+            <element signature="e#1661#5630#0" expanded="false" />
+            <element signature="e#2162#3267#0" expanded="false" />
+            <element signature="e#3326#4144#0" expanded="false" />
+            <element signature="e#15837#16863#0" expanded="false" />
+            <element signature="e#16914#17668#0" expanded="false" />
           </folding>
         </state>
       </provider>
@@ -620,7 +667,13 @@
         <state relative-caret-position="700">
           <caret line="35" column="35" lean-forward="false" selection-start-line="35" selection-start-column="35" selection-end-line="35" selection-end-column="35" />
           <folding>
-            <element signature="e#7064#9659#0" expanded="false" />
+            <element signature="e#332#833#0" expanded="false" />
+            <element signature="e#380#827#0" expanded="false" />
+            <element signature="e#1661#5630#0" expanded="false" />
+            <element signature="e#2162#3267#0" expanded="false" />
+            <element signature="e#3326#4144#0" expanded="false" />
+            <element signature="e#15837#16863#0" expanded="false" />
+            <element signature="e#16914#17668#0" expanded="false" />
           </folding>
         </state>
       </provider>
@@ -653,7 +706,13 @@
         <state relative-caret-position="2280">
           <caret line="114" column="7" lean-forward="false" selection-start-line="114" selection-start-column="7" selection-end-line="114" selection-end-column="7" />
           <folding>
-            <element signature="e#7064#9659#0" expanded="false" />
+            <element signature="e#332#833#0" expanded="false" />
+            <element signature="e#380#827#0" expanded="false" />
+            <element signature="e#1661#5630#0" expanded="false" />
+            <element signature="e#2162#3267#0" expanded="false" />
+            <element signature="e#3326#4144#0" expanded="false" />
+            <element signature="e#15837#16863#0" expanded="false" />
+            <element signature="e#16914#17668#0" expanded="false" />
           </folding>
         </state>
       </provider>
@@ -784,7 +843,7 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/node_modules/mongodb/lib/mongo_client.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-120">
+        <state relative-caret-position="2880">
           <caret line="192" column="0" lean-forward="false" selection-start-line="192" selection-start-column="0" selection-end-line="192" selection-end-column="0" />
           <folding />
         </state>
@@ -793,7 +852,7 @@
     <entry file="file://$PROJECT_DIR$/index.js">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="495">
-          <caret line="33" column="0" lean-forward="true" selection-start-line="33" selection-start-column="0" selection-end-line="33" selection-end-column="0" />
+          <caret line="33" column="0" lean-forward="false" selection-start-line="33" selection-start-column="0" selection-end-line="33" selection-end-column="0" />
           <folding />
         </state>
       </provider>
@@ -801,25 +860,31 @@
     <entry file="file://$PROJECT_DIR$/package.json">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="240">
-          <caret line="16" column="21" lean-forward="true" selection-start-line="16" selection-start-column="21" selection-end-line="16" selection-end-column="21" />
+          <caret line="16" column="21" lean-forward="false" selection-start-line="16" selection-start-column="21" selection-end-line="16" selection-end-column="21" />
           <folding />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/api.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="615">
-          <caret line="74" column="18" lean-forward="false" selection-start-line="74" selection-start-column="18" selection-end-line="74" selection-end-column="53" />
+        <state relative-caret-position="795">
+          <caret line="53" column="13" lean-forward="false" selection-start-line="53" selection-start-column="13" selection-end-line="53" selection-end-column="13" />
           <folding />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/campaignapi.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-24">
-          <caret line="99" column="62" lean-forward="false" selection-start-line="99" selection-start-column="62" selection-end-line="99" selection-end-column="62" />
+        <state relative-caret-position="105">
+          <caret line="178" column="23" lean-forward="false" selection-start-line="178" selection-start-column="23" selection-end-line="178" selection-end-column="23" />
           <folding>
-            <element signature="e#7064#9659#0" expanded="false" />
+            <element signature="e#332#833#0" expanded="false" />
+            <element signature="e#380#827#0" expanded="false" />
+            <element signature="e#1661#5630#0" expanded="false" />
+            <element signature="e#2162#3267#0" expanded="false" />
+            <element signature="e#3326#4144#0" expanded="false" />
+            <element signature="e#15837#16863#0" expanded="false" />
+            <element signature="e#16914#17668#0" expanded="false" />
           </folding>
         </state>
       </provider>

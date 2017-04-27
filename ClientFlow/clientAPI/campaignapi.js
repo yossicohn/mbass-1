@@ -12,7 +12,7 @@ module.exports = function campaignapi(options) {
     var assert = require('assert');
     var Moment = require('moment');
 
-    var campaign_name2 = 'campaign_name';
+
     var log = bunyan.createLogger({
         name: 'client-api',
 
@@ -41,28 +41,17 @@ module.exports = function campaignapi(options) {
     var url = 'mongodb://' + mongodbPrimaryUrl + mbassdb;
 
     var dbMbass = undefined;
-    var campaignSchema = {
-
-        campaign_mode: undefined,
-        target_types: undefined,
-        tenant_id: undefined,
-        campaign_id: undefined,
-        action_serial: undefined,
-        num_tgt_devices: undefined,
-        schedule: undefined,
-        time_to_live: undefined
-    }
-
 
     // Imports the Google Cloud client library
     const PubSub = require('@google-cloud/pubsub');
 
-// Your Google Cloud Platform project ID
+    // Your Google Cloud Platform project ID
     const projectId = 'mobilepush-161510';
 
     // Instantiates a client
     var pubsubClient = {};
 
+    var campaignsMetaData = 'CampaignsMetaData';
 
 // ------------------------------------------------------------------------
 // ----------------------- get_campaign_data Campaign api ----------------------------
@@ -78,7 +67,6 @@ module.exports = function campaignapi(options) {
             var campaign_id = msg.campaign_id;
             var action_serial = msg.action_serial;
             var template_name = msg.template_name;
-
 
             getCampaiginDataPromisify(dbMbass)
                 .then(function (campaign) {
@@ -131,12 +119,12 @@ module.exports = function campaignapi(options) {
             function getCampaiginDataPromisify(db) {
                 return new Promise(function (resolve, reject) {
 
-                    var campaignsMetaData = 'CampaignsMetaData';
+
                     var collection = db.collection(campaignsMetaData);
                     if (collection != undefined) {
 
                         log.info("campaignapi: cmd:get_campaign_data -  connected correctly to collection");
-                        var id = "campaign_tid:" + tenant_id + "_cpid:" + campaign_id + "_action_serial:" + action_serial;
+                        var id = "campaign_tid:" + tenant_id + "_cpid:" + campaign_id + "_action_serial:" + action_serial + "_template_name:" + template_name;
 
                         collection.findOne({_id: {$eq: id}}, function (err, result) {
                                 if (err == null) {
@@ -271,21 +259,20 @@ module.exports = function campaignapi(options) {
                             var scheduledDate = new Date(parseInt(msg.schedule));
                             var create_date = new Date();
                             var schedule_date = scheduledDate.toISOString();
-                            var status = 1; // 1=scheduled, 2=scheduled, 3=deleted, 4=aborted, 100=error
-                            var dbUpdated = false;
+                            var status_schedule = 1; // 1=scheduled, 2=scheduled, 3=deleted, 4=aborted, 100=error
                             var tokenDocument = {
                                 "_id": id,
-                                "create_date": create_date,
-                                "campaign_mode": campaign_mode,
-                                "target_types": target_types,
-                                "tenant_id": tenant_id,
-                                "campaign_id": campaign_id,
-                                "action_serial": action_serial,
-                                "template_name" :       template_name
-                                "num_tgt_devices": num_tgt_devices,
-                                "schedule": msg.schedule,
-                                "schedule_date": schedule_date,
-                                "time_to_live": time_to_live,
+                                "create_date":          create_date,
+                                "campaign_mode":        campaign_mode,
+                                "target_types":         target_types,
+                                "tenant_id":            tenant_id,
+                                "campaign_id":          campaign_id,
+                                "action_serial":        action_serial,
+                                "template_name" :       template_name,
+                                "num_tgt_devices":      num_tgt_devices,
+                                "schedule":             schedule,
+                                "schedule_date":        schedule_date,
+                                "time_to_live":         time_to_live,
                                 "campaign_data": {
                                     "content": "1 The quick brown fox jumps over the lazy dog",
                                     "title": "CustomView Text Title",
@@ -293,9 +280,10 @@ module.exports = function campaignapi(options) {
                                     "big_imageurl": "https://s27.postimg.org/6ym653mz7/finance_marketer_6501.jpg",
                                     "type": "CustomView"
                                 },
-                                "status": 1,
-                                "succeeded_devices": 0,
-                                "failed_devices": 0
+                                "topic_name":           topic_name,
+                                "status":               status_schedule,
+                                "succeeded_devices":    0,
+                                "failed_devices":       0
                             };
 
 
@@ -304,7 +292,7 @@ module.exports = function campaignapi(options) {
                                         resolve(id);
                                     }
                                     else {
-                                        var error = new Error("campaignapi: cmd:create_sfailed");
+                                        var error = new Error("campaignapi: cmd:create_campaign failed");
                                         error.message = "campaignapi: cmd:create_campaign document insertion failed";
 
                                         reject(error);
@@ -322,6 +310,98 @@ module.exports = function campaignapi(options) {
                     }
                 );
             }
+        }
+    );
+
+
+// ------------------------------------------------------------------------
+// ----------------------- Update Campaign api ----------------------------
+// -------------------------------------------------------------------------
+    this.add('role:campaignapi, cmd:update_campaign', function (msg, respond) {
+
+            log.info("campaignapi: cmd:update_campaign enter");
+
+
+            var command_name = msg.command_name;
+            var campaign_mode = msg.campaign_mode;
+            var target_types = msg.target_types;
+            var tenant_id = msg.tenant_id;
+            var campaign_id = msg.campaign_id;
+            var action_serial = msg.action_serial;
+            var template_name = msg.template_name;
+            var num_tgt_devices = msg.num_tgt_devices;
+            var schedule = msg.schedule;
+            var time_to_live = msg.time_to_live;
+            var topic_name = 'topic_tid_' + tenant_id + '_cid_' + campaign_id + '_action_serial_' + action_serial + "_template_name_" + template_name;
+
+            var id = "campaign_tid:" + tenant_id + "_cpid:" + campaign_id + "_action_serial:" + action_serial+ "_template_name:" + template_name;
+            var scheduledDate = new Date(parseInt(msg.schedule));
+            var create_date = new Date();
+            var schedule_date = scheduledDate.toISOString();
+
+        var collection = db.collection(campaignsMetaData);
+        if (collection != undefined) {
+            collection.findOneAndUpdate({_id: id} , {$set: {target_types: target_types}}
+                , {
+                    returnOriginal: false,
+                    upsert: false
+                }).then(function() {
+
+                }
+            );
+        }
+
+        getCampaiginDataPromisify(dbMbass)
+            .then(function (campaign) {
+
+
+                    if (campaign != null) {
+                        log.info("campaignapi: cmd:get_campaign_data found, Exiting");
+
+                        respond(null, campaign);
+
+                    } else {
+                        log.info("campaignapi: cmd:get_campaign_data , campaign not found Exiting");
+                        var json_response = {
+                            command_name: "get_campaign_data",
+                            campaign_mode: campaign_mode,
+                            target_types: target_types,
+                            tenant_id: tenant_id,
+                            campaign_id: campaign_id,
+                            action_serial: action_serial,
+                            template_name : template_name,
+                            response: "failed",
+                            status: 101,
+                            error: "campaign not found"
+                        };
+                        respond(null, json_response);
+                    }
+
+                }
+            )
+            .catch(function (error) {
+                    log.error(error.message);
+
+                    log.info("campaignapi: cmd:get_campaign_data , Exiting");
+                    var json_response = {
+                        command_name: "create_campaign",
+                        campaign_mode: campaign_mode,
+                        target_types: target_types,
+                        tenant_id: tenant_id,
+                        campaign_id: campaign_id,
+                        action_serial: action_serial,
+                        template_name : template_name,
+                        response: "failed",
+                        status: 100,
+                        error: error.message
+                    };
+
+                    respond(null, json_response);
+                }
+            );
+
+
+
         }
     );
 
@@ -357,4 +437,4 @@ module.exports = function campaignapi(options) {
     })
 
 
-}
+};
