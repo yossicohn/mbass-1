@@ -333,16 +333,20 @@ module.exports = function campaignapi(options) {
             projectId: projectId
         });
 
-        MongoClient.connect(url)
-            .then(function (db) {
-                log.info("init:campaignapi succeeded Connect ");
-                dbMbass = db;
-            })
-            .catch(function (error) {
-                log.error("init:campaignapi failed to Connect ", error.message);
-            });
+        MongoClient.connect(url, {
+            poolSize: 100
 
-        log.info("init:campaignapi exit");
+            }
+        )
+        .then(function (db) {
+            log.info("init:campaignapi succeeded Connect ");
+            dbMbass = db;
+        })
+        .catch(function (error) {
+            log.error("init:campaignapi failed to Connect ", error.message);
+        });
+
+        log.info("init:campaignapi exit url=", url);
         respond();
     })
 
