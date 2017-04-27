@@ -17,11 +17,11 @@
     <favorites_list name="clientAPI" />
   </component>
   <component name="FileEditorManager">
-    <leaf>
-      <file leaf-file-name="api.js" pinned="false" current-in-tab="true">
+    <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
+      <file leaf-file-name="api.js" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/api.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="84">
+            <state relative-caret-position="450">
               <caret line="30" column="6" lean-forward="false" selection-start-line="30" selection-start-column="6" selection-end-line="30" selection-end-column="6" />
               <folding />
             </state>
@@ -33,23 +33,23 @@
           <provider selected="true" editor-type-id="text-editor">
             <state relative-caret-position="90">
               <caret line="6" column="0" lean-forward="false" selection-start-line="6" selection-start-column="0" selection-end-line="6" selection-end-column="0" />
-              <folding>
-                <marker date="1493226988541" expanded="true" signature="275:333" ph="{...}" />
-                <marker date="1493226988541" expanded="true" signature="363:417" ph="{...}" />
-                <marker date="1493226988541" expanded="true" signature="599:614" ph="{&quot;null&quot;: null...}" />
-              </folding>
+              <folding />
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="campaignapi.js" pinned="false" current-in-tab="false">
+      <file leaf-file-name="campaignapi.js" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/campaignapi.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="443">
-              <caret line="249" column="19" lean-forward="false" selection-start-line="249" selection-start-column="19" selection-end-line="249" selection-end-column="19" />
+            <state relative-caret-position="290">
+              <caret line="38" column="32" lean-forward="false" selection-start-line="38" selection-start-column="32" selection-end-line="38" selection-end-column="32" />
               <folding>
-                <element signature="e#3858#5185#0" expanded="false" />
-                <element signature="e#13599#13826#0" expanded="false" />
+                <element signature="e#2395#3437#0" expanded="false" />
+                <element signature="e#3496#4255#0" expanded="false" />
+                <element signature="e#4327#5757#0" expanded="false" />
+                <element signature="e#6799#9394#0" expanded="false" />
+                <element signature="e#9453#10357#0" expanded="false" />
+                <element signature="e#10438#13772#0" expanded="false" />
               </folding>
             </state>
           </provider>
@@ -58,7 +58,7 @@
       <file leaf-file-name="mongo_client.js" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/node_modules/mongodb/lib/mongo_client.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="173">
+            <state relative-caret-position="3390">
               <caret line="226" column="1" lean-forward="false" selection-start-line="226" selection-start-column="1" selection-end-line="226" selection-end-column="1" />
               <folding />
             </state>
@@ -87,9 +87,9 @@
       <find>num_tgt_devices</find>
       <find>&quot;code&quot;: &quot;ETIMEDOUT&quot;</find>
       <find>\n    if \(\!s\.running\) \{</find>
-      <find>&quot;code&quot;: &quot;ETIMEDOUT&quot;</find>
       <find>&quot;code&quot;: &quot;ETIMEDOUT&quot; }</find>
       <find>topic_name</find>
+      <find>topicCreated</find>
     </findStrings>
     <dirStrings>
       <dir>$PROJECT_DIR$</dir>
@@ -104,8 +104,8 @@
         <option value="$PROJECT_DIR$/client-api-logs.log" />
         <option value="timers.js" />
         <option value="$PROJECT_DIR$/index.js" />
-        <option value="$PROJECT_DIR$/campaignapi.js" />
         <option value="$PROJECT_DIR$/api.js" />
+        <option value="$PROJECT_DIR$/campaignapi.js" />
       </list>
     </option>
   </component>
@@ -121,10 +121,10 @@
     <handled-path value="$PROJECT_DIR$/node_modules" />
   </component>
   <component name="ProjectFrameBounds">
-    <option name="x" value="65" />
-    <option name="y" value="-4" />
-    <option name="width" value="1855" />
-    <option name="height" value="979" />
+    <option name="x" value="64" />
+    <option name="y" value="-11" />
+    <option name="width" value="1857" />
+    <option name="height" value="1092" />
   </component>
   <component name="ProjectView">
     <navigator currentView="ProjectPane" proportions="" version="1">
@@ -141,6 +141,7 @@
       <foldersAlwaysOnTop value="true" />
     </navigator>
     <panes>
+      <pane id="Scratches" />
       <pane id="ProjectPane">
         <subPane>
           <PATH>
@@ -155,7 +156,6 @@
           </PATH>
         </subPane>
       </pane>
-      <pane id="Scratches" />
       <pane id="Scope" />
     </panes>
   </component>
@@ -304,11 +304,13 @@
       <workItem from="1493215504816" duration="3511000" />
       <workItem from="1493222213168" duration="3091000" />
       <workItem from="1493225347023" duration="2086000" />
+      <workItem from="1493276576197" duration="12000" />
+      <workItem from="1493276677161" duration="4250000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="96633000" />
+    <option name="totallyTimeSpent" value="100895000" />
   </component>
   <component name="TodoView">
     <todo-panel id="selected-file">
@@ -320,19 +322,19 @@
     </todo-panel>
   </component>
   <component name="ToolWindowManager">
-    <frame x="65" y="-4" width="1855" height="979" extended-state="6" />
+    <frame x="64" y="-11" width="1857" height="1092" extended-state="6" />
     <editor active="true" />
     <layout>
       <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.20161726" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
       <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
       <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="7" side_tool="true" content_ui="tabs" />
+      <window_info id="Run" active="true" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.24923703" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
       <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="false" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="npm" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="2" side_tool="true" content_ui="tabs" />
-      <window_info id="Run" active="true" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.24943052" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
       <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.36104783" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
+      <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.3092574" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="Favorites" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="2" side_tool="true" content_ui="tabs" />
-      <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.3781321" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="Cvs" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="4" side_tool="false" content_ui="tabs" />
       <window_info id="Message" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
       <window_info id="Commander" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.4" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
@@ -371,31 +373,6 @@
     <breakpoint-manager>
       <breakpoints>
         <line-breakpoint enabled="true" type="javascript">
-          <url>file://$PROJECT_DIR$/campaignapi.js</url>
-          <line>320</line>
-          <option name="timeStamp" value="225" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="javascript">
-          <url>file://$PROJECT_DIR$/campaignapi.js</url>
-          <line>254</line>
-          <option name="timeStamp" value="226" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="javascript">
-          <url>file://$PROJECT_DIR$/campaignapi.js</url>
-          <line>250</line>
-          <option name="timeStamp" value="236" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="javascript">
-          <url>file://$PROJECT_DIR$/campaignapi.js</url>
-          <line>249</line>
-          <option name="timeStamp" value="237" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="javascript">
-          <url>file://$PROJECT_DIR$/campaignapi.js</url>
-          <line>227</line>
-          <option name="timeStamp" value="242" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="javascript">
           <url>file://$PROJECT_DIR$/api.js</url>
           <line>6</line>
           <option name="timeStamp" value="248" />
@@ -404,81 +381,6 @@
           <url>file://$PROJECT_DIR$/math.js</url>
           <line>33</line>
           <option name="timeStamp" value="249" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="javascript">
-          <url>file://$PROJECT_DIR$/campaignapi.js</url>
-          <line>231</line>
-          <option name="timeStamp" value="255" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="javascript">
-          <url>file://$PROJECT_DIR$/campaignapi.js</url>
-          <line>135</line>
-          <option name="timeStamp" value="260" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="javascript">
-          <url>file://$PROJECT_DIR$/campaignapi.js</url>
-          <line>86</line>
-          <option name="timeStamp" value="261" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="javascript">
-          <url>file://$PROJECT_DIR$/campaignapi.js</url>
-          <line>89</line>
-          <option name="timeStamp" value="262" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="javascript">
-          <url>file://$PROJECT_DIR$/campaignapi.js</url>
-          <line>137</line>
-          <option name="timeStamp" value="265" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="javascript">
-          <url>file://$PROJECT_DIR$/campaignapi.js</url>
-          <line>141</line>
-          <option name="timeStamp" value="266" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="javascript">
-          <url>file://$PROJECT_DIR$/campaignapi.js</url>
-          <line>204</line>
-          <option name="timeStamp" value="273" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="javascript">
-          <url>file://$PROJECT_DIR$/campaignapi.js</url>
-          <line>224</line>
-          <option name="timeStamp" value="275" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="javascript">
-          <url>file://$PROJECT_DIR$/campaignapi.js</url>
-          <line>233</line>
-          <option name="timeStamp" value="276" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="javascript">
-          <url>file://$PROJECT_DIR$/campaignapi.js</url>
-          <line>183</line>
-          <option name="timeStamp" value="277" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="javascript">
-          <url>file://$PROJECT_DIR$/campaignapi.js</url>
-          <line>269</line>
-          <option name="timeStamp" value="278" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="javascript">
-          <url>file://$PROJECT_DIR$/campaignapi.js</url>
-          <line>83</line>
-          <option name="timeStamp" value="281" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="javascript">
-          <url>file://$PROJECT_DIR$/campaignapi.js</url>
-          <line>109</line>
-          <option name="timeStamp" value="282" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="javascript">
-          <url>file://$PROJECT_DIR$/campaignapi.js</url>
-          <line>110</line>
-          <option name="timeStamp" value="283" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="javascript">
-          <url>file://$PROJECT_DIR$/campaignapi.js</url>
-          <line>120</line>
-          <option name="timeStamp" value="284" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="javascript">
           <url>file://$PROJECT_DIR$/node_modules/mongodb/lib/mongo_client.js</url>
@@ -497,45 +399,27 @@
         </line-breakpoint>
         <line-breakpoint enabled="true" type="javascript">
           <url>file://$PROJECT_DIR$/campaignapi.js</url>
-          <line>82</line>
+          <line>337</line>
           <properties />
-          <option name="timeStamp" value="299" />
+          <option name="timeStamp" value="313" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="javascript">
           <url>file://$PROJECT_DIR$/campaignapi.js</url>
-          <line>107</line>
+          <line>341</line>
           <properties />
-          <option name="timeStamp" value="300" />
+          <option name="timeStamp" value="314" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="javascript">
           <url>file://$PROJECT_DIR$/campaignapi.js</url>
-          <line>287</line>
+          <line>256</line>
           <properties />
-          <option name="timeStamp" value="306" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="javascript">
-          <url>file://$PROJECT_DIR$/campaignapi.js</url>
-          <line>276</line>
-          <properties />
-          <option name="timeStamp" value="307" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="javascript">
-          <url>file://$PROJECT_DIR$/campaignapi.js</url>
-          <line>278</line>
-          <properties />
-          <option name="timeStamp" value="308" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="javascript">
-          <url>file://$PROJECT_DIR$/campaignapi.js</url>
-          <line>284</line>
-          <properties />
-          <option name="timeStamp" value="309" />
+          <option name="timeStamp" value="318" />
         </line-breakpoint>
       </breakpoints>
       <breakpoints-dialog>
         <breakpoints-dialog />
       </breakpoints-dialog>
-      <option name="time" value="310" />
+      <option name="time" value="320" />
     </breakpoint-manager>
     <watches-manager>
       <configuration name="NodeJSConfigurationType">
@@ -578,8 +462,12 @@
         <state relative-caret-position="2688">
           <caret line="168" column="0" lean-forward="true" selection-start-line="168" selection-start-column="0" selection-end-line="168" selection-end-column="0" />
           <folding>
-            <element signature="e#3858#5185#0" expanded="false" />
-            <element signature="e#13599#13826#0" expanded="false" />
+            <element signature="e#2395#3437#0" expanded="false" />
+            <element signature="e#3496#4255#0" expanded="false" />
+            <element signature="e#4327#5757#0" expanded="false" />
+            <element signature="e#6799#9394#0" expanded="false" />
+            <element signature="e#9453#10357#0" expanded="false" />
+            <element signature="e#10438#13772#0" expanded="false" />
           </folding>
         </state>
       </provider>
@@ -640,8 +528,12 @@
         <state relative-caret-position="2430">
           <caret line="162" column="32" lean-forward="true" selection-start-line="162" selection-start-column="32" selection-end-line="162" selection-end-column="32" />
           <folding>
-            <element signature="e#3858#5185#0" expanded="false" />
-            <element signature="e#13599#13826#0" expanded="false" />
+            <element signature="e#2395#3437#0" expanded="false" />
+            <element signature="e#3496#4255#0" expanded="false" />
+            <element signature="e#4327#5757#0" expanded="false" />
+            <element signature="e#6799#9394#0" expanded="false" />
+            <element signature="e#9453#10357#0" expanded="false" />
+            <element signature="e#10438#13772#0" expanded="false" />
           </folding>
         </state>
       </provider>
@@ -650,11 +542,7 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="80">
           <caret line="4" column="26" lean-forward="false" selection-start-line="4" selection-start-column="26" selection-end-line="4" selection-end-column="26" />
-          <folding>
-            <marker date="1493226988541" expanded="true" signature="275:333" ph="{...}" />
-            <marker date="1493226988541" expanded="true" signature="363:417" ph="{...}" />
-            <marker date="1493226988541" expanded="true" signature="599:614" ph="{&quot;null&quot;: null...}" />
-          </folding>
+          <folding />
         </state>
       </provider>
     </entry>
@@ -699,8 +587,12 @@
         <state relative-caret-position="1740">
           <caret line="87" column="42" lean-forward="true" selection-start-line="87" selection-start-column="42" selection-end-line="87" selection-end-column="42" />
           <folding>
-            <element signature="e#3858#5185#0" expanded="false" />
-            <element signature="e#13599#13826#0" expanded="false" />
+            <element signature="e#2395#3437#0" expanded="false" />
+            <element signature="e#3496#4255#0" expanded="false" />
+            <element signature="e#4327#5757#0" expanded="false" />
+            <element signature="e#6799#9394#0" expanded="false" />
+            <element signature="e#9453#10357#0" expanded="false" />
+            <element signature="e#10438#13772#0" expanded="false" />
           </folding>
         </state>
       </provider>
@@ -709,11 +601,7 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="80">
           <caret line="4" column="26" lean-forward="false" selection-start-line="4" selection-start-column="26" selection-end-line="4" selection-end-column="26" />
-          <folding>
-            <marker date="1493226988541" expanded="true" signature="275:333" ph="{...}" />
-            <marker date="1493226988541" expanded="true" signature="363:417" ph="{...}" />
-            <marker date="1493226988541" expanded="true" signature="599:614" ph="{&quot;null&quot;: null...}" />
-          </folding>
+          <folding />
         </state>
       </provider>
     </entry>
@@ -737,8 +625,12 @@
         <state relative-caret-position="700">
           <caret line="35" column="35" lean-forward="false" selection-start-line="35" selection-start-column="35" selection-end-line="35" selection-end-column="35" />
           <folding>
-            <element signature="e#3858#5185#0" expanded="false" />
-            <element signature="e#13599#13826#0" expanded="false" />
+            <element signature="e#2395#3437#0" expanded="false" />
+            <element signature="e#3496#4255#0" expanded="false" />
+            <element signature="e#4327#5757#0" expanded="false" />
+            <element signature="e#6799#9394#0" expanded="false" />
+            <element signature="e#9453#10357#0" expanded="false" />
+            <element signature="e#10438#13772#0" expanded="false" />
           </folding>
         </state>
       </provider>
@@ -747,11 +639,7 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="0">
           <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-          <folding>
-            <marker date="1493226988541" expanded="true" signature="275:333" ph="{...}" />
-            <marker date="1493226988541" expanded="true" signature="363:417" ph="{...}" />
-            <marker date="1493226988541" expanded="true" signature="599:614" ph="{&quot;null&quot;: null...}" />
-          </folding>
+          <folding />
         </state>
       </provider>
     </entry>
@@ -775,8 +663,12 @@
         <state relative-caret-position="2280">
           <caret line="114" column="7" lean-forward="false" selection-start-line="114" selection-start-column="7" selection-end-line="114" selection-end-column="7" />
           <folding>
-            <element signature="e#3858#5185#0" expanded="false" />
-            <element signature="e#13599#13826#0" expanded="false" />
+            <element signature="e#2395#3437#0" expanded="false" />
+            <element signature="e#3496#4255#0" expanded="false" />
+            <element signature="e#4327#5757#0" expanded="false" />
+            <element signature="e#6799#9394#0" expanded="false" />
+            <element signature="e#9453#10357#0" expanded="false" />
+            <element signature="e#10438#13772#0" expanded="false" />
           </folding>
         </state>
       </provider>
@@ -785,11 +677,7 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="320">
           <caret line="16" column="0" lean-forward="false" selection-start-line="16" selection-start-column="0" selection-end-line="16" selection-end-column="0" />
-          <folding>
-            <marker date="1493226988541" expanded="true" signature="275:333" ph="{...}" />
-            <marker date="1493226988541" expanded="true" signature="363:417" ph="{...}" />
-            <marker date="1493226988541" expanded="true" signature="599:614" ph="{&quot;null&quot;: null...}" />
-          </folding>
+          <folding />
         </state>
       </provider>
     </entry>
@@ -851,16 +739,7 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/promisw.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1410">
-          <caret line="96" column="10" lean-forward="false" selection-start-line="73" selection-start-column="0" selection-end-line="96" selection-end-column="10" />
-          <folding>
-            <element signature="e#1815#1863#0" expanded="false" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
+    <entry file="file://$PROJECT_DIR$/promisw.js" />
     <entry file="file://$PROJECT_DIR$/client-api-logs.log">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="0">
@@ -887,7 +766,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="284">
           <caret line="197" column="1" lean-forward="false" selection-start-line="197" selection-start-column="1" selection-end-line="197" selection-end-column="1" />
-          <folding />
         </state>
       </provider>
     </entry>
@@ -902,7 +780,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="224">
           <caret line="1037" column="5" lean-forward="false" selection-start-line="1037" selection-start-column="5" selection-end-line="1037" selection-end-column="5" />
-          <folding />
         </state>
       </provider>
     </entry>
@@ -910,7 +787,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="3975">
           <caret line="360" column="0" lean-forward="false" selection-start-line="360" selection-start-column="0" selection-end-line="360" selection-end-column="0" />
-          <folding />
         </state>
       </provider>
     </entry>
@@ -918,7 +794,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="494">
           <caret line="170" column="3" lean-forward="false" selection-start-line="170" selection-start-column="3" selection-end-line="170" selection-end-column="3" />
-          <folding />
         </state>
       </provider>
     </entry>
@@ -926,17 +801,21 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="90">
           <caret line="6" column="0" lean-forward="false" selection-start-line="6" selection-start-column="0" selection-end-line="6" selection-end-column="0" />
-          <folding>
-            <marker date="1493226988541" expanded="true" signature="275:333" ph="{...}" />
-            <marker date="1493226988541" expanded="true" signature="363:417" ph="{...}" />
-            <marker date="1493226988541" expanded="true" signature="599:614" ph="{&quot;null&quot;: null...}" />
-          </folding>
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/api.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="450">
+          <caret line="30" column="6" lean-forward="false" selection-start-line="30" selection-start-column="6" selection-end-line="30" selection-end-column="6" />
+          <folding />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/node_modules/mongodb/lib/mongo_client.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="173">
+        <state relative-caret-position="3390">
           <caret line="226" column="1" lean-forward="false" selection-start-line="226" selection-start-column="1" selection-end-line="226" selection-end-column="1" />
           <folding />
         </state>
@@ -944,20 +823,16 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/campaignapi.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="443">
-          <caret line="249" column="19" lean-forward="false" selection-start-line="249" selection-start-column="19" selection-end-line="249" selection-end-column="19" />
+        <state relative-caret-position="290">
+          <caret line="38" column="32" lean-forward="false" selection-start-line="38" selection-start-column="32" selection-end-line="38" selection-end-column="32" />
           <folding>
-            <element signature="e#3858#5185#0" expanded="false" />
-            <element signature="e#13599#13826#0" expanded="false" />
+            <element signature="e#2395#3437#0" expanded="false" />
+            <element signature="e#3496#4255#0" expanded="false" />
+            <element signature="e#4327#5757#0" expanded="false" />
+            <element signature="e#6799#9394#0" expanded="false" />
+            <element signature="e#9453#10357#0" expanded="false" />
+            <element signature="e#10438#13772#0" expanded="false" />
           </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/api.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="84">
-          <caret line="30" column="6" lean-forward="false" selection-start-line="30" selection-start-column="6" selection-end-line="30" selection-end-column="6" />
-          <folding />
         </state>
       </provider>
     </entry>
