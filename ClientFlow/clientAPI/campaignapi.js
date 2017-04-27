@@ -181,7 +181,7 @@ module.exports = function campaignapi(options) {
             var topic_name = 'topic_tid_' + tenant_id + '_cid_' + campaign_id + '_action_serial_' + action_serial;
 
 
-            updateSchedulaCampaignInPromisify(db)
+            updateSchedulaCampaignInPromisify(dbMbass)
                 .then(function (createdId) {
                         log.info("campaignapi: cmd:create document Id =", createdId);
                         pubsubClient.createTopic(topic_name)
