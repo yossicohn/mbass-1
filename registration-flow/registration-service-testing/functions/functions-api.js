@@ -143,7 +143,7 @@ exports.postregisterCustomer = function (req, res) {
         res.json(response);
         return;
     }
-    
+
     var registrationCollectionName = customersRegistrationCollection  + '_' + registration_data.tenant_id;
     var visitorsRegistrationCollectionName = visitorsRegistrationCollection  + '_' + registration_data.tenant_id;
 
@@ -155,7 +155,7 @@ exports.postregisterCustomer = function (req, res) {
             var orig_visitor_id = registration_data.visitor_id;
             var tenantId = registration_data.tenant_id;
 
-            var registrationCollection = db.collection(registrationCollectionName);
+            var customerRegistrationCollection = db.collection(registrationCollectionName);
             var visitorsRegistrationCollection = db.collection(visitorsRegistrationCollectionName);
             // check scenario:
             // 1. Is this Conversion of the visitor or update ==> new Customer Document
@@ -163,9 +163,33 @@ exports.postregisterCustomer = function (req, res) {
              
             handleCustomerRegistration (db, customerRegistrationCollection, registration_data )
             .then(function (status){
+                if(registration_data.is_conversion == true){ //Use Case 1 remove the Visitor Document
+                    
+                    // check if customer already exist
+                        status = findAndDeletExistDocument(db, registrationCollection, tenantId, orig_visitor_id )
+                        .then(function (status){
+                            console.log("findAndDeletExistDocument() removed visitor = " + tenantId + " orig_visitor_id =  " + orig_visitor_id );
+                        }).catch(function(error){
+
+                            cleanup(db);
+                            console.error("findAndDeletExistDocument() Failed");
+                            var errMsg = "postregisterVisitor: findAndDeletExistDocument() Failed tenantId = " + tenantId + " orig_visitor_id =  " + orig_visitor_id + " " + error;
+                            console.error(errMsg);
+                            var response = createCustomerRegisterResponse(registration_data, false, errMsg);
+                            res.status(400);
+                            res.json(response);
+                           
+                            return;
+        
+                        })
+                    }
+                db.close();
+                var response = createCustomerRegisterResponse(registration_data, true, undefined);
+                res.json(response);
 
             })
             .catch(function(error){
+                cleanup(db);
                 console.error("postregisterCustomer() Failed");
                 var errMsg = "postregisterVisitor: handleCustomerRegistration() Failed tenantId = " + tenantId + " orig_visitor_id =  " + orig_visitor_id + " " + error;
                 console.error(errMsg);
@@ -174,33 +198,15 @@ exports.postregisterCustomer = function (req, res) {
                 res.json(response);
 
             })  
-            if(registration_data.is_conversion == true){ //Use Case 1 remove the Visitor Document
-
-                // check if customer already exist
-                if(status == true) {
-                   
-                    status = findAndDeletExistDocument(db, registrationCollection, tenantId, orig_visitor_id )
-                    .then(function (status){
-                        console.log("findAndDeletExistDocument() removed visitor = " + tenantId + " orig_visitor_id =  " + orig_visitor_id );
-                    }).catch(function(error){
-                        console.error("findAndDeletExistDocument() Failed");
-                        var errMsg = "postregisterVisitor: findAndDeletExistDocument() Failed tenantId = " + tenantId + " orig_visitor_id =  " + orig_visitor_id + " " + error;
-                        console.error(errMsg);
-                        var response = createCustomerRegisterResponse(registration_data, false, errMsg);
-                        res.status(400);
-                        res.json(response);
-    
-                    })
-            }
-        }
+           
     })
     .catch(function(error){
-
-            var errMsg = "postregisterVisitor: Connected DB Server Failed  tenantId = " + tenantId + " orig_visitor_id =  " + orig_visitor_id + " " + error;
-            console.error(errMsg);
-            var response = createCustomerRegisterResponse(registration_data, false, errMsg);
-            res.status(400);
-            res.json(response);
+        cleanup(db);
+        var errMsg = "postregisterVisitor: Connected DB Server Failed  tenantId = " + tenantId + " orig_visitor_id =  " + orig_visitor_id + " " + error;
+        console.error(errMsg);
+        var response = createCustomerRegisterResponse(registration_data, false, errMsg);
+        res.status(400);
+        res.json(response);
 
 
     })
@@ -287,6 +293,7 @@ exports.postregisterVisitor = function (req, res) {
 
                     })
                     .catch(function (error) {
+                        cleanup(db);
                         var errMsg = "postregisterVisitor: InsertOne  DB Server Failed tenantId = " + tenantId + " orig_visitor_id =  " + orig_visitor_id + " " +error;
                         console.error(errMsg);
                         var response = createVisitorRegisterResponse(registration_data, false, errMsg);
@@ -298,6 +305,7 @@ exports.postregisterVisitor = function (req, res) {
                 }
 
             }).catch(function(error){
+                cleanup(db);
                 console.error("findAndDeletExistDocument() Failed");
                 var errMsg = "postregisterVisitor: findAndDeletExistDocument() Failed tenantId = " + tenantId + " orig_visitor_id =  " + orig_visitor_id + " " + error;
                 console.error(errMsg);
@@ -309,7 +317,7 @@ exports.postregisterVisitor = function (req, res) {
 
         })
         .catch(function(error){
-
+            cleanup(db);
             var errMsg = "postregisterVisitor: Connected DB Server Failed  tenantId = " + tenantId + " orig_visitor_id =  " + orig_visitor_id + " " + error;
             console.error(errMsg);
             var response = createVisitorRegisterResponse(registration_data, false, errMsg);
@@ -465,7 +473,7 @@ var validateCustomerRegistrationData = function (registration_data){
         status = false;
     }
 
-    if(registration_data.is_visitor == undefined || registration_data.is_visitor == false)
+    if(registration_data.is_visitor == undefined || registration_data.is_visitor == true)
     {
         err = 'validateVisitorRegistrationData: registration_data.is_visitor is missing';
         validationResult.error += "\n" + err;
@@ -475,7 +483,7 @@ var validateCustomerRegistrationData = function (registration_data){
     }
 
 
-    if(registration_data.tenant_id == undefined || typeof registration_data.tenant_id != 'Number')
+    if(registration_data.tenant_id == undefined || typeof registration_data.tenant_id != 'number')
     {
         err = 'validateVisitorRegistrationData: registration_data.tenant_id is missing';
         validationResult.error += "\n" + err;
@@ -558,7 +566,7 @@ var checkCustomerIsDocumentExist = function(db, customerRegistrationCollection, 
         return new Promise( function (resolve, reject) {
             var id = "tid:" + tenantId + "_pcid:" + public_customer_id;
             customerRegistrationCollection.findOne({"_id": id}).then(function (foundDocument) {
-                resolve(true);
+                resolve(foundDocument);
             }).catch(function (error) {
                 console.error("checkCustomerIsDocumentExist:  Failed Deletion - " + {_id: id});
                 reject(false);
@@ -569,12 +577,12 @@ var checkCustomerIsDocumentExist = function(db, customerRegistrationCollection, 
 
     
 //-----------------------------------------------------------------------------
-// functions: InsertNewCustomerDocument
+// functions: insertNewCustomerDocument
 // args: db, customerRegistrationCollection, registration_data 
 // return: boolean
 // description: insert new customer document.
 //---------------------------------------------------------------------------
-var InsertNewCustomerDocument = function(db, customerRegistrationCollection, registration_data ){
+var insertNewCustomerDocument = function(db, customerRegistrationCollection, registration_data ){
     
         return new Promise( function (resolve, reject) {
             var dataResult = createCustomerRegisterData(registration_data);
@@ -591,7 +599,30 @@ var InsertNewCustomerDocument = function(db, customerRegistrationCollection, reg
     
     }
 
+//-----------------------------------------------------------------------------
+// functions: updadateExistingCustomerDocument
+// args: db, customerRegistrationCollection, registration_data, existingDocument 
+// return: boolean
+// description: update customer document.
+//---------------------------------------------------------------------------
+var updadateExistingCustomerDocument = function(db, customerRegistrationCollection, registration_data, existingDocument ){
+    
+        return new Promise( function (resolve, reject) {
+            var dataResult = createCustomerRegisterDocumentFromExisting(registration_data, existingDocument);
+            if(dataResult.status == true){
+                customerRegistrationCollection.insertOne(dataResult.data)
+                .then(function(reultInsert){
+                    resolve(true);   
+                })
+                .catch(function(reultInsert){
+                    reject(false);
+                  });
+            }
+        });
+    
+    }
 
+    
 //-----------------------------------------------------------------------------
 // functions: checkCustomerIsDocumentExist
 // args: db, customerRegistrationCollection, registration_data 
@@ -604,10 +635,16 @@ var handleCustomerRegistration = function(db, customerRegistrationCollection, re
             .then(function(foundCustomerDocument){
 
                 if(foundCustomerDocument != undefined){ //customer Exist! shoud update
-                    
-
+                    updadateExistingCustomerDocument(db, customerRegistrationCollection, registration_data, foundCustomerDocument )
+                    then(function(status){
+                        resolve(true);
+                    })
+                    .catch(function(status){
+                        console.error("handleCustomerRegistration: updadateExistingCustomerDocument:  Failed update Customer Document - " + {_id: id});
+                        reject(false);
+                    });
                 }else{//customer Not Exist! shoud Insert new Document
-                    InsertNewCustomerDocument(db, customerRegistrationCollection, registration_data )
+                    insertNewCustomerDocument(db, customerRegistrationCollection, registration_data )
                     .then(function(status){
                         resolve(true);
                     })
@@ -738,6 +775,79 @@ var  createCustomerRegisterData = function (registration_data){
         status.data = data;
         return status;
     }
+
+
+//-----------------------------------------------------------------------------
+// functions: createCustomerRegisterDocumentFromExisting
+// args: registration_data, existingDocument
+// description: create Registration Document from existing One.
+// { 
+//     "_id": "tid:1_pcid:eb3b6e8b-97b3-47fe-9d05-3b134e7e040f", 
+//     "tenant_id": 1, 
+//     "public_customer_id": "eb3b6e8b-97b3-47fe-9d05-3b134e7e040f", 
+//     "opt_in": "true",
+//     "is_visitor": "false",
+	
+//     "android_tokens": {
+//         "2b14fa8b-abcf-4347-aca9-ea3e03be657e": { 
+//         "opt_in": "true",        
+//         "token": "152 Bytes", 
+//         "os_version": "7.002" 
+//         }, 
+
+//         "3c14fa8b-abcf-4347-aca9-fg4de03be657e":{         
+//         "token": "152 Bytes", 
+//         "os_version": "7.002" 
+//         }
+//     }, 
+//     "ios_tokens": { 
+//          "opt_in": "false",        
+//          "5b14fa8b-abcf-4347-aca9-ea3e03be657e":{         
+//         "token": "152 Bytes", 
+//         "os_version": "7.002" 
+//         }
+//     } 
+// }
+//---------------------------------------------------------------------------
+  var createCustomerRegisterDocumentFromExisting= function (registration_data, existingDocument){
+    if(existingDocument != undefined){
+        //check the device type and if itis already exist
+        var deviceType = -1; // 1 = and, 2 = ios, 3 = web
+        var deviceGroup = undefined;
+        var existingDeviceGroup = undefined;
+        if(registration_data.android_tokens){
+            deviceType = 1;
+            deviceGroup = registration_data.android_tokens;
+            existingDeviceGroup = existingDocument.android_tokens;
+        }  
+        else if(registration_data.ios_tokens)
+            {
+                deviceType = 2;
+                deviceGroup = registration_data.ios_tokens;
+                existingDeviceGroup = existingDocument.ios_tokens;
+            }
+
+            var addedDeviceId = Object.keys(deviceGroup)[0]; // getting the device
+
+            var devicesKeys = Object.keys(existingDeviceGroup);
+            var numOfExeistingDevcies = devicesKeys.length;
+            var foundExisitingDevice = false;
+            devicesKeys.forEach(function(deviceId){
+                if(deviceId == addedDevice){
+                    foundExisitingDevice = true;
+                    // update the device in the exisitng Document
+                    existingDeviceGroup.addedDeviceId = deviceGroup.addedDeviceId;
+                }
+
+            })
+
+            if(foundExisitingDevice == false){ // add the device to the exisitng Document
+                existingDeviceGroup.addedDeviceId = deviceGroup.addedDeviceId;
+            }
+
+    }
+
+  }
 
 //-----------------------------------------------------------------------------
 // functions: createVisitorRegisterResponse
