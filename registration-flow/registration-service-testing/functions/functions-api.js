@@ -191,7 +191,7 @@ exports.postregisterCustomer = function (req, res) {
             .catch(function(error){
                 cleanup(db);
                 console.error("postregisterCustomer() Failed");
-                var errMsg = "postregisterVisitor: handleCustomerRegistration() Failed tenantId = " + tenantId + " orig_visitor_id =  " + orig_visitor_id + " " + error;
+                var errMsg = "postregisterCustomer: handleCustomerRegistration() Failed tenantId = " + tenantId + " orig_visitor_id =  " + orig_visitor_id + " " + error;
                 console.error(errMsg);
                 var response = createCustomerRegisterResponse(registration_data, false, errMsg);
                 res.status(400);
@@ -557,18 +557,18 @@ var findAndDeletExistDocument = function(db, registrationCollection, tenantId, o
 
 
 //-----------------------------------------------------------------------------
-// functions: checkCustomerIsDocumentExist
+// functions: checkIfCustomerDocumentExists
 // args: db, customerRegistrationCollection, tenantId, public_customer_id
 // description: find customer document.
 //---------------------------------------------------------------------------
-var checkCustomerIsDocumentExist = function(db, customerRegistrationCollection, tenantId, public_customer_id ){
+var checkIfCustomerDocumentExists = function(db, customerRegistrationCollection, tenantId, public_customer_id ){
     
         return new Promise( function (resolve, reject) {
             var id = "tid:" + tenantId + "_pcid:" + public_customer_id;
             customerRegistrationCollection.findOne({"_id": id}).then(function (foundDocument) {
                 resolve(foundDocument);
             }).catch(function (error) {
-                console.error("checkCustomerIsDocumentExist:  Failed Deletion - " + {_id: id});
+                console.error("checkIfCustomerDocumentExists:  Failed Deletion - " + {_id: id});
                 reject(false);
             });
         });
@@ -601,22 +601,30 @@ var insertNewCustomerDocument = function(db, customerRegistrationCollection, reg
 
 //-----------------------------------------------------------------------------
 // functions: updadateExistingCustomerDocument
-// args: db, customerRegistrationCollection, registration_data, existingDocument 
+// args: db, customerRegistrationCollection, registration_data, existingDocument, docId 
 // return: boolean
 // description: update customer document.
 //---------------------------------------------------------------------------
-var updadateExistingCustomerDocument = function(db, customerRegistrationCollection, registration_data, existingDocument ){
+var updadateExistingCustomerDocument = function(db, customerRegistrationCollection, registration_data, existingDocument, docId ){
     
         return new Promise( function (resolve, reject) {
             var dataResult = createCustomerRegisterDocumentFromExisting(registration_data, existingDocument);
             if(dataResult.status == true){
-                customerRegistrationCollection.insertOne(dataResult.data)
-                .then(function(reultInsert){
-                    resolve(true);   
+                customerRegistrationCollection.update({_id: docId}, dataResult.data)
+                .then(function(status){
+                    resolve(true);
                 })
-                .catch(function(reultInsert){
+                .catch(function(error){
                     reject(false);
-                  });
+                })
+                // try{
+                   
+                //     resolve(true);
+                // }catch(error){
+                //     console.error("updadateExistingCustomerDocument: failed docId= "  +docId);
+                //     reject( error);
+                // }
+                
             }
         });
     
@@ -624,24 +632,26 @@ var updadateExistingCustomerDocument = function(db, customerRegistrationCollecti
 
     
 //-----------------------------------------------------------------------------
-// functions: checkCustomerIsDocumentExist
+// functions: checkIfCustomerDocumentExists
 // args: db, customerRegistrationCollection, registration_data 
 // description: find customer document.
 //---------------------------------------------------------------------------
 var handleCustomerRegistration = function(db, customerRegistrationCollection, registration_data ){
     
         return new Promise( function (resolve, reject) {
-            checkCustomerIsDocumentExist(db, customerRegistrationCollection, registration_data.tenantId, registration_data.public_customer_id )
+            var docId = "tid:" + registration_data.tenant_id + "_pcid:" + registration_data.public_customer_id;
+            checkIfCustomerDocumentExists(db, customerRegistrationCollection, registration_data.tenant_id, registration_data.public_customer_id )
             .then(function(foundCustomerDocument){
 
                 if(foundCustomerDocument != undefined){ //customer Exist! shoud update
-                    updadateExistingCustomerDocument(db, customerRegistrationCollection, registration_data, foundCustomerDocument )
-                    then(function(status){
+                    
+                    updadateExistingCustomerDocument(db, customerRegistrationCollection, registration_data, foundCustomerDocument, docId)
+                    .then(function(status){
                         resolve(true);
                     })
-                    .catch(function(status){
-                        console.error("handleCustomerRegistration: updadateExistingCustomerDocument:  Failed update Customer Document - " + {_id: id});
-                        reject(false);
+                    .catch(function(statusError){
+                        console.error("handleCustomerRegistration: updadateExistingCustomerDocument:  Failed update Customer Document - " + {_id: id} + statusError);
+                        reject(statusError);
                     });
                 }else{//customer Not Exist! shoud Insert new Document
                     insertNewCustomerDocument(db, customerRegistrationCollection, registration_data )
@@ -649,13 +659,14 @@ var handleCustomerRegistration = function(db, customerRegistrationCollection, re
                         resolve(true);
                     })
                     .catch(function(status){
-                        console.error("handleCustomerRegistration: checkCustomerIsDocumentExist:  Failed InsertNewCustomerDocument - " + {_id: id});
+                        
+                        console.error("handleCustomerRegistration: checkIfCustomerDocumentExists:  Failed InsertNewCustomerDocument - " + {_id: docId});
                         reject(false);
                     });
                 }
             })
             .catch(function (error) {
-                console.error("handleCustomerRegistration:checkCustomerIsDocumentExist:  Failed Deletion - " + {_id: id});
+                console.error("handleCustomerRegistration:checkIfCustomerDocumentExists:  Failed Deletion - " + {_id: docId});
                 reject(false);
             });
         });
@@ -810,44 +821,43 @@ var  createCustomerRegisterData = function (registration_data){
 // }
 //---------------------------------------------------------------------------
   var createCustomerRegisterDocumentFromExisting= function (registration_data, existingDocument){
-    if(existingDocument != undefined){
-        //check the device type and if itis already exist
-        var deviceType = -1; // 1 = and, 2 = ios, 3 = web
-        var deviceGroup = undefined;
-        var existingDeviceGroup = undefined;
-        if(registration_data.android_tokens){
-            deviceType = 1;
-            deviceGroup = registration_data.android_tokens;
-            existingDeviceGroup = existingDocument.android_tokens;
-        }  
-        else if(registration_data.ios_tokens)
-            {
-                deviceType = 2;
-                deviceGroup = registration_data.ios_tokens;
-                existingDeviceGroup = existingDocument.ios_tokens;
-            }
 
-            var addedDeviceId = Object.keys(deviceGroup)[0]; // getting the device
+    var dataResult = {status : false, data: undefined};
 
-            var devicesKeys = Object.keys(existingDeviceGroup);
-            var numOfExeistingDevcies = devicesKeys.length;
-            var foundExisitingDevice = false;
-            devicesKeys.forEach(function(deviceId){
-                if(deviceId == addedDevice){
-                    foundExisitingDevice = true;
-                    // update the device in the exisitng Document
-                    existingDeviceGroup.addedDeviceId = deviceGroup.addedDeviceId;
+    try{
+        if(existingDocument != undefined){
+            //check the device type and if itis already exist
+            var deviceType = -1; // 1 = and, 2 = ios, 3 = web
+            var deviceGroup = undefined;
+            var addedDevice = undefined;
+            var existingDeviceGroup = undefined;
+            if(registration_data.android_token){
+                deviceType = 1;
+                deviceGroup = registration_data.android_token;
+                existingDeviceGroup = existingDocument.android_tokens;
+            }  
+            else if(registration_data.ios_token)
+                {
+                    deviceType = 2;
+                    deviceGroup = registration_data.ios_token;
+                    existingDeviceGroup = existingDocument.ios_tokens;
                 }
-
-            })
-
-            if(foundExisitingDevice == false){ // add the device to the exisitng Document
-                existingDeviceGroup.addedDeviceId = deviceGroup.addedDeviceId;
+    
+                var addedDeviceId = Object.keys(deviceGroup)[0]; // getting the device
+                addedDevice = deviceGroup[addedDeviceId];
+                existingDeviceGroup[addedDeviceId] = addedDevice;
+                dataResult.status = true;
+                dataResult.data = existingDocument;
+               return  dataResult;
             }
-
+    }catch(error){
+        dataResult.status = false;
+        dataResult.data = undefined;
+        daraResult.error = error;
+        return  dataResult;
     }
-
-  }
+   
+}
 
 //-----------------------------------------------------------------------------
 // functions: createVisitorRegisterResponse
