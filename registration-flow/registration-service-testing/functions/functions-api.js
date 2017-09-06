@@ -221,8 +221,7 @@ exports.postregisterCustomer = function (req, res) {
     
 //     "unregistration_data": {
 //         "tenant_id": "85",
-//         "public_customer_id": "eb3b6e8b-97b3-47fe-9d05-3b134e7e040f",
-//         "is_visitor": "false"
+//         "public_customer_id": "eb3b6e8b-97b3-47fe-9d05-3b134e7e040f",         
 //         "android_token": {
 //             “device_id”: "2b14fa8b-abcf-4347-aca9-ea3e03be657e"                  
 //         }
@@ -323,8 +322,9 @@ exports.postunregisterCustomer = function (req, res) {
 //     "is_visitor": "true"
 //     "android_token": {
 //         "2b14fa8b-abcf-4347-aca9-ea3e03be657e": {
+//             "opt-in" : true,        
 //             "token": "152 Bytes",
-//                 "os_version": "7.002"
+//              "os_version": "7.002"
 //         }
 //     }
 // }
@@ -425,7 +425,95 @@ exports.postregisterVisitor = function (req, res) {
         })
 };
 
+//-----------------------------------------------------------------------------
+// functions: postunregisterVisitor
+// args: register device/user data in the body
+// description:mock for the register
+// format example:
+//     
+//      "unregistration_data": {
+//          "tenant_id": "85",
+//          "visitor_id": "ef3b6e8b-89c3-47fe-9d05-3b254e7e040f",
+//          "is_visitor": "true"
+//          "android_token": {
+//              “device_id”: "2b14fa8b-abcf-4347-aca9-ea3e03be657e"                  
+//          }
+//      }
+//  }
+//---------------------------------------------------------------------------
+exports.postunregisterVisitor = function (req, res) {
+    
+        var err = undefined;
+        var status = undefined;
+    
+        var shouldDeleteVisitorDocument = false;
+        var registerReq = req.body;
+        var unregistration_data = registerReq.unregistration_data;
 
+        if(unregistration_data == undefined)
+        {
+    
+            var errMsg = "postunregisterVisitor:registration_data is missing Failed !!!";
+            console.error(errMsg);
+            var response = createVisitorRegisterResponse(unregistration_data, false, errMsg);
+            res.status(400);
+            res.json(response);
+            return;
+        }
+    
+        var validationResult = validateVisitorUnRegistrationData(unregistration_data);
+        if(validationResult.status == false){
+    
+            var errMsg = "postunregisterVisitor:validateVisitorUnRegistrationData Failed " +validationResult.error;
+            console.error(errMsg);
+            var response = createVisitorRegisterResponse(unregistration_data, false, errMsg);
+            res.status(400);
+            res.json(response);
+            return;
+        }
+        
+        var registrationCollectionName = visitorsRegistrationCollection  + '_' + unregistration_data.tenant_id;
+    
+        MongoClient.connect(url)
+            .then(function(db){
+                console.log("Connected correctly to server");
+                status = true;
+    
+                var orig_visitor_id = unregistration_data.visitor_id;
+                var tenantId = unregistration_data.tenant_id;
+    
+                var registrationCollection = db.collection(registrationCollectionName);
+                status = findAndDeletExistDocument(db, registrationCollection, tenantId, orig_visitor_id )    
+                .then(function (status){
+    
+                        db.close();                        
+                        var response = createVisitorRegisterResponse(unregistration_data, true, undefined);
+                        res.json(response);
+    
+                }).catch(function(error){
+                    cleanup(db);
+                    console.error("postunregisterVisitor: findAndDeletExistDocument() Failed");
+                    var errMsg = "postunregisterVisitor: findAndDeletExistDocument() Failed tenantId = " + tenantId + " orig_visitor_id =  " + orig_visitor_id + " " + error;
+                    console.error(errMsg);
+                    var response = createVisitorRegisterResponse(unregistration_data, false, errMsg);
+                    res.status(400);
+                    res.json(response);
+    
+                    })
+    
+            })
+            .catch(function(error){
+                cleanup(db);
+                var errMsg = "postunregisterVisitor: Connected DB Server Failed  tenantId = " + tenantId + " orig_visitor_id =  " + orig_visitor_id + " " + error;
+                console.error(errMsg);
+                var response = createVisitorRegisterResponse(registration_data, false, errMsg);
+                res.status(400);
+                res.json(response);
+    
+    
+            })
+    };
+    
 //-----------------------------------------------------------------------------
 // functions: removeVisitorTokenRegistrationDocument
 // args: db, tenantId, orig_visitor_id
@@ -677,6 +765,7 @@ var validateCustomerRegistrationData = function (registration_data){
         }
 
 
+
 //-----------------------------------------------------------------------------
 // functions: validateCustomerUnRegistrationData
 // args: unregistration_data
@@ -748,6 +837,78 @@ var validateCustomerUnRegistrationData = function (unregistration_data){
     return validationResult;
 }
 
+
+
+     
+
+//-----------------------------------------------------------------------------
+// functions: validateVisitorUnRegistrationData
+// args: unregistration_data
+// description: validate register data.
+// {    
+//      "unregistration_data": {
+//          "tenant_id": 85,
+//          "visitor_id": "ef3b6e8b-89c3-47fe-9d05-3b254e7e040f",          
+//          "android_token": {
+//              “device_id”: "2b14fa8b-abcf-4347-aca9-ea3e03be657e"                  
+//          }
+//      }
+//  } 
+//---------------------------------------------------------------------------
+var validateVisitorUnRegistrationData = function (unregistration_data){
+    
+        var status = true;
+        var err = undefined;
+    
+        var validationResult = {status: false, error: undefined};
+    
+        if(unregistration_data.visitor_id == undefined)
+        {
+            err = 'validateVisitorUnRegistrationData: unregistration_data.visitor_id is missing';
+            validationResult.error += "\n" + err;
+            console.error(err);
+    
+            status = false;
+        }
+    
+    
+    
+        if(unregistration_data.tenant_id == undefined || typeof unregistration_data.tenant_id != 'number')
+        {
+            err = 'validateVisitorUnRegistrationData: unregistration_data.tenant_id is missing';
+            validationResult.error += "\n" + err;
+            console.error(err);
+    
+            status = false;
+        }
+    
+        if(unregistration_data.android_token == undefined && unregistration_data.ios_token== undefined)
+            {
+                err = 'validateVisitorUnRegistrationData: unregistration_data device is missing';
+                validationResult.error += "\n" + err;
+                console.error(err);
+        
+                status = false;
+            }else{
+                var devicegroup = undefined;
+                if(unregistration_data.android_token!== undefined)
+                    devicegroup = unregistration_data.android_token;
+                else
+                    devicegroup = unregistration_data.ios_token;
+                var statusDevId =  checkDeviceIdExisitinData(devicegroup)
+               if( statusDevId == false){
+                err = 'validateVisitorUnRegistrationData: unregistration_data device data is missing';
+                validationResult.error += "\n" + err;
+                status = false;
+                console.error(err);
+               }
+            }
+       
+    
+        validationResult.status = status;
+    
+        return validationResult;
+    }
 //-----------------------------------------------------------------------------
 // functions: checkIfVisitorDocumentExist
 // args: db, registrationCollection, tenantId, orig_visitor_id

@@ -8,8 +8,8 @@ module.exports = function(app) {
     app.route('/register-visitor')
     .post(functions_api.postregisterVisitor);
     //  Routes
-   // app.route('/unregister-visitor')
-   // .post(functions_api.postunregisterVisitor);
+    app.route('/unregister-visitor')
+    .post(functions_api.postunregisterVisitor);
 
     //  Routes
     app.route('/register-customer')
