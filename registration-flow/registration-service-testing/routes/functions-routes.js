@@ -18,5 +18,11 @@ module.exports = function(app) {
     app.route('/unregister-customer')
     .post(functions_api.postunregisterCustomer);
 
+    app.route('/optinout-customer')
+    .post(functions_api.optinoutcustomer);
+
+    // app.route('/optinout-visitor')
+    // .post(functions_api.postunregisterCustomer);
+
 }
 
