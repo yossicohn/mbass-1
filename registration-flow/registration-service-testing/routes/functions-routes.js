@@ -19,10 +19,10 @@ module.exports = function(app) {
     .post(functions_api.postunregisterCustomer);
 
     app.route('/optinout-customer')
-    .post(functions_api.optinoutcustomer);
+    .post(functions_api.opt_in_out_customer);
 
     app.route('/optinout-visitor')
-    .post(functions_api.optinoutvisitor);
+    .post(functions_api.opt_in_out_visitor);
 
 }
 
