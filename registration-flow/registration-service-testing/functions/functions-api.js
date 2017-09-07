@@ -275,7 +275,7 @@ exports.opt_in_out_visitor = function (req, res){
             })
             .catch(function(error){
                 cleanup(db);
-                var errMsg = "opt_in_out_customer:customerRegistrationCollection.findOne Failed " + error;
+                var errMsg = "opt_in_out_customer: customerRegistrationCollection.findOne Failed " + error;
                 console.error(errMsg);
                 var response = createCustomerOptInOutResponse(opt_request, opt_mode, false, errMsg);
                 res.status(400);
@@ -285,22 +285,12 @@ exports.opt_in_out_visitor = function (req, res){
 
         })
         .catch(function(error){
-            cleanup(db);
-            console.error("opt_in_out_visitor() Failed");
-            var errMsg = "opt_in_out_visitor: handleCustomerRegistration() Failed tenantId = " + tenantId + " orig_visitor_id =  " + orig_visitor_id + " " + error;
-            console.error(errMsg);
-            var response = createCustomerRegisterResponse(registration_data, false, errMsg);
-            res.status(400);
-            res.json(response);
-
-        })
-        .catch(function(error){
-        
-            var errMsg = "opt_in_out_visitor: Connected DB Server Failed  tenantId = " + tenantId + " orig_visitor_id =  " + orig_visitor_id + " " + error;
-            console.error(errMsg);
-            var response = createCustomerRegisterResponse(registration_data, false, errMsg);
-            res.status(400);
-            res.json(response);
+            
+                var errMsg = "opt_in_out_visitor: Connected DB Server Failed  tenantId = " + tenantId + " orig_visitor_id =  " + orig_visitor_id + " " + error;
+                console.error(errMsg);
+                var response = createCustomerRegisterResponse(registration_data, false, errMsg);
+                res.status(400);
+                res.json(response);
         })
     }
 
