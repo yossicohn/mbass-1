@@ -166,27 +166,14 @@ exports.opt_in_out_visitor = function (req, res){
 
         })
         .catch(function(error){
-            cleanup(db);
-            console.error("postregisterCustomer() Failed");
-            var errMsg = "opt_in_out_visitor: handleCustomerRegistration() Failed tenantId = " + tenantId + " orig_visitor_id =  " + orig_visitor_id + " " + error;
+            
+            var errMsg = "opt_in_out_visitor: Connected DB Server Failed  tenantId = " + opt_request.tenant_id + " visitor_id =  " + opt_request.visitor_id + " " + error;
             console.error(errMsg);
-            var response = createCustomerRegisterResponse(registration_data, false, errMsg);
+            var response = createVisitorOptInOutResponse(opt_request, opt_mode, false, errMsg);
             res.status(400);
             res.json(response);
-
-        }) 
-            
-    .catch(function(error){
-        
-        var errMsg = "opt_in_out_visitor: Connected DB Server Failed  tenantId = " + tenantId + " orig_visitor_id =  " + orig_visitor_id + " " + error;
-        console.error(errMsg);
-        var response = createCustomerRegisterResponse(registration_data, false, errMsg);
-        res.status(400);
-        res.json(response);
-
-
-  
-    })
+        })         
+   
 }
     
 
@@ -251,7 +238,7 @@ exports.opt_in_out_visitor = function (req, res){
        
         MongoClient.connect(url)
         .then(function(db){
-            console.log("opt_in_out_visitor:Connected correctly to server");
+            console.log("opt_in_out_customer:Connected correctly to server");
             status = true;           
             var tenantId = opt_request.tenant_id;
             var customerRegistrationCollection = db.collection(registrationCollectionName);
@@ -286,9 +273,9 @@ exports.opt_in_out_visitor = function (req, res){
         })
         .catch(function(error){
             
-                var errMsg = "opt_in_out_visitor: Connected DB Server Failed  tenantId = " + tenantId + " orig_visitor_id =  " + orig_visitor_id + " " + error;
+                var errMsg = "opt_in_out_customer: Connected DB Server Failed  tenantId = " + opt_request.tenant_id + " public_customer_id =  " + opt_request.public_customer_id + " " + error;
                 console.error(errMsg);
-                var response = createCustomerRegisterResponse(registration_data, false, errMsg);
+                var response = createCustomerOptInOutResponse(opt_request, opt_mode, false, errMsg);
                 res.status(400);
                 res.json(response);
         })
