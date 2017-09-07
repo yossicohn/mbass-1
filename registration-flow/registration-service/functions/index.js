@@ -282,101 +282,91 @@ exports.registerDeviceTokenPromised = functions.https.onRequest((request, respon
 //---------------------------------------------------------------------------
 exports.opt_in_out_visitor = functions.https.onRequest((req, res) => {
     
-        var err = undefined;
-        var status = undefined;
+    var err = undefined;
+    var status = undefined;
 
 
-        var registerReq = req.body;
-        var opt_mode = undefined;
-        var opt_request = undefined;
-        if(registerReq.opt_out != undefined){
-            opt_mode = false;
-            opt_request = registerReq.opt_out;
-        }else  if(registerReq.opt_in != undefined){
-            opt_mode = true;
-            opt_request = registerReq.opt_in;
-        }               
+    var registerReq = req.body;
+    var opt_mode = undefined;
+    var opt_request = undefined;
+    if(registerReq.opt_out != undefined){
+        opt_mode = false;
+        opt_request = registerReq.opt_out;
+    }else  if(registerReq.opt_in != undefined){
+        opt_mode = true;
+        opt_request = registerReq.opt_in;
+    }               
 
-        if(opt_request == undefined)
-        {
+    if(opt_request == undefined)
+    {
 
-            var errMsg = "optinoutvisitor:opt_request is missing data Failed !!!";
-            console.error(errMsg);
-            var response = createVisitorOptInOutResponse(opt_request, opt_mode, false, errMsg);
-            res.status(400);
-            res.json(response);
-            return;
-        }
+        var errMsg = "opt_in_out_visitor:opt_request is missing data Failed !!!";
+        console.error(errMsg);
+        var response = createVisitorOptInOutResponse(opt_request, opt_mode, false, errMsg);
+        res.status(400);
+        res.json(response);
+        return;
+    }
 
-        //var validationResult = validateCustomerOptInOutData(registration_data);
-        var validationResult = {status: true};
+    //var validationResult = validateCustomerOptInOutData(registration_data);
+    var validationResult = {status: true};
 
-        if(validationResult.status == false){
+    if(validationResult.status == false){
 
-            var errMsg = "optinoutvisitor:validateCustomerOptInOutData Failed " +validationResult.error;
-            console.error(errMsg);
-            var response = createVisitorOptInOutResponse(opt_request, opt_mode, false, errMsg);
-            res.status(400);
-            res.json(response);
-            return;
-        }
+        var errMsg = "opt_in_out_visitor:validateCustomerOptInOutData Failed " +validationResult.error;
+        console.error(errMsg);
+        var response = createVisitorOptInOutResponse(opt_request, opt_mode, false, errMsg);
+        res.status(400);
+        res.json(response);
+        return;
+    }
 
-        var registrationCollectionName = visitorsRegistrationCollection  + '_' + opt_request.tenant_id;
-        
-        MongoClient.connect(url)
-        .then(function(db){
-            console.log("Connected correctly to server");
-            status = true;           
-            var tenantId = opt_request.tenant_id;
-            var visitorsRegistrationCollection = db.collection(registrationCollectionName);
-            var docId = "tid:" + opt_request.tenant_id + "_vid:" + opt_request.visitor_id;
-            visitorsRegistrationCollection.findOne({_id: docId})
+    var registrationCollectionName = visitorsRegistrationCollection  + '_' + opt_request.tenant_id;
+    
+    MongoClient.connect(url)
+    .then(function(db){
+        console.log("opt_in_out_visitor: Connected correctly to server");
+        status = true;           
+        var tenantId = opt_request.tenant_id;
+        var visitorsRegistrationCollection = db.collection(registrationCollectionName);
+        var docId = "tid:" + opt_request.tenant_id + "_vid:" + opt_request.visitor_id;
+        visitorsRegistrationCollection.findOne({_id: docId})
+        .then(function(exisitingDoc){
+            handleOptInOutUpdate(db, visitorsRegistrationCollection, docId, exisitingDoc, opt_mode, opt_request)
             .then(function(exisitingDoc){
-                handleOptInOutUpdate(db, visitorsRegistrationCollection, docId, exisitingDoc, opt_mode, opt_request)
-                .then(function(exisitingDoc){
-                    db.close();                   
-                    var response = createVisitorOptInOutResponse(opt_request, opt_mode, true, errMsg);                    
-                    res.json(response);
-                })
-                .catch(function(error){
-                    var errMsg = "optinoutvisitor:handleOptInOutUpdate Failed " + error;
-                    console.error(errMsg);
-                    var response = createVisitorOptInOutResponse(opt_request, opt_mode, false, errMsg);
-                    res.status(400);
-                    res.json(response);
-                    return;
-                })
+                db.close();                   
+                var response = createVisitorOptInOutResponse(opt_request, opt_mode, true, errMsg);                    
+                res.json(response);
             })
             .catch(function(error){
-                cleanup(db);
-                var errMsg = "optinoutvisitor:customerRegistrationCollection.findOne Failed " + error;
+                var errMsg = "opt_in_out_visitor:handleOptInOutUpdate Failed " + error;
                 console.error(errMsg);
                 var response = createVisitorOptInOutResponse(opt_request, opt_mode, false, errMsg);
                 res.status(400);
                 res.json(response);
-                return; 
-            })                                          
-
+                return;
+            })
         })
         .catch(function(error){
             cleanup(db);
-            console.error("postregisterCustomer() Failed");
-            var errMsg = "postregisterCustomer: handleCustomerRegistration() Failed tenantId = " + tenantId + " orig_visitor_id =  " + orig_visitor_id + " " + error;
+            var errMsg = "opt_in_out_visitor:customerRegistrationCollection.findOne Failed " + error;
             console.error(errMsg);
-            var response = createCustomerRegisterResponse(registration_data, false, errMsg);
+            var response = createVisitorOptInOutResponse(opt_request, opt_mode, false, errMsg);
             res.status(400);
             res.json(response);
+            return; 
+        })                                          
 
-        }) 
-            
+    })
     .catch(function(error){
         
-        var errMsg = "postregisterVisitor: Connected DB Server Failed  tenantId = " + tenantId + " orig_visitor_id =  " + orig_visitor_id + " " + error;
+        var errMsg = "opt_in_out_visitor: Connected DB Server Failed  tenantId = " + opt_request.tenant_id + " visitor_id =  " + opt_request.visitor_id + " " + error;
         console.error(errMsg);
-        var response = createCustomerRegisterResponse(registration_data, false, errMsg);
+        var response = createVisitorOptInOutResponse(opt_request, opt_mode, false, errMsg);
         res.status(400);
-        res.json(response);  
-    })
+        res.json(response);
+    })         
+   
 })
 
 
@@ -422,77 +412,67 @@ exports.opt_in_out_customer = functions.https.onRequest((req, res) => {
         res.json(response);
         return;
     }
-        
-            //var validationResult = validateCustomerOptInOutData(registration_data);
-            var validationResult = {status: true};
+
+    //var validationResult = validateCustomerOptInOutData(registration_data);
+    var validationResult = {status: true};
+
     
-            
-            if(validationResult.status == false){
-        
-                var errMsg = "opt_in_out_customer:validateCustomerOptInOutData Failed " +validationResult.error;
+    if(validationResult.status == false){
+
+        var errMsg = "opt_in_out_customer:validateCustomerOptInOutData Failed " +validationResult.error;
+        console.error(errMsg);
+        var response = createCustomerOptInOutResponse(opt_request, opt_mode, false, errMsg);
+        res.status(400);
+        res.json(response);
+        return;
+    }
+
+    var registrationCollectionName = customersRegistrationCollection  + '_' + opt_request.tenant_id;
+    
+    MongoClient.connect(url)
+    .then(function(db){
+        console.log("opt_in_out_visitor:Connected correctly to server");
+        status = true;           
+        var tenantId = opt_request.tenant_id;
+        var customerRegistrationCollection = db.collection(registrationCollectionName);
+        var docId = "tid:" + opt_request.tenant_id + "_pcid:" + opt_request.public_customer_id;
+        customerRegistrationCollection.findOne({_id: docId})
+        .then(function(exisitingDoc){
+            handleOptInOutUpdate(db, customerRegistrationCollection, docId, exisitingDoc, opt_mode, opt_request)
+            .then(function(exisitingDoc){
+                db.close();                   
+                var response = createCustomerOptInOutResponse(opt_request, opt_mode, true, errMsg);                    
+                res.json(response);
+            })
+            .catch(function(error){
+                var errMsg = "opt_in_out_customer:handleOptInOutUpdate Failed " + error;
                 console.error(errMsg);
                 var response = createCustomerOptInOutResponse(opt_request, opt_mode, false, errMsg);
                 res.status(400);
                 res.json(response);
                 return;
-            }
-        
-            var registrationCollectionName = customersRegistrationCollection  + '_' + opt_request.tenant_id;
-           
-            MongoClient.connect(url)
-            .then(function(db){
-                console.log("Connected correctly to server");
-                status = true;           
-                var tenantId = opt_request.tenant_id;
-                var customerRegistrationCollection = db.collection(registrationCollectionName);
-                var docId = "tid:" + opt_request.tenant_id + "_pcid:" + opt_request.public_customer_id;
-                customerRegistrationCollection.findOne({_id: docId})
-                .then(function(exisitingDoc){
-                    handleOptInOutUpdate(db, customerRegistrationCollection, docId, exisitingDoc, opt_mode, opt_request)
-                    .then(function(exisitingDoc){
-                        db.close();                   
-                        var response = createCustomerOptInOutResponse(opt_request, opt_mode, true, errMsg);                    
-                        res.json(response);
-                    })
-                    .catch(function(error){
-                        var errMsg = "opt_in_out_customer:handleOptInOutUpdate Failed " + error;
-                        console.error(errMsg);
-                        var response = createCustomerOptInOutResponse(opt_request, opt_mode, false, errMsg);
-                        res.status(400);
-                        res.json(response);
-                        return;
-                    })
-                })
-                .catch(function(error){
-                    cleanup(db);
-                    var errMsg = "opt_in_out_customer:customerRegistrationCollection.findOne Failed " + error;
-                    console.error(errMsg);
-                    var response = createCustomerOptInOutResponse(opt_request, opt_mode, false, errMsg);
-                    res.status(400);
-                    res.json(response);
-                    return; 
-                })                                          
-    
-            })
-            .catch(function(error){
-                cleanup(db);
-                console.error("opt_in_out_customer() Failed");
-                var errMsg = "opt_in_out_customer: handleCustomerRegistration() Failed tenantId = " + tenantId + " orig_visitor_id =  " + orig_visitor_id + " " + error;
-                console.error(errMsg);
-                var response = createCustomerRegisterResponse(registration_data, false, errMsg);
-                res.status(400);
-                res.json(response);
-    
-            })
-            .catch(function(error){
-            
-                var errMsg = "opt_in_out_customer: Connected DB Server Failed  tenantId = " + tenantId + " orig_visitor_id =  " + orig_visitor_id + " " + error;
-                console.error(errMsg);
-                var response = createCustomerRegisterResponse(registration_data, false, errMsg);
-                res.status(400);
-                res.json(response);
             })
         })
+        .catch(function(error){
+            cleanup(db);
+            var errMsg = "opt_in_out_customer: customerRegistrationCollection.findOne Failed " + error;
+            console.error(errMsg);
+            var response = createCustomerOptInOutResponse(opt_request, opt_mode, false, errMsg);
+            res.status(400);
+            res.json(response);
+            return; 
+        })                                          
+
+    })
+    .catch(function(error){
+        
+            var errMsg = "opt_in_out_customer: Connected DB Server Failed  tenantId = " + opt_request.tenant_id + " public_customer_id =  " + opt_request.public_customer_id + " " + error;
+            console.error(errMsg);
+            var response = createCustomerOptInOutResponse(opt_request, opt_mode, false, errMsg);
+            res.status(400);
+            res.json(response);
+    })
+})
 
 //-----------------------------------------------------------------------------
 // functions: handleOptInOutUpdate
