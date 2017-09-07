@@ -74,6 +74,7 @@ var unregistration_response = {
                     response.send("registerDeviceTokenMocPrimised: Connected succeeded " );
                 })
                     .catch(function(error){
+                        cleanup(db);
                         console.error("InsertOne  DB Server Failed");
                         response.send("registerDeviceTokenMocPrimised: Connected Failed Exiting  " );
 
@@ -132,7 +133,7 @@ var unregistration_response = {
     
             var errMsg = "optinoutcustomer:opt_request is missing data Failed !!!";
             console.error(errMsg);
-            var response = createCustomerOptInOutResponse(opt_data, opt_mode, false, errMsg);
+            var response = createCustomerOptInOutResponse(opt_request, opt_mode, false, errMsg);
             res.status(400);
             res.json(response);
             return;
@@ -145,54 +146,62 @@ var unregistration_response = {
     
             var errMsg = "optinoutcustomer:validateCustomerOptInOutData Failed " +validationResult.error;
             console.error(errMsg);
-            var response = createCustomerOptInOutResponse(registration_data, false, errMsg);
+            var response = createCustomerOptInOutResponse(opt_request, opt_mode, false, errMsg);
             res.status(400);
             res.json(response);
             return;
         }
     
-        var registrationCollectionName = customersRegistrationCollection  + '_' + registration_data.tenant_id;
+        var registrationCollectionName = customersRegistrationCollection  + '_' + opt_request.tenant_id;
        
         MongoClient.connect(url)
         .then(function(db){
             console.log("Connected correctly to server");
             status = true;           
-            var tenantId = registration_data.tenant_id;
+            var tenantId = opt_request.tenant_id;
             var customerRegistrationCollection = db.collection(registrationCollectionName);
             var docId = "tid:" + opt_request.tenant_id + "_pcid:" + opt_request.public_customer_id;
             customerRegistrationCollection.findOne({_id: docId})
             .then(function(exisitingDoc){
-                handleOptInOutUpdate(db, registrationCollection, docId, exisitingDoc, opt_mode, opt_request)
+                handleOptInOutUpdate(db, customerRegistrationCollection, docId, exisitingDoc, opt_mode, opt_request)
                 .then(function(exisitingDoc){
-
+                    db.close();                   
+                    var response = createCustomerOptInOutResponse(opt_request, opt_mode, true, errMsg);                    
+                    res.json(response);
                 })
                 .catch(function(error){
-                    
+                    var errMsg = "optinoutcustomer:handleOptInOutUpdate Failed " + error;
+                    console.error(errMsg);
+                    var response = createCustomerOptInOutResponse(opt_request, opt_mode, false, errMsg);
+                    res.status(400);
+                    res.json(response);
+                    return;
                 })
-            })
-            .catch(function(error){
-                
-            })
-           
-                
-                db.close();
-                var response = createCustomerRegisterResponse(registration_data, true, undefined);
-                res.json(response);
-
             })
             .catch(function(error){
                 cleanup(db);
-                console.error("postregisterCustomer() Failed");
-                var errMsg = "postregisterCustomer: handleCustomerRegistration() Failed tenantId = " + tenantId + " orig_visitor_id =  " + orig_visitor_id + " " + error;
+                var errMsg = "optinoutcustomer:customerRegistrationCollection.findOne Failed " + error;
                 console.error(errMsg);
-                var response = createCustomerRegisterResponse(registration_data, false, errMsg);
+                var response = createCustomerOptInOutResponse(opt_request, opt_mode, false, errMsg);
                 res.status(400);
                 res.json(response);
+                return; 
+            })                                          
 
-            }) 
+        })
+        .catch(function(error){
+            cleanup(db);
+            console.error("postregisterCustomer() Failed");
+            var errMsg = "postregisterCustomer: handleCustomerRegistration() Failed tenantId = " + tenantId + " orig_visitor_id =  " + orig_visitor_id + " " + error;
+            console.error(errMsg);
+            var response = createCustomerRegisterResponse(registration_data, false, errMsg);
+            res.status(400);
+            res.json(response);
+
+        }) 
            
     .catch(function(error){
-        cleanup(db);
+       
         var errMsg = "postregisterVisitor: Connected DB Server Failed  tenantId = " + tenantId + " orig_visitor_id =  " + orig_visitor_id + " " + error;
         console.error(errMsg);
         var response = createCustomerRegisterResponse(registration_data, false, errMsg);
@@ -1239,24 +1248,44 @@ var handleOptInOutUpdate = function(db, registrationCollection, docId,existingDo
     return new Promise( function (resolve, reject) {
         var deviceGroup = undefined;
         var needUpdated = false;
-        if(existingDocument.android_token != undefined){        
-            existsingDeviceGroup = existingDocument.android_tokens;
-            needUpdated == true
-        }else if(existingDocument.ios_token != undefined){          
-            existsingDeviceGroup = existingDocument.ios_tokens;
-            needUpdated == true
-        }       
+        var devicePlatform = -1;
+        var updatedDeviceId = undefined; 
+        var existsingDeviceGroup = undefined;
 
-        if(needUpdated == true){
-            var updatedDeviceId = opt_request.device_id;
-            existsingDeviceGroup[updatedDeviceId].opt_in = opt_mode;
+        if(opt_request.ios_token != undefined)
+            {
+                updatedDeviceId = opt_request.ios_token.device_id;
+                devicePlatform = 2;
+            }else if(opt_request.android_token != undefined){
+                updatedDeviceId = opt_request.android_token.device_id;
+                devicePlatform = 1;
+            }
+            
+        if(devicePlatform == 1){
+            if(existingDocument.android_tokens != undefined && Object.keys(existingDocument.android_tokens)[0] != undefined){        
+                existsingDeviceGroup = existingDocument.android_tokens[updatedDeviceId];
+                needUpdated = true
+            }else{
+                reject("No existsingDeviceGroup");
+            }
+        }else if (devicePlatform == 2){
+            if(existingDocument.ios_tokens != undefined && Object.keys(existingDocument.ios_tokens)[0] != undefined){        
+                existsingDeviceGroup = existingDocument.ios_tokens[updatedDeviceId];
+                needUpdated = true;
+            }else{
+                reject("No existsingDeviceGroup");
+            }
+        }           
+
+        if(needUpdated == true){           
+            existsingDeviceGroup.opt_in = opt_mode;
 
             registrationCollection.update({_id: docId}, existingDocument)
             .then(function(status){
                 resolve(true);
             })
             .catch(function(error){
-                reject(false);
+                reject(error);
             })
         }else{
             reject(false);
@@ -1567,29 +1596,29 @@ var  createCustomerOptInOutResponse = function (opt_data, opt_mode, opt_status, 
             "tenant_id": opt_data.tenant_id,
             "public_customer_id": opt_data.public_customer_id,
             "device_id": opt_data.device_id,
-            "success_status": registration_status
+            "success_status": opt_status
         }
     };
 
     var opt_in_status_response = {
         
                 "opt_in_status": {
-                    "tenant_id": registration_data.tenant_id,
-                    "public_customer_id": registration_data.public_customer_id,
+                    "tenant_id": opt_data.tenant_id,
+                    "public_customer_id": opt_data.public_customer_id,
                     "device_id": opt_data.device_id,
-                    "success_status": registration_status
+                    "success_status": opt_status
                 }
             };
     
 
-    if(opt_mode == 1) {//opt_out
+    if(opt_mode == false) {//opt_out
         response_status= opt_out_status_response;
-    } else if(opt_mode == 2){//opt_out
+    } else if(opt_mode == true){//opt_in
         response_status= opt_in_status_response;
     }
 
     if(error != undefined){
-        response_status.response_status.error = error;
+        response_status.error = error;
     }
     
     return response_status;
