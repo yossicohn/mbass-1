@@ -8,22 +8,6 @@ var customersRegistrationCollection = 'CustomersTokens';
 var visitorsRegistrationCollection = 'VisitorsTokens';
 
 
-var registration_response = {
-
-    "registration_status": {
-        "tenant_id": -1,
-        "success_status": false
-    }
-};
-
-
-var unregistration_response = {
-
-    "registration_status": {
-        "tenant_id": -1,
-        "success_status": false
-    }
-};
 
 // -------------------------------------- Functions -----------------------------------
 
@@ -88,6 +72,123 @@ var unregistration_response = {
             })
     };
 
+    //-----------------------------------------------------------------------------
+// functions: optinoutvisitor
+// args: register device/user data in the body
+// description:mock for the register
+// format example:
+// {
+//     "opt_in": {
+//         "tenant_id": 85,
+//         "visitor_id": "32862a06-cdfd-4f75-ace4-a721aea02c98",,        
+//         "ios_token\": {
+//             "device_id": "5b14fa8b-abdd-4347-aca9-ea3e03be657e"                        
+//         }
+//     }
+//  }
+//---------------------------------------------------------------------------
+exports.optinoutvisitor = function (req, res){
+    
+        var err = undefined;
+        var status = undefined;
+
+
+        var registerReq = req.body;
+        var opt_mode = undefined;
+        var opt_request = undefined;
+        if(registerReq.opt_out != undefined){
+            opt_mode = false;
+            opt_request = registerReq.opt_out;
+        }else  if(registerReq.opt_in != undefined){
+            opt_mode = true;
+            opt_request = registerReq.opt_in;
+        }               
+
+        if(opt_request == undefined)
+        {
+
+            var errMsg = "optinoutvisitor:opt_request is missing data Failed !!!";
+            console.error(errMsg);
+            var response = createVisitorOptInOutResponse(opt_request, opt_mode, false, errMsg);
+            res.status(400);
+            res.json(response);
+            return;
+        }
+
+        //var validationResult = validateCustomerOptInOutData(registration_data);
+        var validationResult = {status: true};
+
+        if(validationResult.status == false){
+
+            var errMsg = "optinoutvisitor:validateCustomerOptInOutData Failed " +validationResult.error;
+            console.error(errMsg);
+            var response = createVisitorOptInOutResponse(opt_request, opt_mode, false, errMsg);
+            res.status(400);
+            res.json(response);
+            return;
+        }
+
+        var registrationCollectionName = visitorsRegistrationCollection  + '_' + opt_request.tenant_id;
+        
+        MongoClient.connect(url)
+        .then(function(db){
+            console.log("Connected correctly to server");
+            status = true;           
+            var tenantId = opt_request.tenant_id;
+            var visitorsRegistrationCollection = db.collection(registrationCollectionName);
+            var docId = "tid:" + opt_request.tenant_id + "_vid:" + opt_request.visitor_id;
+            visitorsRegistrationCollection.findOne({_id: docId})
+            .then(function(exisitingDoc){
+                handleOptInOutUpdate(db, visitorsRegistrationCollection, docId, exisitingDoc, opt_mode, opt_request)
+                .then(function(exisitingDoc){
+                    db.close();                   
+                    var response = createVisitorOptInOutResponse(opt_request, opt_mode, true, errMsg);                    
+                    res.json(response);
+                })
+                .catch(function(error){
+                    var errMsg = "optinoutvisitor:handleOptInOutUpdate Failed " + error;
+                    console.error(errMsg);
+                    var response = createVisitorOptInOutResponse(opt_request, opt_mode, false, errMsg);
+                    res.status(400);
+                    res.json(response);
+                    return;
+                })
+            })
+            .catch(function(error){
+                cleanup(db);
+                var errMsg = "optinoutvisitor:customerRegistrationCollection.findOne Failed " + error;
+                console.error(errMsg);
+                var response = createVisitorOptInOutResponse(opt_request, opt_mode, false, errMsg);
+                res.status(400);
+                res.json(response);
+                return; 
+            })                                          
+
+        })
+        .catch(function(error){
+            cleanup(db);
+            console.error("postregisterCustomer() Failed");
+            var errMsg = "postregisterCustomer: handleCustomerRegistration() Failed tenantId = " + tenantId + " orig_visitor_id =  " + orig_visitor_id + " " + error;
+            console.error(errMsg);
+            var response = createCustomerRegisterResponse(registration_data, false, errMsg);
+            res.status(400);
+            res.json(response);
+
+        }) 
+            
+    .catch(function(error){
+        
+        var errMsg = "postregisterVisitor: Connected DB Server Failed  tenantId = " + tenantId + " orig_visitor_id =  " + orig_visitor_id + " " + error;
+        console.error(errMsg);
+        var response = createCustomerRegisterResponse(registration_data, false, errMsg);
+        res.status(400);
+        res.json(response);
+
+
+  
+    })
+}
+    
 
 //-----------------------------------------------------------------------------
 // functions: optinoutcustomer
@@ -95,23 +196,16 @@ var unregistration_response = {
 // description:mock for the register
 // format example:
 // {
-//     "_id": "tid:1_pcid:" + currUUID,
-//     "tenant_id": 1,
-//     "public_customer_id ":  currUUID,
-//     "opt_in": "true",
-//     "is_visitor": "false",
-//      "is_conversion": "false"
-//      "orig_visitor_id": "eb3b6e8b-97b3-47fe-9d05-3b134e7e040f",
-//
-//     "android_tokens": {
-//     "2b14fa8b-abcf-4347-aca9-ea3e03be657e": {
-//         "opt_in": "true",
-//             "token": "152 Bytes",
-//             "os_version": "7.002"
+//     "opt_in": {
+//         "tenant_id": 85,
+//         "public_customer_id": "32862a06-cdfd-4f75-ace4-a721aea02c98",,        
+//         "ios_token\": {
+//             "device_id": "5b14fa8b-abdd-4347-aca9-ea3e03be657e"                        
+//         }
 //     }
-// }
+//  }
 //---------------------------------------------------------------------------
-    exports. optinoutcustomer = function (req, res){
+    exports.optinoutcustomer = function (req, res){
 
         var err = undefined;
         var status = undefined;
@@ -142,6 +236,7 @@ var unregistration_response = {
         //var validationResult = validateCustomerOptInOutData(registration_data);
         var validationResult = {status: true};
 
+        
         if(validationResult.status == false){
     
             var errMsg = "optinoutcustomer:validateCustomerOptInOutData Failed " +validationResult.error;
@@ -1279,7 +1374,7 @@ var handleOptInOutUpdate = function(db, registrationCollection, docId,existingDo
         if(needUpdated == true){           
             existsingDeviceGroup.opt_in = opt_mode;
             if(opt_mode == false){
-                updateCustomerDocumentOptInStatus(existingDocument);
+                updateDocumentOptInStatus(existingDocument);
             }else{
                 existingDocument.opt_in = true;
             }
@@ -1298,13 +1393,13 @@ var handleOptInOutUpdate = function(db, registrationCollection, docId,existingDo
 
 
 //-----------------------------------------------------------------------------
-// functions: updateCustomerDocumentOptInStatus
+// functions: updateDocumentOptInStatus
 // args: existingDocument
 // description: update the general optin status.
 // Go over all the opt-in keys if all are false set the root optin key to false.
 // if one is true then root should be true.
 //---------------------------------------------------------------------------
-var updateCustomerDocumentOptInStatus = function (existingDocument){
+var updateDocumentOptInStatus = function (existingDocument){
 
     var opt_in = false;
     var androidDeviceGroup = existingDocument.android_tokens;
@@ -1621,7 +1716,7 @@ var  createCustomerUnRegisterResponse = function (registration_data, registratio
     }
 
 
-    //-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 // functions: createCustomerUnRegisterResponse
 // args: opt_data, opt_mode, opt_status, error
 // description: create optinout response for the  registration request.
@@ -1668,6 +1763,56 @@ var  createCustomerOptInOutResponse = function (opt_data, opt_mode, opt_status, 
     
     return response_status;
     }
+
+
+//-----------------------------------------------------------------------------
+// functions: createVisitorOptInOutResponse
+// args: opt_data, opt_mode, opt_status, error
+// description: create optinout response for the  registration request.
+// {
+//     "unregistration_status": {
+//     "tenant_id": "85",
+//         "visitor_id": "eb3b6e8b-97b3-47fe-9d05-3b134e7e040f",
+//         “success_status”:  true
+// }
+//---------------------------------------------------------------------------
+var  createVisitorOptInOutResponse = function (opt_data, opt_mode, opt_status, error){
+    
+    var response_status = undefined;
+    var opt_out_status_response = {
+
+        "opt-out_status": {
+            "tenant_id": opt_data.tenant_id,
+            "visitor_id": opt_data.public_customer_id,
+            "device_id": opt_data.device_id,
+            "success_status": opt_status
+        }
+    };
+
+    var opt_in_status_response = {
+        
+                "opt_in_status": {
+                    "tenant_id": opt_data.tenant_id,
+                    "visitor_id": opt_data.public_customer_id,
+                    "device_id": opt_data.device_id,
+                    "success_status": opt_status
+                }
+            };
+    
+
+    if(opt_mode == false) {//opt_out
+        response_status= opt_out_status_response;
+    } else if(opt_mode == true){//opt_in
+        response_status= opt_in_status_response;
+    }
+
+    if(error != undefined){
+        response_status.error = error;
+    }
+    
+    return response_status;
+    }
+
 //-----------------------------------------------------------------------------
 // functions: cleanup
 // args: db
