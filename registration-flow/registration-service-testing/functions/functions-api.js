@@ -1252,8 +1252,7 @@ var handleOptInOutUpdate = function(db, registrationCollection, docId,existingDo
         var updatedDeviceId = undefined; 
         var existsingDeviceGroup = undefined;
 
-        if(opt_request.ios_token != undefined)
-            {
+        if(opt_request.ios_token != undefined){
                 updatedDeviceId = opt_request.ios_token.device_id;
                 devicePlatform = 2;
             }else if(opt_request.android_token != undefined){
@@ -1264,7 +1263,7 @@ var handleOptInOutUpdate = function(db, registrationCollection, docId,existingDo
         if(devicePlatform == 1){
             if(existingDocument.android_tokens != undefined && Object.keys(existingDocument.android_tokens)[0] != undefined){        
                 existsingDeviceGroup = existingDocument.android_tokens[updatedDeviceId];
-                needUpdated = true
+                needUpdated = true                           
             }else{
                 reject("No existsingDeviceGroup");
             }
@@ -1279,7 +1278,11 @@ var handleOptInOutUpdate = function(db, registrationCollection, docId,existingDo
 
         if(needUpdated == true){           
             existsingDeviceGroup.opt_in = opt_mode;
-
+            if(opt_mode == false){
+                updateCustomerDocumentOptInStatus(existingDocument);
+            }else{
+                existingDocument.opt_in = true;
+            }
             registrationCollection.update({_id: docId}, existingDocument)
             .then(function(status){
                 resolve(true);
@@ -1292,6 +1295,48 @@ var handleOptInOutUpdate = function(db, registrationCollection, docId,existingDo
         }
     });
 }
+
+
+//-----------------------------------------------------------------------------
+// functions: updateCustomerDocumentOptInStatus
+// args: existingDocument
+// description: update the general optin status.
+// Go over all the opt-in keys if all are false set the root optin key to false.
+// if one is true then root should be true.
+//---------------------------------------------------------------------------
+var updateCustomerDocumentOptInStatus = function (existingDocument){
+
+    var opt_in = false;
+    var androidDeviceGroup = existingDocument.android_tokens;
+    var iosDeviceGroup = existingDocument.ios_tokens;    
+    if(androidDeviceGroup != undefined){
+        var androidKeys = Object.keys(androidDeviceGroup);
+        if(androidKeys[0] != undefined){               
+            androidKeys.forEach(function(key){
+                if(androidDeviceGroup[key].opt_in == true){
+                    existingDocument.opt_in = true;
+                    return;
+                }
+            })
+        }
+
+    }
+        
+    if(iosDeviceGroup != undefined){
+        var iosKeys = Object.keys(iosDeviceGroup);
+        if(iosKeys[0] != undefined){               
+            iosKeys.forEach(function(key){
+                if(iosDeviceGroup[key].opt_in == true){
+                    existingDocument.opt_in = true;
+                    return;
+                }
+            })
+        }
+    }
+    existingDocument.opt_in = false;
+
+}
+
 
 //-----------------------------------------------------------------------------
 // functions: createVisitorRegisterData
@@ -1634,3 +1679,4 @@ var  cleanup = function (db){
         db.close();
     }
 }
+    
