@@ -1174,6 +1174,7 @@ var updateDeviceInExistingCustomerDocument = function(db, customerRegistrationCo
         return new Promise( function (resolve, reject) {
             var dataResult = createCustomerRegisterDocumentFromExisting(registration_data, existingDocument);
             if(dataResult.status == true){
+                updateDocumentOptInStatus(dataResult.data);
                 customerRegistrationCollection.update({_id: docId}, dataResult.data)
                 .then(function(status){
                     resolve(true);
@@ -1217,6 +1218,7 @@ var removeDeviceAndUpdateExistingDocument = function(db, registrationCollection,
             }
 
             if(needUpdated == true){
+                updateDocumentOptInStatus(existingDocument);
                 registrationCollection.update({_id: docId}, existingDocument)
                 .then(function(status){
                     resolve(true);
