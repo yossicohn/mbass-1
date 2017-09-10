@@ -1370,3 +1370,425 @@ var  createCustomerRegisterData = function (registration_data){
     return status;
 }
 // ----------------------------------- End  Register/unRegister Customer Protocol ---------------------------------------------
+
+// ----------------------------------- End  Register/unRegister Visitor Protocol ---------------------------------------------
+
+//-----------------------------------------------------------------------------
+// functions: register_visitor
+// args: register device/user data in the body
+// description:mock for the register
+// format example:
+// {
+//
+//     "registration_data": {
+//     "tenant_id": "85",
+//     "visitor_id": "ef3b6e8b-89c3-47fe-9d05-3b254e7e040f",
+//     "is_visitor": "true"
+//     "android_token": {
+//         "2b14fa8b-abcf-4347-aca9-ea3e03be657e": {
+//             "opt-in" : true,        
+//             "token": "152 Bytes",
+//              "os_version": "7.002"
+//         }
+//     }
+// }
+// }
+//---------------------------------------------------------------------------
+exports.register_visitor = functions.https.onRequest((req, res) => {
+    
+    var err = undefined;
+    var status = undefined;
+
+    var shouldDeleteVisitorDocument = false;
+    var registerReq = req.body;
+    var registration_data = registerReq.registration_data;
+
+
+    if(registration_data == undefined)
+    {
+
+        var errMsg = "register_visitor:registration_data is missing Failed !!!";
+        console.error(errMsg);
+        var response = createVisitorRegisterResponse(registration_data, false, errMsg);
+        res.status(400);
+        res.json(response);
+        return;
+    }
+
+    var validationResult = validateVisitorRegistrationData(registration_data);
+    if(validationResult.status == false){
+
+        var errMsg = "register_visitor:validateVisitorRegistrationData Failed " +validationResult.error;
+        console.error(errMsg);
+        var response = createVisitorRegisterResponse(registration_data, false, errMsg);
+        res.status(400);
+        res.json(response);
+        return;
+    }
+
+
+    var registrationCollectionName = visitorsRegistrationCollection  + '_' + registration_data.tenant_id;
+
+    MongoClient.connect(url)
+        .then(function(db){
+            console.log("register_Visitor: Connected correctly to server");
+            status = true;
+
+            var orig_visitor_id = registration_data.visitor_id;
+            var tenantId = registration_data.tenant_id;
+
+            var registrationCollection = db.collection(registrationCollectionName);
+            status = findAndDeletExistDocument(db, registrationCollection, tenantId, orig_visitor_id )
+
+                .then(function (status){
+
+                if(status == true) {
+
+                    var resultData = createVisitorRegisterData(registration_data);
+                    registrationCollection.insertOne(resultData.data).then(function (r) {
+                        console.log("register_visitor: Insert One correctly to server");
+                        db.close();
+
+                        var response = createVisitorRegisterResponse(registration_data, true, undefined);
+                        res.json(response);
+
+                    })
+                    .catch(function (error) {
+                        cleanup(db);
+                        var errMsg = "register_visitor: InsertOne  DB Server Failed tenantId = " + tenantId + " orig_visitor_id =  " + orig_visitor_id + " " +error;
+                        console.error(errMsg);
+                        var response = createVisitorRegisterResponse(registration_data, false, errMsg);
+                        res.status(400);
+                        res.json(response);
+
+                    })
+
+                }
+
+            }).catch(function(error){
+                cleanup(db);
+                console.error("findAndDeletExistDocument() Failed");
+                var errMsg = "register_visitor: findAndDeletExistDocument() Failed tenantId = " + tenantId + " orig_visitor_id =  " + orig_visitor_id + " " + error;
+                console.error(errMsg);
+                var response = createVisitorRegisterResponse(registration_data, false, errMsg);
+                res.status(400);
+                res.json(response);
+
+                })
+
+        })
+        .catch(function(error){
+            cleanup(db);
+            var errMsg = "register_visitor: Connected DB Server Failed  tenantId = " + tenantId + " orig_visitor_id =  " + orig_visitor_id + " " + error;
+            console.error(errMsg);
+            var response = createVisitorRegisterResponse(registration_data, false, errMsg);
+            res.status(400);
+            res.json(response);
+
+
+        })
+});
+
+//-----------------------------------------------------------------------------
+// functions: unregister_visitor
+// args: register device/user data in the body
+// description:mock for the register
+// format example:
+//     
+//      "unregistration_data": {
+//          "tenant_id": "85",
+//          "visitor_id": "ef3b6e8b-89c3-47fe-9d05-3b254e7e040f",
+//          "is_visitor": "true"
+//          "android_token": {
+//              “device_id”: "2b14fa8b-abcf-4347-aca9-ea3e03be657e"                  
+//          }
+//      }
+//  }
+//---------------------------------------------------------------------------
+exports.unregister_visitor  = functions.https.onRequest((req, res) => {
+    
+    var err = undefined;
+    var status = undefined;
+
+    var shouldDeleteVisitorDocument = false;
+    var registerReq = req.body;
+    var unregistration_data = registerReq.unregistration_data;
+
+    if(unregistration_data == undefined)
+    {
+
+        var errMsg = "unregister_visitor:registration_data is missing Failed !!!";
+        console.error(errMsg);
+        var response = createVisitorRegisterResponse(unregistration_data, false, errMsg);
+        res.status(400);
+        res.json(response);
+        return;
+    }
+
+    var validationResult = validateVisitorUnRegistrationData(unregistration_data);
+    if(validationResult.status == false){
+
+        var errMsg = "unregister_visitor:validateVisitorUnRegistrationData Failed " +validationResult.error;
+        console.error(errMsg);
+        var response = createVisitorRegisterResponse(unregistration_data, false, errMsg);
+        res.status(400);
+        res.json(response);
+        return;
+    }
+    
+    var registrationCollectionName = visitorsRegistrationCollection  + '_' + unregistration_data.tenant_id;
+
+    MongoClient.connect(url)
+        .then(function(db){
+            console.log("Connected correctly to server");
+            status = true;
+
+            var orig_visitor_id = unregistration_data.visitor_id;
+            var tenantId = unregistration_data.tenant_id;
+
+            var registrationCollection = db.collection(registrationCollectionName);
+            status = findAndDeletExistDocument(db, registrationCollection, tenantId, orig_visitor_id )    
+            .then(function (status){
+
+                    db.close();                        
+                    var response = createVisitorRegisterResponse(unregistration_data, true, undefined);
+                    res.json(response);
+
+            }).catch(function(error){
+                cleanup(db);
+                console.error("unregister_visitor: findAndDeletExistDocument() Failed");
+                var errMsg = "unregister_visitor: findAndDeletExistDocument() Failed tenantId = " + tenantId + " orig_visitor_id =  " + orig_visitor_id + " " + error;
+                console.error(errMsg);
+                var response = createVisitorRegisterResponse(unregistration_data, false, errMsg);
+                res.status(400);
+                res.json(response);
+
+                })
+
+        })
+        .catch(function(error){
+            cleanup(db);
+            var errMsg = "unregister_visitor: Connected DB Server Failed  tenantId = " + tenantId + " orig_visitor_id =  " + orig_visitor_id + " " + error;
+            console.error(errMsg);
+            var response = createVisitorRegisterResponse(registration_data, false, errMsg);
+            res.status(400);
+            res.json(response);
+
+
+        })
+});
+
+
+//-----------------------------------------------------------------------------
+// functions: validateVisitorRegistrationData
+// args: registration_data
+// description: validate register data..
+//---------------------------------------------------------------------------
+var validateVisitorRegistrationData = function (registration_data){
+    
+    var status = true;
+    var err = undefined;
+
+    var validationResult = {status: false, error: undefined};
+
+    if(registration_data.is_visitor == undefined || registration_data.is_visitor == false)
+    {
+        err = 'validateVisitorRegistrationData: registration_data.is_visitor is missing';
+        validationResult.error += "\n" + err;
+        console.error(err);
+
+        status = false;
+    }
+
+
+    if(registration_data.tenant_id == undefined || typeof registration_data.tenant_id != 'number')
+    {
+        err = 'validateVisitorRegistrationData: registration_data.tenant_id is missing';
+        validationResult.error += "\n" + err;
+        console.error(err);
+
+        status = false;
+    }
+
+
+    if(registration_data.visitor_id == undefined)
+    {
+        err = 'validateVisitorRegistrationData: registration_data.public_customer_id is missing';
+        validationResult.error += "\n" + err;
+        console.error(err);
+
+        status = false;
+    }
+
+
+    if(registration_data.android_token == undefined && registration_data.ios_token == undefined  )
+    {
+        err = 'validateVisitorRegistrationData: registration_data.android_token || ios_token  is missing';
+        validationResult.error += "\n" + err;
+        console.error(err);
+
+        status = false;
+    }
+
+
+    validationResult.status = status;
+
+    return validationResult;
+
+}
+
+
+//-----------------------------------------------------------------------------
+// functions: validateVisitorUnRegistrationData
+// args: unregistration_data
+// description: validate register data.
+// {    
+//      "unregistration_data": {
+//          "tenant_id": 85,
+//          "visitor_id": "ef3b6e8b-89c3-47fe-9d05-3b254e7e040f",          
+//          "android_token": {
+//              “device_id”: "2b14fa8b-abcf-4347-aca9-ea3e03be657e"                  
+//          }
+//      }
+//  } 
+//---------------------------------------------------------------------------
+var validateVisitorUnRegistrationData = function (unregistration_data){
+
+    var status = true;
+    var err = undefined;
+
+    var validationResult = {status: false, error: undefined};
+
+    if(unregistration_data.visitor_id == undefined)
+    {
+        err = 'validateVisitorUnRegistrationData: unregistration_data.visitor_id is missing';
+        validationResult.error += "\n" + err;
+        console.error(err);
+
+        status = false;
+    }
+
+
+
+    if(unregistration_data.tenant_id == undefined || typeof unregistration_data.tenant_id != 'number')
+    {
+        err = 'validateVisitorUnRegistrationData: unregistration_data.tenant_id is missing';
+        validationResult.error += "\n" + err;
+        console.error(err);
+
+        status = false;
+    }
+
+    if(unregistration_data.android_token == undefined && unregistration_data.ios_token== undefined)
+        {
+            err = 'validateVisitorUnRegistrationData: unregistration_data device is missing';
+            validationResult.error += "\n" + err;
+            console.error(err);
+    
+            status = false;
+        }else{
+            var devicegroup = undefined;
+            if(unregistration_data.android_token!== undefined)
+                devicegroup = unregistration_data.android_token;
+            else
+                devicegroup = unregistration_data.ios_token;
+            var statusDevId =  checkDeviceIdExisitinData(devicegroup)
+            if( statusDevId == false){
+            err = 'validateVisitorUnRegistrationData: unregistration_data device data is missing';
+            validationResult.error += "\n" + err;
+            status = false;
+            console.error(err);
+            }
+        }
+    
+
+    validationResult.status = status;
+
+    return validationResult;
+}
+
+//-----------------------------------------------------------------------------
+// functions: createVisitorRegisterResponse
+// args: registration_data, registration_status, error
+// description: create Registration response for the  registration request.
+// {
+//
+//     "registration_status": {
+//     "tenant_id": "85",
+//         "visitor_id": "eb3b6e8b-97b3-47fe-9d05-3b134e7e040f",
+//         “success_status”:  true
+// }
+//
+// }
+//---------------------------------------------------------------------------
+var  createVisitorRegisterResponse = function (registration_data, registration_status, error){
+
+    var registration_response = {
+
+        "registration_status": {
+            "tenant_id": registration_data.tenant_id,
+            "visitor_id": registration_data.visitor_id,
+            "success_status": registration_status
+        }
+    };
+
+    if(error != undefined){
+        registration_response.registration_status.error = error;
+    }
+
+    return registration_response;
+}
+    
+    
+
+//-----------------------------------------------------------------------------
+// functions: createVisitorRegisterData
+// args: registration_data
+// description: create Registration Data for the visitors Collection.
+// {
+//
+//     "registration_data": {
+//     "tenant_id": "85",
+//     "visitor_id": "ef3b6e8b-89c3-47fe-9d05-3b254e7e040f",
+//     "is_visitor": "true"
+//     "android_token": {
+//         "2b14fa8b-abcf-4347-aca9-ea3e03be657e": {
+//             "token": "152 Bytes",
+//                 "os_version": "7.002"
+//         }
+//     }
+// }
+// }
+//---------------------------------------------------------------------------
+var  createVisitorRegisterData = function (registration_data){
+    
+    var data = {
+        "_id": undefined,
+        "tenant_id": undefined,
+        "visitor_id":undefined,
+        "opt_in": "true",
+        "is_visitor": "true",
+
+        "android_token": {
+
+        }
+    };
+
+    var status = {status: true, data:undefined};
+
+    var orig_visitor_id = registration_data.visitor_id;
+    var tenantId = registration_data.tenant_id;
+    var id = "tid:"+ tenantId + "_vid:" + orig_visitor_id;
+    data._id = id;
+    data.tenant_id  = tenantId;
+    if(registration_data.android_token != undefined){
+        data.android_token = registration_data.android_token ;
+    }else if(registration_data.ios_token != undefined){
+        data.android_token = registration_data.ios_token ;
+    }
+
+    status.data = data;
+    return status;
+}
+    
+    

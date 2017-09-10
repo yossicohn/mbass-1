@@ -502,8 +502,8 @@ exports.unregister_customer = function (req, res) {
     
     
 
-    //-----------------------------------------------------------------------------
-// functions: postregisterVisitor
+//-----------------------------------------------------------------------------
+// functions: register_visitor
 // args: register device/user data in the body
 // description:mock for the register
 // format example:
@@ -523,7 +523,7 @@ exports.unregister_customer = function (req, res) {
 // }
 // }
 //---------------------------------------------------------------------------
-exports.postregisterVisitor = function (req, res) {
+exports.register_visitor = function (req, res) {
 
     var err = undefined;
     var status = undefined;
@@ -536,7 +536,7 @@ exports.postregisterVisitor = function (req, res) {
     if(registration_data == undefined)
     {
 
-        var errMsg = "postregisterVisitor:registration_data is missing Failed !!!";
+        var errMsg = "register_visitor:registration_data is missing Failed !!!";
         console.error(errMsg);
         var response = createVisitorRegisterResponse(registration_data, false, errMsg);
         res.status(400);
@@ -547,7 +547,7 @@ exports.postregisterVisitor = function (req, res) {
     var validationResult = validateVisitorRegistrationData(registration_data);
     if(validationResult.status == false){
 
-        var errMsg = "postregisterVisitor:validateVisitorRegistrationData Failed " +validationResult.error;
+        var errMsg = "register_visitor:validateVisitorRegistrationData Failed " +validationResult.error;
         console.error(errMsg);
         var response = createVisitorRegisterResponse(registration_data, false, errMsg);
         res.status(400);
@@ -560,7 +560,7 @@ exports.postregisterVisitor = function (req, res) {
 
     MongoClient.connect(url)
         .then(function(db){
-            console.log("Connected correctly to server");
+            console.log("register_Visitor: Connected correctly to server");
             status = true;
 
             var orig_visitor_id = registration_data.visitor_id;
@@ -575,7 +575,7 @@ exports.postregisterVisitor = function (req, res) {
 
                     var resultData = createVisitorRegisterData(registration_data);
                     registrationCollection.insertOne(resultData.data).then(function (r) {
-                        console.log("postregisterVisitor: postregisterVisitorMock: Insert One correctly to server");
+                        console.log("register_visitor: Insert One correctly to server");
                         db.close();
 
                         var response = createVisitorRegisterResponse(registration_data, true, undefined);
@@ -584,7 +584,7 @@ exports.postregisterVisitor = function (req, res) {
                     })
                     .catch(function (error) {
                         cleanup(db);
-                        var errMsg = "postregisterVisitor: InsertOne  DB Server Failed tenantId = " + tenantId + " orig_visitor_id =  " + orig_visitor_id + " " +error;
+                        var errMsg = "register_visitor: InsertOne  DB Server Failed tenantId = " + tenantId + " orig_visitor_id =  " + orig_visitor_id + " " +error;
                         console.error(errMsg);
                         var response = createVisitorRegisterResponse(registration_data, false, errMsg);
                         res.status(400);
@@ -597,7 +597,7 @@ exports.postregisterVisitor = function (req, res) {
             }).catch(function(error){
                 cleanup(db);
                 console.error("findAndDeletExistDocument() Failed");
-                var errMsg = "postregisterVisitor: findAndDeletExistDocument() Failed tenantId = " + tenantId + " orig_visitor_id =  " + orig_visitor_id + " " + error;
+                var errMsg = "register_visitor: findAndDeletExistDocument() Failed tenantId = " + tenantId + " orig_visitor_id =  " + orig_visitor_id + " " + error;
                 console.error(errMsg);
                 var response = createVisitorRegisterResponse(registration_data, false, errMsg);
                 res.status(400);
@@ -608,7 +608,7 @@ exports.postregisterVisitor = function (req, res) {
         })
         .catch(function(error){
             cleanup(db);
-            var errMsg = "postregisterVisitor: Connected DB Server Failed  tenantId = " + tenantId + " orig_visitor_id =  " + orig_visitor_id + " " + error;
+            var errMsg = "register_visitor: Connected DB Server Failed  tenantId = " + tenantId + " orig_visitor_id =  " + orig_visitor_id + " " + error;
             console.error(errMsg);
             var response = createVisitorRegisterResponse(registration_data, false, errMsg);
             res.status(400);

@@ -6,10 +6,10 @@ module.exports = function(app) {
 
     //  Routes
     app.route('/register-visitor')
-    .post(functions_api.postregisterVisitor);
+    .post(functions_api.register_visitor);
     //  Routes
     app.route('/unregister-visitor')
-    .post(functions_api.postunregisterVisitor);
+    .post(functions_api.unregister_visitor);
 
     //  Routes
     app.route('/register-customer')
