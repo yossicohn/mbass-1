@@ -282,7 +282,7 @@ exports.opt_in_out_visitor = function (req, res){
     }
 
 //-----------------------------------------------------------------------------
-// functions: postregisterCustomer
+// functions: register_customer
 // args: register device/user data in the body
 // description:mock for the register
 // format example:
@@ -303,7 +303,7 @@ exports.opt_in_out_visitor = function (req, res){
 //     }
 // }
 //---------------------------------------------------------------------------
-exports.postregisterCustomer = function (req, res) {
+exports.register_customer = function (req, res) {
 
     var err = undefined;
     var status = undefined;
@@ -316,7 +316,7 @@ exports.postregisterCustomer = function (req, res) {
     if(registration_data == undefined)
     {
 
-        var errMsg = "postregisterCustomer:registration_data is missing Failed !!!";
+        var errMsg = "register_customer:registration_data is missing Failed !!!";
         console.error(errMsg);
         var response = createCustomerRegisterResponse(registration_data, false, errMsg);
         res.status(400);
@@ -327,7 +327,7 @@ exports.postregisterCustomer = function (req, res) {
     var validationResult = validateCustomerRegistrationData(registration_data);
     if(validationResult.status == false){
 
-        var errMsg = "postregisterCustomer:validateCustomerRegistrationData Failed " +validationResult.error;
+        var errMsg = "register_customer:validateCustomerRegistrationData Failed " +validationResult.error;
         console.error(errMsg);
         var response = createCustomerRegisterResponse(registration_data, false, errMsg);
         res.status(400);
@@ -340,7 +340,7 @@ exports.postregisterCustomer = function (req, res) {
 
     MongoClient.connect(url)
         .then(function(db){
-            console.log("Connected correctly to server");
+            console.log("register_customer: Connected correctly to server");
             status = true;
 
             var orig_visitor_id = registration_data.visitor_id;
@@ -359,12 +359,12 @@ exports.postregisterCustomer = function (req, res) {
                     // check if customer already exist
                         status = findAndDeletExistDocument(db, registrationCollection, tenantId, orig_visitor_id )
                         .then(function (status){
-                            console.log("findAndDeletExistDocument() removed visitor = " + tenantId + " orig_visitor_id =  " + orig_visitor_id );
+                            console.log("register_customer: findAndDeletExistDocument() removed visitor = " + tenantId + " orig_visitor_id =  " + orig_visitor_id );
                         }).catch(function(error){
 
                             cleanup(db);
-                            console.error("findAndDeletExistDocument() Failed");
-                            var errMsg = "postregisterVisitor: findAndDeletExistDocument() Failed tenantId = " + tenantId + " orig_visitor_id =  " + orig_visitor_id + " " + error;
+                            console.error("register_customer: findAndDeletExistDocument() Failed");
+                            var errMsg = "register_customer: findAndDeletExistDocument() Failed tenantId = " + tenantId + " orig_visitor_id =  " + orig_visitor_id + " " + error;
                             console.error(errMsg);
                             var response = createCustomerRegisterResponse(registration_data, false, errMsg);
                             res.status(400);
@@ -381,8 +381,8 @@ exports.postregisterCustomer = function (req, res) {
             })
             .catch(function(error){
                 cleanup(db);
-                console.error("postregisterCustomer() Failed");
-                var errMsg = "postregisterCustomer: handleCustomerRegistration() Failed tenantId = " + tenantId + " orig_visitor_id =  " + orig_visitor_id + " " + error;
+                console.error("register_customer() Failed");
+                var errMsg = "register_customer: handleCustomerRegistration() Failed tenantId = " + tenantId + " orig_visitor_id =  " + orig_visitor_id + " " + error;
                 console.error(errMsg);
                 var response = createCustomerRegisterResponse(registration_data, false, errMsg);
                 res.status(400);
@@ -393,7 +393,7 @@ exports.postregisterCustomer = function (req, res) {
     })
     .catch(function(error){
         cleanup(db);
-        var errMsg = "postregisterVisitor: Connected DB Server Failed  tenantId = " + tenantId + " orig_visitor_id =  " + orig_visitor_id + " " + error;
+        var errMsg = "register_customer: Connected DB Server Failed  tenantId = " + tenantId + " orig_visitor_id =  " + orig_visitor_id + " " + error;
         console.error(errMsg);
         var response = createCustomerRegisterResponse(registration_data, false, errMsg);
         res.status(400);
@@ -404,7 +404,7 @@ exports.postregisterCustomer = function (req, res) {
 }
 
 //-----------------------------------------------------------------------------
-// functions: postunregisterCustomer
+// functions: unregister_customer
 // args: register device/user data in the body
 // description:mock for the register
 // format example:
@@ -419,7 +419,7 @@ exports.postregisterCustomer = function (req, res) {
 //     }
 // }
 //---------------------------------------------------------------------------
-exports.postunregisterCustomer = function (req, res) {
+exports.unregister_customer = function (req, res) {
     
         var err = undefined;
         var status = undefined;
@@ -432,7 +432,7 @@ exports.postunregisterCustomer = function (req, res) {
         if(unregistration_data == undefined)
         {
     
-            var errMsg = "postunregisterCustomer:unregistration_data is missing Failed !!!";
+            var errMsg = "unregister_customer:unregistration_data is missing Failed !!!";
             console.error(errMsg);
             var response = createCustomerRegisterResponse(registration_data, false, errMsg);
             res.status(400);
@@ -443,7 +443,7 @@ exports.postunregisterCustomer = function (req, res) {
         var validationResult = validateCustomerUnRegistrationData(unregistration_data);
         if(validationResult.status == false){
     
-            var errMsg = "postregisterCustomer:validateCustomerUnRegistrationData Failed " +validationResult.error;
+            var errMsg = "unregister_customer:validateCustomerUnRegistrationData Failed " +validationResult.error;
             console.error(errMsg);
             var response = createCustomerUnRegisterResponse(unregistration_data, false, errMsg);
             res.status(400);
@@ -455,7 +455,7 @@ exports.postunregisterCustomer = function (req, res) {
        
         MongoClient.connect(url)
             .then(function(db){
-                console.log("Connected correctly to server");
+                console.log("unregister_customer: Connected correctly to server");
                 status = true;
     
                
@@ -477,8 +477,8 @@ exports.postunregisterCustomer = function (req, res) {
                 })
                 .catch(function(error){
                     cleanup(db);
-                    console.error("postregisterCustomer() Failed");
-                    var errMsg = "postregisterCustomer: handleCustomerRegistration() Failed tenantId = " + tenantId + " orig_visitor_id =  " + orig_visitor_id + " " + error;
+                    console.error("unregister_customer() Failed");
+                    var errMsg = "unregister_customer: handleCustomerRegistration() Failed tenantId = " + tenantId + " orig_visitor_id =  " + orig_visitor_id + " " + error;
                     console.error(errMsg);
                     var response = createCustomerRegisterResponse(unregistration_data, false, errMsg);
                     res.status(400);
@@ -489,7 +489,7 @@ exports.postunregisterCustomer = function (req, res) {
         })
         .catch(function(error){
             cleanup(db);
-            var errMsg = "postregisterVisitor: Connected DB Server Failed  tenantId = " + tenantId + " orig_visitor_id =  " + orig_visitor_id + " " + error;
+            var errMsg = "unregister_customer: Connected DB Server Failed  tenantId = " + tenantId + " orig_visitor_id =  " + orig_visitor_id + " " + error;
             console.error(errMsg);
             var response = createCustomerRegisterResponse(unregistration_data, false, errMsg);
             res.status(400);
@@ -500,7 +500,9 @@ exports.postunregisterCustomer = function (req, res) {
     }
 
     
-//-----------------------------------------------------------------------------
+    
+
+    //-----------------------------------------------------------------------------
 // functions: postregisterVisitor
 // args: register device/user data in the body
 // description:mock for the register
@@ -838,7 +840,7 @@ var checkDeviceIdExisitinData = function (devicegroup){
         var deviceId =  Object.keys(devicegroup)[0];
 
         if(deviceId == undefined || devicegroup[deviceId] == undefined){
-             err = 'validateCustomerRegistrationData: registration_data device is missing';
+             err = 'checkDeviceIdExisitinData: registration_data device is missing';
              validationResult.error += "\n" + err;
              console.error(err);
      
@@ -860,7 +862,7 @@ var validateCustomerRegistrationData = function (registration_data){
     
         var status = true;
         var err = undefined;
-    
+        var  deviceGroup = undefined; 
         var validationResult = {status: false, error: undefined};
     
         if(registration_data.public_customer_id == undefined){
@@ -914,15 +916,15 @@ var validateCustomerRegistrationData = function (registration_data){
         
                 status = false;
             }else{
-                if(registration_data.android_token!== undefined){
-                    devicegroup = registration_data.android_token;
+                if(registration_data.android_token != undefined){
+                    deviceGroup = registration_data.android_token;
                 }  
                 else{
-                    devicegroup = registration_data.ios_token;
+                    deviceGroup = registration_data.ios_token;
                 }
                     
-               var status =  checkDeviceIdExisitinData(devicegroup);
-               if( status = false){
+               var status =  checkDeviceIdExisitinData(deviceGroup);
+               if( status == false){
                 err = 'validateUnCustomerRegistrationData: registration_data device data is missing';
                 validationResult.error += "\n" + err;
                 console.error(err);
@@ -1259,7 +1261,7 @@ var handleCustomerRegistration = function(db, customerRegistrationCollection, re
                     })
                     .catch(function(status){
                         
-                        console.error("handleCustomerRegistration: checkIfCustomerDocumentExists:  Failed InsertNewCustomerDocument - " + {_id: docId});
+                        console.error("handleCustomerRegistration: InsertNewCustomerDocument Failed  - " + {_id: docId});
                         reject(false);
                     });
                 }
@@ -1501,16 +1503,19 @@ var  createCustomerRegisterData = function (registration_data){
     
         var status = {status: true, data:undefined};
     
-        var public_customer_id = registration_data.public_customer_id;
-        var tenantId = registration_data.tenant_id;
-        var id = "tid:"+ tenantId + "_pcid:" + public_customer_id;
+        data.public_customer_id = registration_data.public_customer_id;
+        data.tenant_id = registration_data.tenant_id;
+        var id = "tid:"+ data.tenant_id + "_pcid:" + data.public_customer_id;
         data._id = id;
-        data.tenant_id  = tenantId;
+       
+       
 
         if(registration_data.android_token != undefined){
-            data.android_token = registration_data.android_token ;
+            
+            data.android_tokens = registration_data.android_token ;
         }else if(registration_data.ios_token != undefined){
-            data.android_token = registration_data.ios_token ;
+           
+            data.ios_tokens = registration_data.ios_token ;
         }
             
         status.data = data;

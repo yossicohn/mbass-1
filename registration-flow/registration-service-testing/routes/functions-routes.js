@@ -13,10 +13,10 @@ module.exports = function(app) {
 
     //  Routes
     app.route('/register-customer')
-        .post(functions_api.postregisterCustomer);
+        .post(functions_api.register_customer);
         //  Routes
     app.route('/unregister-customer')
-    .post(functions_api.postunregisterCustomer);
+    .post(functions_api.unregister_customer);
 
     app.route('/optinout-customer')
     .post(functions_api.opt_in_out_customer);

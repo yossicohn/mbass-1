@@ -63,7 +63,108 @@ var visitorsRegistrationCollection = 'VisitorsTokens';
   log.write(log.entry(metadata, errorEvent), callback);
 }
 
+// --------------------------- Utilitu member functions -----------------------
+//-----------------------------------------------------------------------------
+// functions: cleanup
+// args: db
+// description: Clean up.
+//---------------------------------------------------------------------------
+var  cleanup = function (db){
+    
+        if(db != undefined){
+            db.close();
+        }
+    }
 
+
+
+    //-----------------------------------------------------------------------------
+// functions: removeDeviceAndUpdateExistingDocument
+// args: db, registrationCollection, registration_data, existingDocument, docId 
+// return: boolean
+// description: update customer document.
+//---------------------------------------------------------------------------
+var removeDeviceAndUpdateExistingDocument = function(db, registrationCollection, unregistration_data, existingDocument, docId ){
+    
+return new Promise( function (resolve, reject) {
+    var groupType = -1;
+    if(unregistration_data.android_token != undefined){
+        groupType = 1;
+        var deviceGroup = unregistration_data.android_token;
+    }else{
+        groupType = 2;
+        deviceGroup = unregistration_data.ios_token;
+    }
+
+    var deviceId = deviceGroup.device_id;
+
+    var needUpdated=false;
+    if(groupType == 1){//android
+        delete existingDocument.android_tokens[deviceId];
+        needUpdated = true;
+
+    }else if(groupType == 2){ //ios
+        existingDocument.ios_tokens[deviceId] = undefined;
+        needUpdated = true;
+    }
+
+    if(needUpdated == true){
+        registrationCollection.update({_id: docId}, existingDocument)
+        .then(function(status){
+            resolve(true);
+        })
+        .catch(function(error){
+            reject(false);
+        })
+    }else{
+        reject(false);
+    }
+    
+});
+}
+//-----------------------------------------------------------------------------
+// functions: findAndDeletExistDocument
+// args: db, registrationCollection, tenantId, orig_visitor_id
+// description: find and delete document visitor.
+//---------------------------------------------------------------------------
+var findAndDeletExistDocument = function(db, registrationCollection, tenantId, orig_visitor_id ){
+
+return new Promise( function (resolve, reject) {
+    var id = "tid:" + tenantId + "_vid:" + orig_visitor_id;
+    registrationCollection.findOneAndDelete({"_id": id}).then(function (foundDocument) {
+        resolve(true);
+    }).catch(function (error) {
+        console.error("findAndDeletExistDocument:  Failed Deletion - " + {_id: id});
+        reject(false);
+    });
+});
+
+}
+
+
+//-----------------------------------------------------------------------------
+// functions: checkDeviceIdExisitinData
+// args: devicegroup
+// description: validate register data.
+//---------------------------------------------------------------------------
+var checkDeviceIdExisitinData = function (devicegroup){
+    
+    var status = false;
+    if(devicegroup != undefined){
+        var deviceId =  Object.keys(devicegroup)[0];
+
+        if(deviceId == undefined || devicegroup[deviceId] == undefined){
+                err = 'checkDeviceIdExisitinData: registration_data device is missing';
+                validationResult.error += "\n" + err;
+                console.error(err);
+        
+                status = false;
+        }else{
+            status = true;
+        }
+        return status;
+        }
+}
 
 exports.registerDeviceTokenMoc = functions.https.onRequest((request, response) => {
     
@@ -131,139 +232,7 @@ exports.registerDeviceTokenMoc = functions.https.onRequest((request, response) =
 })
 
 
-
-exports.registerDeviceTokenMocPromised = functions.https.onRequest((request, response) => {
-    
-// Use connect method to connect to the Server 
-    var currUUID = uuidV4(); // -> '110ec58a-a0f2-4ac4-8393-c866d813b8d1' 
-    var tokenDocument = {
-        "_id": "tid:1_pcid:" + currUUID, 
-        "tenant_id": 1, 
-        "public_customer_id ":  currUUID,
-        "opt_in": "true",
-        "is_visitor": "false",
-        
-        "android_tokens": {
-            "2b14fa8b-abcf-4347-aca9-ea3e03be657e": { 
-            "opt_in": "true",        
-            "token": "152 Bytes", 
-            "os_version": "7.002" 
-            }, 
-
-            "3c14fa8b-abcf-4347-aca9-fg4de03be657e":{   
-            "opt_in": "false",       
-            "token": "152 Bytes", 
-            "os_version": "7.002" 
-            }
-        }, 
-        "ios_tokens": { 
-            "opt_in": "false",        
-            "5b14fa8b-abcf-4347-aca9-ea3e03be657e":{         
-            "token": "152 Bytes", 
-            "os_version": "7.002" 
-            }
-        } 
-    };
-
-    MongoClient.connect(url)
-    .then(function(db){
-        console.log("Connected correctly to server");
-        var collection = db.collection(registrationCollection)
-        collection.insertOne(tokenDocument).then(function(r) {           
-            console.log("Insert One correctly to server");
-            db.close();
-            response.send("registerDeviceTokenMocPrimised: Connected succeeded " );
-        })
-        .catch(function(error){
-            console.error("InsertOne  DB Server Failed");
-            response.send("registerDeviceTokenMocPrimised: Connected Failed Exiting  " ); 
-    
-        })
-            
-       
-    })
-    .catch(function(error){
-        console.error("Connected DB Server Failed");
-        response.send("registerDeviceTokenMocPrimised: Connected Failed Exiting  " ); 
-
-    })
-})
-
-exports.registerDeviceToken = functions.https.onRequest((request, response) => {
-    
-// Use connect method to connect to the Server 
-    try{
-        MongoClient.connect(url, function(err, db) {
-        if(err == undefined )
-        {
-                console.log("Connected correctly to server");
-                var collection = db.collection(registrationCollection);       
-            
-                var tokenDocument = JSON.stringify(request.body)
-                console.log("tokenDocument=", tokenDocument);
-                collection.insert(request.body);
-                db.close();
-               
-            }     
-            else{
-
-                console.error("registerDeviceToken: Connected err ", err);
-                //response.send("registerDeviceToken: Connected err Exiting");
-                const error = new Error('Only GET requests are accepted!');
-                error.code = 405;
-                throw error;
-                
-            } 
-         response.send("registerDeviceToken: Connected succeeded Exiting");   
-            
-        });
-
-
-    }catch(err){
-        // Report the error
-        reportError(err, () => {
-        // Now respond to the HTTP request
-        res.status(err.code || 500).send(err.message);
-        });
-    }
-  
-
-})
-
-
-exports.registerDeviceTokenPromised = functions.https.onRequest((request, response) => {
-    
-// Use connect method to connect to the Server 
-    try{
-        MongoClient.connect(url)
-            .then(function(db){
-                console.log("Connected correctly to server");
-                var collection = db.collection(registrationCollection);       
-            
-                var tokenDocument = JSON.stringify(request.body)
-                console.log("tokenDocument=", tokenDocument);
-                collection.insert(request.body);
-                db.close();
-                response.send("registerDeviceToken: Connected succeeded Exiting"); 
-
-            })
-            .catch(function(error){
-                console.error("registerDeviceToken: Connected err ", error);
-                //response.send("registerDeviceToken: Connected err Exiting");
-                 var error2 = new Error('Only GET requests are accepted!');
-                error2.code = 405;
-                response.send("registerDeviceToken: Connected Failed Exiting " + error); 
-
-            })                
-
-    }catch(err){
-        // Report the error
-        reportError(err, () => {
-        // Now respond to the HTTP request
-        res.status(err.code || 500).send(err.message);
-        });
-    }
-})
+// ----------------------------------- Opt In Out Protocol ---------------------------------------------
 
 //-----------------------------------------------------------------------------
 // functions: opt_in_out_visitor(optinoutvisitor)
@@ -668,21 +637,734 @@ var  createVisitorOptInOutResponse = function (opt_data, opt_mode, opt_status, e
     
     return response_status;
     }
+// ----------------------------------- End Opt/In Out Protocol ---------------------------------------------
+
+// -----------------------------------  Register/unRegister Customer Protocol ---------------------------------------------
+
+ //-----------------------------------------------------------------------------
+// functions: register_customer
+// args: register device/user data in the body
+// description:mock for the register
+// format example:
+// {
+//     "_id": "tid:1_pcid:" + currUUID,
+//     "tenant_id": 1,
+//     "public_customer_id ":  currUUID,
+//     "opt_in": "true",
+//     "is_visitor": "false",
+//      "is_conversion": "false"
+//      "orig_visitor_id": "eb3b6e8b-97b3-47fe-9d05-3b134e7e040f",
+//
+//     "android_tokens": {
+//     "2b14fa8b-abcf-4347-aca9-ea3e03be657e": {
+//         "opt_in": "true",
+//             "token": "152 Bytes",
+//             "os_version": "7.002"
+//     }
+// }
+//---------------------------------------------------------------------------
+exports.register_customer =  functions.https.onRequest((req, res) => {
+    
+        var err = undefined;
+        var status = undefined;
+    
+    
+        var registerReq = req.body;
+        var registration_data = registerReq.registration_data;
+    
+    
+        if(registration_data == undefined)
+        {
+    
+            var errMsg = "register_customer:registration_data is missing Failed !!!";
+            console.error(errMsg);
+            var response = createCustomerRegisterResponse(registration_data, false, errMsg);
+            res.status(400);
+            res.json(response);
+            return;
+        }
+    
+        var validationResult = validateCustomerRegistrationData(registration_data);
+        if(validationResult.status == false){
+    
+            var errMsg = "register_customer:validateCustomerRegistrationData Failed " +validationResult.error;
+            console.error(errMsg);
+            var response = createCustomerRegisterResponse(registration_data, false, errMsg);
+            res.status(400);
+            res.json(response);
+            return;
+        }
+    
+        var registrationCollectionName = customersRegistrationCollection  + '_' + registration_data.tenant_id;
+        var visitorsRegistrationCollectionName = visitorsRegistrationCollection  + '_' + registration_data.tenant_id;
+    
+        MongoClient.connect(url)
+            .then(function(db){
+                console.log("register_customer: Connected correctly to server");
+                status = true;
+    
+                var orig_visitor_id = registration_data.visitor_id;
+                var tenantId = registration_data.tenant_id;
+    
+                var customerRegistrationCollection = db.collection(registrationCollectionName);
+                var visitorsRegistrationCollection = db.collection(visitorsRegistrationCollectionName);
+                // check scenario:
+                // 1. Is this Conversion of the visitor or update ==> new Customer Document
+                // 2. is this an update of existing Customer ==> update Customer Document
+                 
+                handleCustomerRegistration (db, customerRegistrationCollection, registration_data )
+                .then(function (status){
+                    if(registration_data.is_conversion == true){ //Use Case 1 remove the Visitor Document
+                        
+                        // check if customer already exist
+                            status = findAndDeletExistDocument(db, registrationCollection, tenantId, orig_visitor_id )
+                            .then(function (status){
+                                console.log("register_customer: findAndDeletExistDocument() removed visitor = " + tenantId + " orig_visitor_id =  " + orig_visitor_id );
+                            }).catch(function(error){
+    
+                                cleanup(db);
+                                console.error("register_customer: findAndDeletExistDocument() Failed");
+                                var errMsg = "register_customer: findAndDeletExistDocument() Failed tenantId = " + tenantId + " orig_visitor_id =  " + orig_visitor_id + " " + error;
+                                console.error(errMsg);
+                                var response = createCustomerRegisterResponse(registration_data, false, errMsg);
+                                res.status(400);
+                                res.json(response);
+                               
+                                return;
+            
+                            })
+                        }
+                    db.close();
+                    var response = createCustomerRegisterResponse(registration_data, true, undefined);
+                    res.json(response);
+    
+                })
+                .catch(function(error){
+                    cleanup(db);
+                    console.error("register_customer() Failed");
+                    var errMsg = "register_customer: handleCustomerRegistration() Failed tenantId = " + tenantId + " orig_visitor_id =  " + orig_visitor_id + " " + error;
+                    console.error(errMsg);
+                    var response = createCustomerRegisterResponse(registration_data, false, errMsg);
+                    res.status(400);
+                    res.json(response);
+    
+                })  
+               
+        })
+        .catch(function(error){
+            cleanup(db);
+            var errMsg = "register_customer: Connected DB Server Failed  tenantId = " + tenantId + " orig_visitor_id =  " + orig_visitor_id + " " + error;
+            console.error(errMsg);
+            var response = createCustomerRegisterResponse(registration_data, false, errMsg);
+            res.status(400);
+            res.json(response);
+    
+    
+        })
+    })
+    
+    //-----------------------------------------------------------------------------
+    // functions: unregister_customer
+    // args: register device/user data in the body
+    // description:mock for the register
+    // format example:
+    // {
+        
+    //     "unregistration_data": {
+    //         "tenant_id": "85",
+    //         "public_customer_id": "eb3b6e8b-97b3-47fe-9d05-3b134e7e040f",         
+    //         "android_token": {
+    //             “device_id”: "2b14fa8b-abcf-4347-aca9-ea3e03be657e"                  
+    //         }
+    //     }
+    // }
+    //---------------------------------------------------------------------------
+    exports.unregister_customer  = functions.https.onRequest((req, res) => {
+        
+            var err = undefined;
+            var status = undefined;
+        
+        
+            var registerReq = req.body;
+            var unregistration_data = registerReq.unregistration_data;
+        
+        
+            if(unregistration_data == undefined)
+            {
+        
+                var errMsg = "unregister_customer:unregistration_data is missing Failed !!!";
+                console.error(errMsg);
+                var response = createCustomerRegisterResponse(registration_data, false, errMsg);
+                res.status(400);
+                res.json(response);
+                return;
+            }
+        
+            var validationResult = validateCustomerUnRegistrationData(unregistration_data);
+            if(validationResult.status == false){
+        
+                var errMsg = "unregister_customer:validateCustomerUnRegistrationData Failed " +validationResult.error;
+                console.error(errMsg);
+                var response = createCustomerUnRegisterResponse(unregistration_data, false, errMsg);
+                res.status(400);
+                res.json(response);
+                return;
+            }
+        
+            var registrationCollectionName = customersRegistrationCollection  + '_' + unregistration_data.tenant_id;
+           
+            MongoClient.connect(url)
+                .then(function(db){
+                    console.log("unregister_customer: Connected correctly to server");
+                    status = true;
+        
+                   
+                    var tenantId = unregistration_data.tenant_id;
+        
+                    var customerRegistrationCollection = db.collection(registrationCollectionName);
+                  
+                    // check scenario:
+                    // 1. Is this Conversion of the visitor or update ==> new Customer Document
+                    // 2. is this an update of existing Customer ==> update Customer Document
+                     
+                    handleCustomerUnRegistration (db, customerRegistrationCollection, unregistration_data )
+                    .then(function (status){
+                        
+                        db.close();
+                        var response = createCustomerUnRegisterResponse(unregistration_data, true, undefined);
+                        res.json(response);
+        
+                    })
+                    .catch(function(error){
+                        cleanup(db);
+                        console.error("unregister_customer() Failed");
+                        var errMsg = "unregister_customer: handleCustomerRegistration() Failed tenantId = " + tenantId + " orig_visitor_id =  " + orig_visitor_id + " " + error;
+                        console.error(errMsg);
+                        var response = createCustomerRegisterResponse(unregistration_data, false, errMsg);
+                        res.status(400);
+                        res.json(response);
+        
+                    })  
+                   
+            })
+            .catch(function(error){
+                cleanup(db);
+                var errMsg = "unregister_customer: Connected DB Server Failed  tenantId = " + tenantId + " orig_visitor_id =  " + orig_visitor_id + " " + error;
+                console.error(errMsg);
+                var response = createCustomerRegisterResponse(unregistration_data, false, errMsg);
+                res.status(400);
+                res.json(response);
+        
+        
+            })
+        })
+    
+        
+
+        //-----------------------------------------------------------------------------
+// functions: createCustomerRegisterResponse
+// args: registration_data, registration_status, error
+// description: create Registration response for the  registration request.
+// {
+//
+//     "registration_status": {
+//     "tenant_id": "85",
+//         "public_customer_id": "eb3b6e8b-97b3-47fe-9d05-3b134e7e040f",
+//         “success_status”:  true
+// }
+//
+// }
+//---------------------------------------------------------------------------
+var  createCustomerRegisterResponse = function (registration_data, registration_status, error){
+    
+        var registration_response = {
+    
+            "registration_status": {
+                "tenant_id": registration_data.tenant_id,
+                "public_customer_id": registration_data.public_customer_id,
+                "success_status": registration_status
+            }
+        };
+    
+        if(error != undefined){
+            registration_response.registration_status.error = error;
+        }
+    
+        return registration_response;
+    }
+    
+    
+    //-----------------------------------------------------------------------------
+    // functions: createCustomerUnRegisterResponse
+    // args: registration_data, registration_status, error
+    // description: create Registration response for the  registration request.
+    // {
+    //
+    //     "unregistration_status": {
+    //     "tenant_id": "85",
+    //         "public_customer_id": "eb3b6e8b-97b3-47fe-9d05-3b134e7e040f",
+    //         “success_status”:  true
+    // }
+    //
+    // }
+    //---------------------------------------------------------------------------
+    var  createCustomerUnRegisterResponse = function (registration_data, registration_status, error){
+        
+            var registration_response = {
+        
+                "unregistration_status": {
+                    "tenant_id": registration_data.tenant_id,
+                    "public_customer_id": registration_data.public_customer_id,
+                    "success_status": registration_status
+                }
+            };
+        
+            if(error != undefined){
+                registration_response.registration_status.error = error;
+            }
+        
+            return registration_response;
+        }
 
 
 
 //-----------------------------------------------------------------------------
-// functions: cleanup
-// args: db
-// description: Clean up.
+// functions: handleCustomerRegistration
+// args: db, customerRegistrationCollection, registration_data 
+// description: find customer document.
 //---------------------------------------------------------------------------
-var  cleanup = function (db){
+var handleCustomerRegistration = function(db, customerRegistrationCollection, registration_data ){
+    
+        return new Promise( function (resolve, reject) {
+            var docId = "tid:" + registration_data.tenant_id + "_pcid:" + registration_data.public_customer_id;
+            checkIfCustomerDocumentExists(db, customerRegistrationCollection, registration_data.tenant_id, registration_data.public_customer_id )
+            .then(function(foundCustomerDocument){
 
-    if(db != undefined){
-        db.close();
+                if(foundCustomerDocument != undefined){ //customer Exist! shoud update
+                    
+                    updateDeviceInExistingCustomerDocument(db, customerRegistrationCollection, registration_data, foundCustomerDocument, docId)
+                    .then(function(status){
+                        resolve(true);
+                    })
+                    .catch(function(statusError){
+                        console.error("handleCustomerRegistration: updateDeviceInExistingCustomerDocument:  Failed update Customer Document - " + {_id: id} + statusError);
+                        reject(statusError);
+                    });
+                }else{//customer Not Exist! shoud Insert new Document
+                    insertNewCustomerDocument(db, customerRegistrationCollection, registration_data )
+                    .then(function(status){
+                        resolve(true);
+                    })
+                    .catch(function(status){
+                        
+                        console.error("handleCustomerRegistration: insertNewCustomerDocument Failed  " + {_id: docId});
+                        reject(false);
+                    });
+                }
+            })
+            .catch(function (error) {
+                console.error("handleCustomerRegistration:checkIfCustomerDocumentExists:  Failed Deletion - " + {_id: docId});
+                reject(false);
+            });
+        });
+    
     }
+
+//-----------------------------------------------------------------------------
+// functions: handleCustomerUnRegistration
+// args: db, customerRegistrationCollection, registration_data 
+// description: find customer document.
+//---------------------------------------------------------------------------
+var handleCustomerUnRegistration = function(db, customerRegistrationCollection, registration_data ){
+    
+    return new Promise( function (resolve, reject) {
+        var docId = "tid:" + registration_data.tenant_id + "_pcid:" + registration_data.public_customer_id;
+        checkIfCustomerDocumentExists(db, customerRegistrationCollection, registration_data.tenant_id, registration_data.public_customer_id )
+        .then(function(foundCustomerDocument){
+
+            if(foundCustomerDocument != undefined){ //customer Exist! shoud update
+                
+                removeDeviceAndUpdateExistingDocument(db, customerRegistrationCollection, registration_data, foundCustomerDocument, docId)
+                .then(function(status){
+                    resolve(true);
+                })
+                .catch(function(statusError){
+                    console.error("handleCustomerRegistration: updateDeviceInExistingCustomerDocument:  Failed update Customer Document - " + {_id: id} + statusError);
+                    reject(statusError);
+                });
+            }else{//customer Not Exist! shoud Insert new Document
+                
+            }
+        })
+        .catch(function (error) {
+            console.error("handleCustomerRegistration:checkIfCustomerDocumentExists:  Failed Deletion - " + {_id: docId});
+            reject(false);
+        });
+    });
+
+}
+
+
+//-----------------------------------------------------------------------------
+// functions: checkIfCustomerDocumentExists
+// args: db, customerRegistrationCollection, tenantId, public_customer_id
+// description: find customer document.
+//---------------------------------------------------------------------------
+var checkIfCustomerDocumentExists = function(db, customerRegistrationCollection, tenantId, public_customer_id ){
+    
+        return new Promise( function (resolve, reject) {
+            var id = "tid:" + tenantId + "_pcid:" + public_customer_id;
+            customerRegistrationCollection.findOne({"_id": id}).then(function (foundDocument) {
+                resolve(foundDocument);
+            }).catch(function (error) {
+                console.error("checkIfCustomerDocumentExists:  Failed Deletion - " + {_id: id});
+                reject(false);
+            });
+        });
+    
+    }
+
+        
+//-----------------------------------------------------------------------------
+// functions: insertNewCustomerDocument
+// args: db, customerRegistrationCollection, registration_data 
+// return: boolean
+// description: insert new customer document.
+//---------------------------------------------------------------------------
+var insertNewCustomerDocument = function(db, customerRegistrationCollection, registration_data ){
+    
+        return new Promise( function (resolve, reject) {
+            var dataResult = createCustomerRegisterData(registration_data);
+            if(dataResult.status == true){
+                customerRegistrationCollection.insertOne(dataResult.data)
+                .then(function(reultInsert){
+                    resolve(true);   
+                })
+                .catch(function(reultInsert){
+                    reject(false);
+                    });
+            }
+        });
+    
+    }
+    
+//-----------------------------------------------------------------------------
+// functions: updateDeviceInExistingCustomerDocument
+// args: db, customerRegistrationCollection, registration_data, existingDocument, docId 
+// return: boolean
+// description: update customer document.
+//---------------------------------------------------------------------------
+var updateDeviceInExistingCustomerDocument = function(db, customerRegistrationCollection, registration_data, existingDocument, docId ){
+    
+    return new Promise( function (resolve, reject) {
+        var dataResult = createCustomerRegisterDocumentFromExisting(registration_data, existingDocument);
+        if(dataResult.status == true){
+            customerRegistrationCollection.update({_id: docId}, dataResult.data)
+            .then(function(status){
+                resolve(true);
+            })
+            .catch(function(error){
+                reject(false);
+            })
+            
+        }
+    });
+
+}
+
+
+    
+//-----------------------------------------------------------------------------
+// functions: createCustomerRegisterDocumentFromExisting
+// args: registration_data, existingDocument
+// description: create Registration Document from existing One.
+// { 
+//     "_id": "tid:1_pcid:eb3b6e8b-97b3-47fe-9d05-3b134e7e040f", 
+//     "tenant_id": 1, 
+//     "public_customer_id": "eb3b6e8b-97b3-47fe-9d05-3b134e7e040f", 
+//     "opt_in": "true",
+//     "is_visitor": "false",
+	
+//     "android_tokens": {
+//         "2b14fa8b-abcf-4347-aca9-ea3e03be657e": { 
+//         "opt_in": "true",        
+//         "token": "152 Bytes", 
+//         "os_version": "7.002" 
+//         }, 
+
+//         "3c14fa8b-abcf-4347-aca9-fg4de03be657e":{         
+//         "token": "152 Bytes", 
+//         "os_version": "7.002" 
+//         }
+//     }, 
+//     "ios_tokens": { 
+//          "opt_in": "false",        
+//          "5b14fa8b-abcf-4347-aca9-ea3e03be657e":{         
+//         "token": "152 Bytes", 
+//         "os_version": "7.002" 
+//         }
+//     } 
+// }
+//---------------------------------------------------------------------------
+var createCustomerRegisterDocumentFromExisting= function (registration_data, existingDocument){
+    
+    var dataResult = {status : false, data: undefined};
+
+    try{
+        if(existingDocument != undefined){
+            //check the device type and if itis already exist
+            var deviceType = -1; // 1 = and, 2 = ios, 3 = web
+            var deviceGroup = undefined;
+            var addedDevice = undefined;
+            var existingDeviceGroup = undefined;
+            if(registration_data.android_token){
+                deviceType = 1;
+                deviceGroup = registration_data.android_token;
+                existingDeviceGroup = existingDocument.android_tokens;
+            }  
+            else if(registration_data.ios_token)
+                {
+                    deviceType = 2;
+                    deviceGroup = registration_data.ios_token;
+                    existingDeviceGroup = existingDocument.ios_tokens;
+                }
+    
+                var addedDeviceId = Object.keys(deviceGroup)[0]; // getting the device
+                addedDevice = deviceGroup[addedDeviceId];
+                existingDeviceGroup[addedDeviceId] = addedDevice;
+                dataResult.status = true;
+                dataResult.data = existingDocument;
+                return  dataResult;
+            }
+    }catch(error){
+        dataResult.status = false;
+        dataResult.data = undefined;
+        daraResult.error = error;
+        return  dataResult;
+    }
+    
 }
     
+//-----------------------------------------------------------------------------
+// functions: validateCustomerRegistrationData
+// args: registration_data
+// description: validate register data.
+//---------------------------------------------------------------------------
+var validateCustomerRegistrationData = function (registration_data){
     
+    
+        var status = true;
+        var err = undefined;
+    
+        var validationResult = {status: false, error: undefined};
+    
+        if(registration_data.public_customer_id == undefined){
+        
+            err = 'validateCustomerRegistrationData: registration_data.public_customer_id is missing';
+            validationResult.error += "\n" + err;
+            console.error(err);
+    
+            status = false;
+        }
+    
+        if(registration_data.is_visitor == undefined || registration_data.is_visitor == true){        
+            err = 'validateCustomerRegistrationData: registration_data.is_visitor is missing';
+            validationResult.error += "\n" + err;
+            console.error(err);
+    
+            status = false;
+        }
+    
+    
+        if(registration_data.tenant_id == undefined || typeof registration_data.tenant_id != 'number'){
+        
+            err = 'validateCustomerRegistrationData: registration_data.tenant_id is missing';
+            validationResult.error += "\n" + err;
+            console.error(err);
+    
+            status = false;
+        }
+    
+        if(registration_data.is_conversion == undefined ){
+        
+            err = 'validateCustomerRegistrationData: registration_data.is_conversion  is missing';
+            validationResult.error += "\n" + err;
+            console.error(err);
+    
+            status = false;
+        }
+    
+        if(registration_data.orig_visitor_id == undefined ){
+            err = 'validateCustomerRegistrationData: registration_data.orig_visitor_id  is missing';
+            validationResult.error += "\n" + err;
+            console.error(err);
+    
+            status = false;
+        }
+    
+        if(registration_data.android_token == undefined && registration_data.ios_token == unefined){
+           
+                err = 'validateUnCustomerRegistrationData: registration_data device is missing';
+                validationResult.error += "\n" + err;
+                console.error(err);
+        
+                status = false;
+            }else{
+               
+                if(registration_data.android_token != undefined){
+                    devicegroup = registration_data.android_token;
+                }  
+                else{
+                    devicegroup = registration_data.ios_token;
+                }
+                
+               var status =  checkDeviceIdExisitinData(devicegroup);
+               if( status == false){
+                err = 'validateUnCustomerRegistrationData: registration_data device data is missing';
+                validationResult.error += "\n" + err;
+                console.error(err);
+               }
+            }
+            validationResult.status = status;
+            
+            return validationResult;
+        }
 
 
+
+//-----------------------------------------------------------------------------
+// functions: validateCustomerUnRegistrationData
+// args: unregistration_data
+// description: validate register data.
+// {
+    
+//     "unregistration_data": {
+//         "tenant_id": "85",
+//         "public_customer_id": "eb3b6e8b-97b3-47fe-9d05-3b134e7e040f",
+//         "android_token": {
+//             “device_id”: "2b14fa8b-abcf-4347-aca9-ea3e03be657e"                  
+//         }
+//     }
+// }
+
+//---------------------------------------------------------------------------
+var validateCustomerUnRegistrationData = function (unregistration_data){
+
+    var status = true;
+    var err = undefined;
+
+    var validationResult = {status: false, error: undefined};
+
+    if(unregistration_data.public_customer_id == undefined)
+    {
+        err = 'validateCustomerRegistrationData: unregistration_data.public_customer_id is missing';
+        validationResult.error += "\n" + err;
+        console.error(err);
+
+        status = false;
+    }
+
+
+
+    if(unregistration_data.tenant_id == undefined || typeof unregistration_data.tenant_id != 'number')
+    {
+        err = 'validateVisitorRegistrationData: unregistration_data.tenant_id is missing';
+        validationResult.error += "\n" + err;
+        console.error(err);
+
+        status = false;
+    }
+
+    if(unregistration_data.android_token == undefined && unregistration_data.ios_token== undefined)
+        {
+            err = 'validateUnCustomerRegistrationData: unregistration_data device is missing';
+            validationResult.error += "\n" + err;
+            console.error(err);
+    
+            status = false;
+        }else{
+            var devicegroup = undefined;
+            if(unregistration_data.android_token!== undefined)
+                devicegroup = unregistration_data.android_token;
+            else
+                devicegroup = unregistration_data.ios_token;
+            var statusDevId =  checkDeviceIdExisitinData(devicegroup)
+           if( statusDevId == false){
+            err = 'validateUnCustomerRegistrationData: unregistration_data device data is missing';
+            validationResult.error += "\n" + err;
+            status = false;
+            console.error(err);
+           }
+        }
+   
+
+    validationResult.status = status;
+
+    return validationResult;
+}
+
+
+//-----------------------------------------------------------------------------
+// functions: createCustomerRegisterData
+// args: registration_data
+// description: create Registration Data for the Customer Collection.
+// { 
+//     "_id": "tid:1_pcid:eb3b6e8b-97b3-47fe-9d05-3b134e7e040f", 
+//     "tenant_id": 1, 
+//     "public_customer_id": "eb3b6e8b-97b3-47fe-9d05-3b134e7e040f", 
+//     "opt_in": "true",
+//     "is_visitor": "false",
+	
+//     "android_tokens": {
+//         "2b14fa8b-abcf-4347-aca9-ea3e03be657e": { 
+//         "opt_in": "true",        
+//         "token": "152 Bytes", 
+//         "os_version": "7.002" 
+//         }, 
+
+//         "3c14fa8b-abcf-4347-aca9-fg4de03be657e":{         
+//         "token": "152 Bytes", 
+//         "os_version": "7.002" 
+//         }
+//     }, 
+//     "ios_tokens": { 
+//          "opt_in": "false",        
+//          "5b14fa8b-abcf-4347-aca9-ea3e03be657e":{         
+//         "token": "152 Bytes", 
+//         "os_version": "7.002" 
+//         }
+//     } 
+// }
+//---------------------------------------------------------------------------
+var  createCustomerRegisterData = function (registration_data){
+   
+    var data = {
+        
+        "_id": undefined, 
+        "tenant_id": undefined, 
+        "public_customer_id": undefined, 
+        "opt_in": true,
+
+    };
+
+    var status = {status: true, data:undefined};
+
+    data.public_customer_id = registration_data.public_customer_id;
+    data.tenant_id = registration_data.tenant_id;
+    var id = "tid:"+ data.tenant_id + "_pcid:" + data.public_customer_id;
+    data._id = id;
+   
+   
+
+    if(registration_data.android_token != undefined){
+        
+        data.android_tokens = registration_data.android_token ;
+    }else if(registration_data.ios_token != undefined){
+       
+        data.ios_tokens = registration_data.ios_token ;
+    }
+        
+    status.data = data;
+    return status;
+}
+// ----------------------------------- End  Register/unRegister Customer Protocol ---------------------------------------------
