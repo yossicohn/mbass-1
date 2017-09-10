@@ -1776,11 +1776,12 @@ var  createVisitorRegisterData = function (registration_data){
 
     var status = {status: true, data:undefined};
 
-    var orig_visitor_id = registration_data.visitor_id;
+    var visitor_id = registration_data.visitor_id;
     var tenantId = registration_data.tenant_id;
-    var id = "tid:"+ tenantId + "_vid:" + orig_visitor_id;
+    var id = "tid:"+ tenantId + "_vid:" + visitor_id;
     data._id = id;
     data.tenant_id  = tenantId;
+    data.visitor_id = visitor_id;
     if(registration_data.android_token != undefined){
         data.android_token = registration_data.android_token ;
     }else if(registration_data.ios_token != undefined){

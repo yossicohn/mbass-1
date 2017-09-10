@@ -619,7 +619,7 @@ exports.register_visitor = function (req, res) {
 };
 
 //-----------------------------------------------------------------------------
-// functions: postunregisterVisitor
+// functions: unregister_visitor
 // args: register device/user data in the body
 // description:mock for the register
 // format example:
@@ -634,7 +634,7 @@ exports.register_visitor = function (req, res) {
 //      }
 //  }
 //---------------------------------------------------------------------------
-exports.postunregisterVisitor = function (req, res) {
+exports.unregister_visitor = function (req, res) {
     
         var err = undefined;
         var status = undefined;
@@ -646,7 +646,7 @@ exports.postunregisterVisitor = function (req, res) {
         if(unregistration_data == undefined)
         {
     
-            var errMsg = "postunregisterVisitor:registration_data is missing Failed !!!";
+            var errMsg = "unregister_visitor:registration_data is missing Failed !!!";
             console.error(errMsg);
             var response = createVisitorRegisterResponse(unregistration_data, false, errMsg);
             res.status(400);
@@ -657,7 +657,7 @@ exports.postunregisterVisitor = function (req, res) {
         var validationResult = validateVisitorUnRegistrationData(unregistration_data);
         if(validationResult.status == false){
     
-            var errMsg = "postunregisterVisitor:validateVisitorUnRegistrationData Failed " +validationResult.error;
+            var errMsg = "unregister_visitor:validateVisitorUnRegistrationData Failed " +validationResult.error;
             console.error(errMsg);
             var response = createVisitorRegisterResponse(unregistration_data, false, errMsg);
             res.status(400);
@@ -685,8 +685,8 @@ exports.postunregisterVisitor = function (req, res) {
     
                 }).catch(function(error){
                     cleanup(db);
-                    console.error("postunregisterVisitor: findAndDeletExistDocument() Failed");
-                    var errMsg = "postunregisterVisitor: findAndDeletExistDocument() Failed tenantId = " + tenantId + " orig_visitor_id =  " + orig_visitor_id + " " + error;
+                    console.error("unregister_visitor: findAndDeletExistDocument() Failed");
+                    var errMsg = "unregister_visitor: findAndDeletExistDocument() Failed tenantId = " + tenantId + " orig_visitor_id =  " + orig_visitor_id + " " + error;
                     console.error(errMsg);
                     var response = createVisitorRegisterResponse(unregistration_data, false, errMsg);
                     res.status(400);
@@ -697,7 +697,7 @@ exports.postunregisterVisitor = function (req, res) {
             })
             .catch(function(error){
                 cleanup(db);
-                var errMsg = "postunregisterVisitor: Connected DB Server Failed  tenantId = " + tenantId + " orig_visitor_id =  " + orig_visitor_id + " " + error;
+                var errMsg = "unregister_visitor: Connected DB Server Failed  tenantId = " + tenantId + " orig_visitor_id =  " + orig_visitor_id + " " + error;
                 console.error(errMsg);
                 var response = createVisitorRegisterResponse(registration_data, false, errMsg);
                 res.status(400);
@@ -1446,9 +1446,10 @@ var  createVisitorRegisterData = function (registration_data){
 
     var orig_visitor_id = registration_data.visitor_id;
     var tenantId = registration_data.tenant_id;
-    var id = "tid:"+ tenantId + "_vid:" + orig_visitor_id;
+    var id = "tid:"+ tenantId + "_vid:" + visitor_id;
     data._id = id;
     data.tenant_id  = tenantId;
+    data.visitor_id = visitor_id;
     if(registration_data.android_token != undefined){
         data.android_token = registration_data.android_token ;
     }else if(registration_data.ios_token != undefined){
