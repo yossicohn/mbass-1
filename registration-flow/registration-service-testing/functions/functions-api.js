@@ -347,7 +347,7 @@ exports.register_customer = function (req, res) {
             var tenantId = registration_data.tenant_id;
 
             var customerRegistrationCollection = db.collection(registrationCollectionName);
-            var visitorsRegistrationCollection = db.collection(visitorsRegistrationCollectionName);
+           
             // check scenario:
             // 1. Is this Conversion of the visitor or update ==> new Customer Document
             // 2. is this an update of existing Customer ==> update Customer Document
@@ -356,8 +356,9 @@ exports.register_customer = function (req, res) {
             .then(function (status){
                 if(registration_data.is_conversion == true){ //Use Case 1 remove the Visitor Document
                     
+                        var visitorsRegistrationCollection = db.collection(visitorsRegistrationCollectionName);
                     // check if customer already exist
-                        status = findAndDeletExistDocument(db, registrationCollection, tenantId, orig_visitor_id )
+                        status = findAndDeletExistDocument(db, visitorsRegistrationCollection, tenantId, orig_visitor_id )
                         .then(function (status){
                             console.log("register_customer: findAndDeletExistDocument() removed visitor = " + tenantId + " orig_visitor_id =  " + orig_visitor_id );
                         }).catch(function(error){
