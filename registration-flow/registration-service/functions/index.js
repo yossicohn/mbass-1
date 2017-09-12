@@ -1147,7 +1147,7 @@ var createCustomerRegisterDocumentFromExisting= function (registration_data, exi
     }
     
 }
-    
+   
 //-----------------------------------------------------------------------------
 // functions: validateCustomerRegistrationData
 // args: registration_data
@@ -1155,10 +1155,9 @@ var createCustomerRegisterDocumentFromExisting= function (registration_data, exi
 //---------------------------------------------------------------------------
 var validateCustomerRegistrationData = function (registration_data){
     
-    
         var status = true;
         var err = undefined;
-    
+        var  deviceGroup = undefined; 
         var validationResult = {status: false, error: undefined};
     
         if(registration_data.public_customer_id == undefined){
@@ -1169,15 +1168,6 @@ var validateCustomerRegistrationData = function (registration_data){
     
             status = false;
         }
-    
-        if(registration_data.is_visitor == undefined || registration_data.is_visitor == true){        
-            err = 'validateCustomerRegistrationData: registration_data.is_visitor is missing';
-            validationResult.error += "\n" + err;
-            console.error(err);
-    
-            status = false;
-        }
-    
     
         if(registration_data.tenant_id == undefined || typeof registration_data.tenant_id != 'number'){
         
@@ -1206,24 +1196,22 @@ var validateCustomerRegistrationData = function (registration_data){
         }
     
         if(registration_data.android_token == undefined && registration_data.ios_token == unefined){
-           
-                err = 'validateUnCustomerRegistrationData: registration_data device is missing';
+                err = 'validateCustomerRegistrationData: registration_data device is missing';
                 validationResult.error += "\n" + err;
                 console.error(err);
         
                 status = false;
             }else{
-               
                 if(registration_data.android_token != undefined){
-                    devicegroup = registration_data.android_token;
+                    deviceGroup = registration_data.android_token;
                 }  
                 else{
-                    devicegroup = registration_data.ios_token;
+                    deviceGroup = registration_data.ios_token;
                 }
-                
-               var status =  checkDeviceIdExisitinData(devicegroup);
+                    
+               var status =  checkDeviceIdExisitinData(deviceGroup);
                if( status == false){
-                err = 'validateUnCustomerRegistrationData: registration_data device data is missing';
+                err = 'validateCustomerRegistrationData: registration_data device data is missing';
                 validationResult.error += "\n" + err;
                 console.error(err);
                }
@@ -1260,7 +1248,7 @@ var validateCustomerUnRegistrationData = function (unregistration_data){
 
     if(unregistration_data.public_customer_id == undefined)
     {
-        err = 'validateCustomerRegistrationData: unregistration_data.public_customer_id is missing';
+        err = 'validateCustomerUnRegistrationData: unregistration_data.public_customer_id is missing';
         validationResult.error += "\n" + err;
         console.error(err);
 
@@ -1271,7 +1259,7 @@ var validateCustomerUnRegistrationData = function (unregistration_data){
 
     if(unregistration_data.tenant_id == undefined || typeof unregistration_data.tenant_id != 'number')
     {
-        err = 'validateVisitorRegistrationData: unregistration_data.tenant_id is missing';
+        err = 'validateCustomerUnRegistrationData: unregistration_data.tenant_id is missing';
         validationResult.error += "\n" + err;
         console.error(err);
 
@@ -1280,7 +1268,7 @@ var validateCustomerUnRegistrationData = function (unregistration_data){
 
     if(unregistration_data.android_token == undefined && unregistration_data.ios_token== undefined)
         {
-            err = 'validateUnCustomerRegistrationData: unregistration_data device is missing';
+            err = 'validateCustomerUnRegistrationData: unregistration_data device is missing';
             validationResult.error += "\n" + err;
             console.error(err);
     
@@ -1293,7 +1281,7 @@ var validateCustomerUnRegistrationData = function (unregistration_data){
                 devicegroup = unregistration_data.ios_token;
             var statusDevId =  checkDeviceIdExisitinData(devicegroup)
            if( statusDevId == false){
-            err = 'validateUnCustomerRegistrationData: unregistration_data device data is missing';
+            err = 'validateCustomerUnRegistrationData: unregistration_data device data is missing';
             validationResult.error += "\n" + err;
             status = false;
             console.error(err);
@@ -1580,6 +1568,8 @@ exports.unregister_visitor  = functions.https.onRequest((req, res) => {
 });
 
 
+
+
 //-----------------------------------------------------------------------------
 // functions: validateVisitorRegistrationData
 // args: registration_data
@@ -1591,16 +1581,6 @@ var validateVisitorRegistrationData = function (registration_data){
     var err = undefined;
 
     var validationResult = {status: false, error: undefined};
-
-    if(registration_data.is_visitor == undefined || registration_data.is_visitor == false)
-    {
-        err = 'validateVisitorRegistrationData: registration_data.is_visitor is missing';
-        validationResult.error += "\n" + err;
-        console.error(err);
-
-        status = false;
-    }
-
 
     if(registration_data.tenant_id == undefined || typeof registration_data.tenant_id != 'number')
     {
@@ -1637,7 +1617,7 @@ var validateVisitorRegistrationData = function (registration_data){
     return validationResult;
 
 }
-
+    
 
 //-----------------------------------------------------------------------------
 // functions: validateVisitorUnRegistrationData
@@ -1654,7 +1634,7 @@ var validateVisitorRegistrationData = function (registration_data){
 //  } 
 //---------------------------------------------------------------------------
 var validateVisitorUnRegistrationData = function (unregistration_data){
-
+    
     var status = true;
     var err = undefined;
 
