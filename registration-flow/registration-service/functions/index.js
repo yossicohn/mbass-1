@@ -765,105 +765,108 @@ exports.register_customer =  functions.https.onRequest((req, res) => {
         })
     })
     
-    //-----------------------------------------------------------------------------
-    // functions: unregister_customer
-    // args: register device/user data in the body
-    // description:mock for the register
-    // format example:
-    // {
-        
-    //     "unregistration_data": {
-    //         "tenant_id": "85",
-    //         "public_customer_id": "eb3b6e8b-97b3-47fe-9d05-3b134e7e040f",         
-    //         "android_token": {
-    //             “device_id”: "2b14fa8b-abcf-4347-aca9-ea3e03be657e"                  
-    //         }
-    //     }
-    // }
-    //---------------------------------------------------------------------------
-    exports.unregister_customer  = functions.https.onRequest((req, res) => {
-        
-            var err = undefined;
-            var status = undefined;
-        
-        
-            var registerReq = req.body;
-            var unregistration_data = registerReq.unregistration_data;
-        
-        
-            if(unregistration_data == undefined)
-            {
-        
-                var errMsg = "unregister_customer:unregistration_data is missing Failed !!!";
-                console.error(errMsg);
-                var response = createCustomerRegisterResponse(registration_data, false, errMsg);
-                res.status(400);
+    
+//-----------------------------------------------------------------------------
+// functions: unregister_customer
+// args: register device/user data in the body
+// description:mock for the register
+// format example:
+// {
+    
+//     "unregistration_data": {
+//         "tenant_id": "85",
+//         "public_customer_id": "eb3b6e8b-97b3-47fe-9d05-3b134e7e040f",         
+//         "android_token": {
+//             “device_id”: "2b14fa8b-abcf-4347-aca9-ea3e03be657e"                  
+//         }
+//     }
+// }
+//---------------------------------------------------------------------------
+exports.unregister_customer = function (req, res) {
+    
+    var err = undefined;
+    var status = undefined;
+
+
+    var registerReq = req.body;
+    var unregistration_data = registerReq.unregistration_data;
+
+
+    if(unregistration_data == undefined)
+    {
+
+        var errMsg = "unregister_customer:unregistration_data is missing Failed !!!";
+        console.error(errMsg);
+        var response = createCustomerRegisterResponse(registration_data, false, errMsg);
+        res.status(400);
+        res.json(response);
+        return;
+    }
+
+    var validationResult = validateCustomerUnRegistrationData(unregistration_data);
+    if(validationResult.status == false){
+
+        var errMsg = "unregister_customer:validateCustomerUnRegistrationData Failed " +validationResult.error;
+        console.error(errMsg);
+        var response = createCustomerUnRegisterResponse(unregistration_data, false, errMsg);
+        res.status(400);
+        res.json(response);
+        return;
+    }
+
+    var registrationCollectionName = customersRegistrationCollection  + '_' + unregistration_data.tenant_id;
+    
+    MongoClient.connect(url)
+        .then(function(db){
+            console.log("unregister_customer: Connected correctly to server");
+            status = true;
+
+            
+            var public_customer_id = unregistration_data.public_customer_id;
+            var tenantId = unregistration_data.tenant_id;
+
+            var customerRegistrationCollection = db.collection(registrationCollectionName);
+            
+            // check scenario:
+            // 1. Is this Conversion of the visitor or update ==> new Customer Document
+            // 2. is this an update of existing Customer ==> update Customer Document
+                
+            handleCustomerUnRegistration (db, customerRegistrationCollection, unregistration_data )
+            .then(function (status){
+                
+                db.close();
+                var response = createCustomerUnRegisterResponse(unregistration_data, true, undefined);
                 res.json(response);
-                return;
-            }
-        
-            var validationResult = validateCustomerUnRegistrationData(unregistration_data);
-            if(validationResult.status == false){
-        
-                var errMsg = "unregister_customer:validateCustomerUnRegistrationData Failed " +validationResult.error;
-                console.error(errMsg);
-                var response = createCustomerUnRegisterResponse(unregistration_data, false, errMsg);
-                res.status(400);
-                res.json(response);
-                return;
-            }
-        
-            var registrationCollectionName = customersRegistrationCollection  + '_' + unregistration_data.tenant_id;
-           
-            MongoClient.connect(url)
-                .then(function(db){
-                    console.log("unregister_customer: Connected correctly to server");
-                    status = true;
-        
-                   
-                    var tenantId = unregistration_data.tenant_id;
-        
-                    var customerRegistrationCollection = db.collection(registrationCollectionName);
-                  
-                    // check scenario:
-                    // 1. Is this Conversion of the visitor or update ==> new Customer Document
-                    // 2. is this an update of existing Customer ==> update Customer Document
-                     
-                    handleCustomerUnRegistration (db, customerRegistrationCollection, unregistration_data )
-                    .then(function (status){
-                        
-                        db.close();
-                        var response = createCustomerUnRegisterResponse(unregistration_data, true, undefined);
-                        res.json(response);
-        
-                    })
-                    .catch(function(error){
-                        cleanup(db);
-                        console.error("unregister_customer() Failed");
-                        var errMsg = "unregister_customer: handleCustomerRegistration() Failed tenantId = " + tenantId + " orig_visitor_id =  " + orig_visitor_id + " " + error;
-                        console.error(errMsg);
-                        var response = createCustomerRegisterResponse(unregistration_data, false, errMsg);
-                        res.status(400);
-                        res.json(response);
-        
-                    })  
-                   
+
             })
             .catch(function(error){
                 cleanup(db);
-                var errMsg = "unregister_customer: Connected DB Server Failed  tenantId = " + tenantId + " orig_visitor_id =  " + orig_visitor_id + " " + error;
+                console.error("unregister_customer() Failed");
+                var errMsg = "unregister_customer: handleCustomerRegistration() Failed tenantId = " + tenantId + " public_customer_id =  " + public_customer_id + " " + error;
                 console.error(errMsg);
                 var response = createCustomerRegisterResponse(unregistration_data, false, errMsg);
                 res.status(400);
                 res.json(response);
-        
-        
-            })
-        })
+
+            })  
+            
+    })
+    .catch(function(error){
+        cleanup(db);
+        var errMsg = "unregister_customer: Connected DB Server Failed  tenantId = " + tenantId + " public_customer_id =  " + public_customer_id + " " + error;
+        console.error(errMsg);
+        var response = createCustomerRegisterResponse(unregistration_data, false, errMsg);
+        res.status(400);
+        res.json(response);
+
+
+    })
+}
+
     
         
 
-        //-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 // functions: createCustomerRegisterResponse
 // args: registration_data, registration_status, error
 // description: create Registration response for the  registration request.
@@ -995,7 +998,9 @@ var handleCustomerUnRegistration = function(db, customerRegistrationCollection, 
                     reject(statusError);
                 });
             }else{//customer Not Exist! shoud Insert new Document
-                
+                var warnError = "Customer Document Not Exist";
+                console.warn(warnError);
+                reject(warnError);
             }
         })
         .catch(function (error) {

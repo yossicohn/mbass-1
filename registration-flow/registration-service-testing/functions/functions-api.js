@@ -460,6 +460,7 @@ exports.unregister_customer = function (req, res) {
                 status = true;
     
                
+                var public_customer_id = unregistration_data.public_customer_id;
                 var tenantId = unregistration_data.tenant_id;
     
                 var customerRegistrationCollection = db.collection(registrationCollectionName);
@@ -479,7 +480,7 @@ exports.unregister_customer = function (req, res) {
                 .catch(function(error){
                     cleanup(db);
                     console.error("unregister_customer() Failed");
-                    var errMsg = "unregister_customer: handleCustomerRegistration() Failed tenantId = " + tenantId + " orig_visitor_id =  " + orig_visitor_id + " " + error;
+                    var errMsg = "unregister_customer: handleCustomerRegistration() Failed tenantId = " + tenantId + " public_customer_id =  " + public_customer_id + " " + error;
                     console.error(errMsg);
                     var response = createCustomerRegisterResponse(unregistration_data, false, errMsg);
                     res.status(400);
@@ -490,7 +491,7 @@ exports.unregister_customer = function (req, res) {
         })
         .catch(function(error){
             cleanup(db);
-            var errMsg = "unregister_customer: Connected DB Server Failed  tenantId = " + tenantId + " orig_visitor_id =  " + orig_visitor_id + " " + error;
+            var errMsg = "unregister_customer: Connected DB Server Failed  tenantId = " + tenantId + " public_customer_id =  " + public_customer_id + " " + error;
             console.error(errMsg);
             var response = createCustomerRegisterResponse(unregistration_data, false, errMsg);
             res.status(400);
@@ -1280,7 +1281,9 @@ var handleCustomerUnRegistration = function(db, customerRegistrationCollection, 
                         reject(statusError);
                     });
                 }else{//customer Not Exist! shoud Insert new Document
-                   
+                    var warnError = "Customer Document Not Exist";
+                    console.warn(warnError);
+                    reject(warnError);
                 }
             })
             .catch(function (error) {
