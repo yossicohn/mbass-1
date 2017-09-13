@@ -783,8 +783,7 @@ var checkDeviceIdExisitinData = function (devicegroup){
         var deviceId =  Object.keys(devicegroup)[0];
 
         if(deviceId == undefined || devicegroup[deviceId] == undefined){
-             err = 'checkDeviceIdExisitinData: registration_data device is missing';
-             validationResult.error += "\n" + err;
+             var err = 'checkDeviceIdExisitinData: registration_data device is missing';
              console.error(err);
      
              status = false;
@@ -1673,7 +1672,7 @@ var  createCustomerUnRegisterResponse = function (registration_data, registratio
         };
     
         if(error != undefined){
-            registration_response.registration_status.error = error;
+            registration_response.unregistration_status.error = error;
         }
     
         return registration_response;

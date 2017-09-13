@@ -149,14 +149,13 @@ return new Promise( function (resolve, reject) {
 // description: validate register data.
 //---------------------------------------------------------------------------
 var checkDeviceIdExisitinData = function (devicegroup){
-    
+
     var status = false;
     if(devicegroup != undefined){
         var deviceId =  Object.keys(devicegroup)[0];
 
         if(deviceId == undefined || devicegroup[deviceId] == undefined){
-                err = 'checkDeviceIdExisitinData: registration_data device is missing';
-                validationResult.error += "\n" + err;
+                var err = 'checkDeviceIdExisitinData: registration_data device is missing';
                 console.error(err);
         
                 status = false;
@@ -166,6 +165,7 @@ var checkDeviceIdExisitinData = function (devicegroup){
         return status;
         }
 }
+    
 
 exports.registerDeviceTokenMoc = functions.https.onRequest((request, response) => {
     
@@ -782,7 +782,7 @@ exports.register_customer =  functions.https.onRequest((req, res) => {
 //     }
 // }
 //---------------------------------------------------------------------------
-exports.unregister_customer = function (req, res) {
+exports.unregister_customer = functions.https.onRequest((req, res) => {
     
     var err = undefined;
     var status = undefined;
@@ -859,9 +859,8 @@ exports.unregister_customer = function (req, res) {
         res.status(400);
         res.json(response);
 
-
     })
-}
+})
 
     
         
@@ -899,37 +898,37 @@ var  createCustomerRegisterResponse = function (registration_data, registration_
     }
     
     
-    //-----------------------------------------------------------------------------
-    // functions: createCustomerUnRegisterResponse
-    // args: registration_data, registration_status, error
-    // description: create Registration response for the  registration request.
-    // {
-    //
-    //     "unregistration_status": {
-    //     "tenant_id": "85",
-    //         "public_customer_id": "eb3b6e8b-97b3-47fe-9d05-3b134e7e040f",
-    //         “success_status”:  true
-    // }
-    //
-    // }
-    //---------------------------------------------------------------------------
-    var  createCustomerUnRegisterResponse = function (registration_data, registration_status, error){
-        
-            var registration_response = {
-        
-                "unregistration_status": {
-                    "tenant_id": registration_data.tenant_id,
-                    "public_customer_id": registration_data.public_customer_id,
-                    "success_status": registration_status
-                }
-            };
-        
-            if(error != undefined){
-                registration_response.registration_status.error = error;
+//-----------------------------------------------------------------------------
+// functions: createCustomerUnRegisterResponse
+// args: registration_data, registration_status, error
+// description: create Registration response for the  registration request.
+// {
+//
+//     "unregistration_status": {
+//     "tenant_id": "85",
+//         "public_customer_id": "eb3b6e8b-97b3-47fe-9d05-3b134e7e040f",
+//         “success_status”:  true
+// }
+//
+// }
+//---------------------------------------------------------------------------
+var  createCustomerUnRegisterResponse = function (registration_data, registration_status, error){
+    
+        var registration_response = {
+    
+            "unregistration_status": {
+                "tenant_id": registration_data.tenant_id,
+                "public_customer_id": registration_data.public_customer_id,
+                "success_status": registration_status
             }
-        
-            return registration_response;
+        };
+    
+        if(error != undefined){
+            registration_response.unregistration_status.error = error;
         }
+    
+        return registration_response;
+    }
 
 
 
@@ -1245,59 +1244,60 @@ var validateCustomerRegistrationData = function (registration_data){
 
 //---------------------------------------------------------------------------
 var validateCustomerUnRegistrationData = function (unregistration_data){
-
-    var status = true;
-    var err = undefined;
-
-    var validationResult = {status: false, error: undefined};
-
-    if(unregistration_data.public_customer_id == undefined)
-    {
-        err = 'validateCustomerUnRegistrationData: unregistration_data.public_customer_id is missing';
-        validationResult.error += "\n" + err;
-        console.error(err);
-
-        status = false;
-    }
-
-
-
-    if(unregistration_data.tenant_id == undefined || typeof unregistration_data.tenant_id != 'number')
-    {
-        err = 'validateCustomerUnRegistrationData: unregistration_data.tenant_id is missing';
-        validationResult.error += "\n" + err;
-        console.error(err);
-
-        status = false;
-    }
-
-    if(unregistration_data.android_token == undefined && unregistration_data.ios_token== undefined)
+    
+        var status = true;
+        var err = undefined;
+    
+        var validationResult = {status: false, error: undefined};
+    
+        if(unregistration_data.public_customer_id == undefined)
         {
-            err = 'validateCustomerUnRegistrationData: unregistration_data device is missing';
+            err = 'validateCustomerUnRegistrationData: unregistration_data.public_customer_id is missing';
             validationResult.error += "\n" + err;
             console.error(err);
     
             status = false;
-        }else{
-            var devicegroup = undefined;
-            if(unregistration_data.android_token!== undefined)
-                devicegroup = unregistration_data.android_token;
-            else
-                devicegroup = unregistration_data.ios_token;
-            var statusDevId =  checkDeviceIdExisitinData(devicegroup)
-           if( statusDevId == false){
-            err = 'validateCustomerUnRegistrationData: unregistration_data device data is missing';
-            validationResult.error += "\n" + err;
-            status = false;
-            console.error(err);
-           }
         }
-   
-
-    validationResult.status = status;
-
-    return validationResult;
-}
+    
+    
+    
+        if(unregistration_data.tenant_id == undefined || typeof unregistration_data.tenant_id != 'number')
+        {
+            err = 'validateCustomerUnRegistrationData: unregistration_data.tenant_id is missing';
+            validationResult.error += "\n" + err;
+            console.error(err);
+    
+            status = false;
+        }
+    
+        if(unregistration_data.android_token == undefined && unregistration_data.ios_token== undefined)
+            {
+                err = 'validateCustomerUnRegistrationData: unregistration_data device is missing';
+                validationResult.error += "\n" + err;
+                console.error(err);
+        
+                status = false;
+            }else{
+                var devicegroup = undefined;
+                if(unregistration_data.android_token!== undefined)
+                    devicegroup = unregistration_data.android_token;
+                else
+                    devicegroup = unregistration_data.ios_token;
+                var statusDevId =  checkDeviceIdExisitinData(devicegroup)
+               if( statusDevId == false){
+                var err = 'validateCustomerUnRegistrationData: unregistration_data device data is missing';
+                validationResult.error += "\n" + err;
+                status = false;
+                console.error(err);
+               }
+            }
+       
+    
+        validationResult.status = status;
+    
+        return validationResult;
+    }
+    
 
 
 //-----------------------------------------------------------------------------
