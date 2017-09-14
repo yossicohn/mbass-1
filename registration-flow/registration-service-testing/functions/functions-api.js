@@ -678,12 +678,12 @@ exports.unregister_visitor = function (req, res) {
                 var tenantId = unregistration_data.tenant_id;
     
                 var registrationCollection = db.collection(registrationCollectionName);
-                status = findAndDeletExistDocument(db, registrationCollection, tenantId, orig_visitor_id )    
+                findAndDeletExistDocument(db, registrationCollection, tenantId, orig_visitor_id )
                 .then(function (status){
-    
-                        db.close();                        
-                        var response = createVisitorRegisterResponse(unregistration_data, true, undefined);
-                        res.json(response);
+
+                    cleanup(db);
+                    var response = createVisitorRegisterResponse(unregistration_data, true, undefined);
+                    res.json(response);
     
                 }).catch(function(error){
                     cleanup(db);
@@ -842,7 +842,7 @@ var validateCustomerRegistrationData = function (registration_data){
             status = false;
         }
     
-        if(registration_data.android_token == undefined && registration_data.ios_token == unefined){
+        if(registration_data.android_token == undefined && registration_data.ios_token == undefined){
                 err = 'validateCustomerRegistrationData: registration_data device is missing';
                 validationResult.error += "\n" + err;
                 console.error(err);
@@ -928,7 +928,7 @@ var validateCustomerUnRegistrationData = function (unregistration_data){
                 devicegroup = unregistration_data.ios_token;
             var statusDevId =  checkDeviceIdExisitinData(devicegroup)
            if( statusDevId == false){
-            err = 'validateCustomerUnRegistrationData: unregistration_data device data is missing';
+            var err = 'validateCustomerUnRegistrationData: unregistration_data device data is missing';
             validationResult.error += "\n" + err;
             status = false;
             console.error(err);
@@ -1178,27 +1178,40 @@ var removeDeviceAndUpdateExistingDocument = function(db, registrationCollection,
     
         return new Promise( function (resolve, reject) {
             var groupType = -1;
+           
             if(unregistration_data.android_token != undefined){
                 groupType = 1;
-                var deviceGroup = unregistration_data.android_token;
+                var deviceGroup = unregistration_data.android_token;                
             }else{
                 groupType = 2;
                 deviceGroup = unregistration_data.ios_token;
             }
-
+           
             var deviceId = deviceGroup.device_id;
-
+            var app_ns = deviceGroup.app_ns;
             var needUpdated=false;
-            if(groupType == 1){//android
-               delete existingDocument.android_tokens[deviceId];
-                needUpdated = true;
+            var app = {};
+            var exisitingDeviceGroup = {};
+            if(groupType == 1){//android               
+               exisitingDeviceGroup = existingDocument.android_tokens[deviceId];                            
+               needUpdated = true;
 
-            }else if(groupType == 2){ //ios
-                existingDocument.ios_tokens[deviceId] = undefined;
+            }else if(groupType == 2){ //ios                
+                exisitingDeviceGroup = existingDocument.ios_tokens[deviceId];                          
                 needUpdated = true;
             }
-
-            if(needUpdated == true){
+            
+            if(needUpdated == true){   
+                delete exisitingDeviceGroup.apps[app_ns];
+                
+                if(Object.keys(exisitingDeviceGroup.apps).length == 0) 
+                {// if deveice has no apps then delete the device as well
+                    if(groupType == 1){
+                        delete  existingDocument.android_tokens[deviceId]; 
+                    }else if(groupType == 2){
+                        delete  existingDocument.ios_tokens[deviceId]; 
+                    }                    
+                }               
                 updateDocumentOptInStatus(existingDocument);
                 registrationCollection.update({_id: docId}, existingDocument)
                 .then(function(status){
@@ -1303,35 +1316,36 @@ var handleOptInOutUpdate = function(db, registrationCollection, docId,existingDo
         var deviceGroup = undefined;
         var needUpdated = false;
         var devicePlatform = -1;
+        var app_ns = undefined;
         var updatedDeviceId = undefined; 
         var existsingDeviceGroup = undefined;
 
         if(opt_request.ios_token != undefined){
                 updatedDeviceId = opt_request.ios_token.device_id;
                 devicePlatform = 2;
-            }else if(opt_request.android_token != undefined){
-                updatedDeviceId = opt_request.android_token.device_id;
-                devicePlatform = 1;
-            }
-            
-        if(devicePlatform == 1){
-            if(existingDocument.android_tokens != undefined && Object.keys(existingDocument.android_tokens)[0] != undefined){        
-                existsingDeviceGroup = existingDocument.android_tokens[updatedDeviceId];
-                needUpdated = true                           
-            }else{
-                reject("No existsingDeviceGroup");
-            }
-        }else if (devicePlatform == 2){
-            if(existingDocument.ios_tokens != undefined && Object.keys(existingDocument.ios_tokens)[0] != undefined){        
+            if(existingDocument.ios_tokens != undefined && Object.keys(existingDocument.ios_tokens)[0] != undefined){
                 existsingDeviceGroup = existingDocument.ios_tokens[updatedDeviceId];
+                app_ns = opt_request.ios_tokens.app_ns;
                 needUpdated = true;
             }else{
                 reject("No existsingDeviceGroup");
             }
-        }           
+        }else if(opt_request.android_token != undefined){
+                updatedDeviceId = opt_request.android_token.device_id;
+                devicePlatform = 1;
+                if(existingDocument.android_tokens != undefined && Object.keys(existingDocument.android_tokens)[0] != undefined){
+                    existsingDeviceGroup = existingDocument.android_tokens[updatedDeviceId];
+                    app_ns = opt_request.android_token.app_ns;
+                    needUpdated = true
+                }else{
+                    reject("No existsingDeviceGroup");
+                }
+            }
 
-        if(needUpdated == true){           
-            existsingDeviceGroup.opt_in = opt_mode;
+        if(needUpdated == true){
+
+            existsingDeviceGroup.apps[app_ns].opt_in = opt_mode;
+
             if(opt_mode == false){
                 updateDocumentOptInStatus(existingDocument);
             }else{
@@ -1367,28 +1381,48 @@ var updateDocumentOptInStatus = function (existingDocument){
         var androidKeys = Object.keys(androidDeviceGroup);
         if(androidKeys[0] != undefined){               
             androidKeys.forEach(function(key){
-                if(androidDeviceGroup[key].opt_in == true){
-                    existingDocument.opt_in = true;
+                var device = androidDeviceGroup[key];
+                var apps = device.apps;
+                var Apps_ns_Keys = Object.keys(apps);
+                Apps_ns_Keys.forEach(function(app_ns){
+                if(apps[app_ns].opt_in == true){                    
+                    opt_in = true;
                     return;
                 }
+                    
+                })                
             })
         }
 
     }
         
+    if(opt_in == true)
+    {
+        existingDocument.opt_in = true;
+        return;
+    }
+        
     if(iosDeviceGroup != undefined){
         var iosKeys = Object.keys(iosDeviceGroup);
         if(iosKeys[0] != undefined){               
-            iosKeys.forEach(function(key){
-                if(iosDeviceGroup[key].opt_in == true){
-                    existingDocument.opt_in = true;
-                    return;
-                }
+                iosKeys.forEach(function(key){
+                    var device = iosDeviceGroup[key];
+                    var apps = device.apps;
+                    var Apps_ns_Keys = Object.keys(apps);
+                    Apps_ns_Keys.forEach(function(app_ns){
+                    if(apps[app_ns].opt_in == true){
+                        existingDocument.opt_in = true;
+                        return;
+                    }                
+                })
             })
-        }
+        }   
+    } 
+    
+    if(opt_in == false)
+    {
+        existingDocument.opt_in = false;        
     }
-    existingDocument.opt_in = false;
-
 }
 
 
@@ -1427,7 +1461,7 @@ var  createVisitorRegisterData = function (registration_data){
 
     var status = {status: true, data:undefined};
 
-    var orig_visitor_id = registration_data.visitor_id;
+    var visitor_id = registration_data.visitor_id;
     var tenantId = registration_data.tenant_id;
     var id = "tid:"+ tenantId + "_vid:" + visitor_id;
     data._id = id;
@@ -1448,32 +1482,22 @@ var  createVisitorRegisterData = function (registration_data){
 // functions: createCustomerRegisterData
 // args: registration_data
 // description: create Registration Data for the Customer Collection.
-// { 
-//     "_id": "tid:1_pcid:eb3b6e8b-97b3-47fe-9d05-3b134e7e040f", 
-//     "tenant_id": 1, 
-//     "public_customer_id": "eb3b6e8b-97b3-47fe-9d05-3b134e7e040f", 
+// {
+//     "_id": "tid:85_pcid:eb3b6e8b-97b3-47fe-9d05-3b134e7e040f",
+//     "tenant_id": 85,
+//     "public_customer_id": "eb3b6e8b-97b3-47fe-9d05-3b134e7e040f",
 //     "opt_in": "true",
-//     "is_visitor": "false",
-	
 //     "android_tokens": {
-//         "2b14fa8b-abcf-4347-aca9-ea3e03be657e": { 
-//         "opt_in": "true",        
-//         "token": "152 Bytes", 
-//         "os_version": "7.002" 
-//         }, 
-
-//         "3c14fa8b-abcf-4347-aca9-fg4de03be657e":{         
-//         "token": "152 Bytes", 
-//         "os_version": "7.002" 
-//         }
-//     }, 
-//     "ios_tokens": { 
-//          "opt_in": "false",        
-//          "5b14fa8b-abcf-4347-aca9-ea3e03be657e":{         
-//         "token": "152 Bytes", 
-//         "os_version": "7.002" 
-//         }
-//     } 
+//       "2b14fa8b-abcf-4347-aca9-ea3e03be657e": {
+//         "apps": {
+//           "app_ns.org": {
+//             "opt_in": "false",
+//             "token": "152 Bytes"
+//           }
+//         },
+//         "os_version": "7.002"
+//       }
+//     }
 // }
 //---------------------------------------------------------------------------
 var  createCustomerRegisterData = function (registration_data){
@@ -1492,13 +1516,12 @@ var  createCustomerRegisterData = function (registration_data){
         data.public_customer_id = registration_data.public_customer_id;
         data.tenant_id = registration_data.tenant_id;
         var id = "tid:"+ data.tenant_id + "_pcid:" + data.public_customer_id;
-        data._id = id;
-       
-       
+        data._id = id;              
 
         if(registration_data.android_token != undefined){
             
             data.android_tokens = registration_data.android_token ;
+           
         }else if(registration_data.ios_token != undefined){
            
             data.ios_tokens = registration_data.ios_token ;
@@ -1552,21 +1575,37 @@ var  createCustomerRegisterData = function (registration_data){
             var deviceGroup = undefined;
             var addedDevice = undefined;
             var existingDeviceGroup = undefined;
-            if(registration_data.android_token){
+            if(registration_data.android_token != undefined){
                 deviceType = 1;
                 deviceGroup = registration_data.android_token;
+                if(existingDocument.android_tokens == undefined){
+                    existingDocument.android_tokens = {};
+                }
                 existingDeviceGroup = existingDocument.android_tokens;
             }  
-            else if(registration_data.ios_token)
+            else if(registration_data.ios_token != undefined)
                 {
                     deviceType = 2;
                     deviceGroup = registration_data.ios_token;
+                    if(existingDocument.ios_tokens == undefined){
+                        existingDocument.ios_tokens = {};
+                    }
                     existingDeviceGroup = existingDocument.ios_tokens;
                 }
     
                 var addedDeviceId = Object.keys(deviceGroup)[0]; // getting the device
                 addedDevice = deviceGroup[addedDeviceId];
-                existingDeviceGroup[addedDeviceId] = addedDevice;
+                var  apps = addedDevice.apps; // getting the app Daty
+                var app_ns = Object.keys(apps)[0];
+                var app_data = apps[app_ns]; // app data = token, opt_in
+                if(existingDeviceGroup[addedDeviceId] == undefined)
+                {
+                    existingDeviceGroup[addedDeviceId] = {};
+                    existingDeviceGroup[addedDeviceId].apps = {};
+                }
+                existingDeviceGroup[addedDeviceId].apps[app_ns] = app_data;
+                existingDeviceGroup[addedDeviceId].os_version = addedDevice.os_version; // update the OS Version.
+
                 dataResult.status = true;
                 dataResult.data = existingDocument;
                return  dataResult;
@@ -1629,11 +1668,12 @@ var  createVisitorRegisterResponse = function (registration_data, registration_s
 //---------------------------------------------------------------------------
 var  createCustomerRegisterResponse = function (registration_data, registration_status, error){
 
+    
     var registration_response = {
 
         "registration_status": {
             "tenant_id": registration_data.tenant_id,
-            "public_customer_id": registration_data.public_customer_id,
+            "public_customer_id": registration_data.public_customer_id,            
             "success_status": registration_status
         }
     };
@@ -1695,7 +1735,7 @@ var  createCustomerOptInOutResponse = function (opt_data, opt_mode, opt_status, 
     var response_status = undefined;
     var opt_out_status_response = {
 
-        "opt-out_status": {
+        "opt_out_status": {
             "tenant_id": opt_data.tenant_id,
             "public_customer_id": opt_data.public_customer_id,
             "device_id": opt_data.device_id,
