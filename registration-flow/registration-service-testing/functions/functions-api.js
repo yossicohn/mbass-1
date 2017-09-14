@@ -1519,7 +1519,7 @@ var  createCustomerRegisterData = function (registration_data){
         data._id = id;              
 
         if(registration_data.android_token != undefined){
-            
+        
             data.android_tokens = registration_data.android_token ;
            
         }else if(registration_data.ios_token != undefined){
@@ -1536,33 +1536,25 @@ var  createCustomerRegisterData = function (registration_data){
 // functions: createCustomerRegisterDocumentFromExisting
 // args: registration_data, existingDocument
 // description: create Registration Document from existing One.
-// { 
-//     "_id": "tid:1_pcid:eb3b6e8b-97b3-47fe-9d05-3b134e7e040f", 
-//     "tenant_id": 1, 
-//     "public_customer_id": "eb3b6e8b-97b3-47fe-9d05-3b134e7e040f", 
-//     "opt_in": "true",
-//     "is_visitor": "false",
-	
-//     "android_tokens": {
-//         "2b14fa8b-abcf-4347-aca9-ea3e03be657e": { 
-//         "opt_in": "true",        
-//         "token": "152 Bytes", 
-//         "os_version": "7.002" 
-//         }, 
-
-//         "3c14fa8b-abcf-4347-aca9-fg4de03be657e":{         
-//         "token": "152 Bytes", 
-//         "os_version": "7.002" 
+// {
+//     "registration_data": {
+//       "tenant_id": 85,
+//       "public_customer_id": "32862a06-cdcd-4f75-ace4-a721aea02c98",
+//       "is_conversion": false,
+//       "orig_visitor_id": "ef3b6e8b-89c3-47fe-9d05-3b254e7e040f",
+//       "android_token": {
+//         "2b14fa8b-abcf-4347-aca9-ea3e03be657e": {
+//           "apps": {
+//             "app_ns.com": {
+//               "opt_in": true,
+//               "token": "152 Bytes"
+//             }
+//           },
+//           "os_version": "7.02"
 //         }
-//     }, 
-//     "ios_tokens": { 
-//          "opt_in": "false",        
-//          "5b14fa8b-abcf-4347-aca9-ea3e03be657e":{         
-//         "token": "152 Bytes", 
-//         "os_version": "7.002" 
-//         }
-//     } 
-// }
+//       }
+//     }
+//   }
 //---------------------------------------------------------------------------
   var createCustomerRegisterDocumentFromExisting= function (registration_data, existingDocument){
 
