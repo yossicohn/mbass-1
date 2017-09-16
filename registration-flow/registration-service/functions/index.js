@@ -185,7 +185,7 @@ var checkDeviceIdExisitinData = function (devicegroup){
 // ----------------------------------- Opt In Out Protocol ---------------------------------------------
 
 //-----------------------------------------------------------------------------
-// functions: opt_in_out_visitor
+// functions: optInOutVisitor
 // args: register device/user data in the body
 // description:mock for the register
 // format example:
@@ -199,7 +199,7 @@ var checkDeviceIdExisitinData = function (devicegroup){
 //     }
 //  }
 //---------------------------------------------------------------------------
-exports.opt_in_out_visitor = functions.https.onRequest((req, res) => {
+exports.optInOutVisitor = functions.https.onRequest((req, res) => {
     
         var err = undefined;
         var status = undefined;
@@ -219,7 +219,7 @@ exports.opt_in_out_visitor = functions.https.onRequest((req, res) => {
         if(opt_request == undefined)
         {
 
-            var errMsg = "opt_in_out_visitor:opt_request is missing data Failed !!!";
+            var errMsg = "optInOutVisitor:opt_request is missing data Failed !!!";
             console.error(errMsg);
             var response = createVisitorOptInOutResponse(opt_request, opt_mode, false, errMsg);
             res.status(400);
@@ -232,7 +232,7 @@ exports.opt_in_out_visitor = functions.https.onRequest((req, res) => {
 
         if(validationResult.status == false){
 
-            var errMsg = "opt_in_out_visitor:validateCustomerOptInOutData Failed " +validationResult.error;
+            var errMsg = "optInOutVisitor:validateCustomerOptInOutData Failed " +validationResult.error;
             console.error(errMsg);
             var response = createVisitorOptInOutResponse(opt_request, opt_mode, false, errMsg);
             res.status(400);
@@ -244,7 +244,7 @@ exports.opt_in_out_visitor = functions.https.onRequest((req, res) => {
         
         MongoClient.connect(url)
         .then(function(db){
-            console.log("opt_in_out_visitor: Connected correctly to server");
+            console.log("optInOutVisitor: Connected correctly to server");
             status = true;           
             var tenantId = opt_request.tenant_id;
             var visitorsRegistrationCollection = db.collection(registrationCollectionName);
@@ -258,7 +258,7 @@ exports.opt_in_out_visitor = functions.https.onRequest((req, res) => {
                     res.json(response);
                 })
                 .catch(function(error){
-                    var errMsg = "opt_in_out_visitor:handleOptInOutUpdate Failed " + error;
+                    var errMsg = "optInOutVisitor:handleOptInOutUpdate Failed " + error;
                     console.error(errMsg);
                     var response = createVisitorOptInOutResponse(opt_request, opt_mode, false, errMsg);
                     res.status(400);
@@ -268,7 +268,7 @@ exports.opt_in_out_visitor = functions.https.onRequest((req, res) => {
             })
             .catch(function(error){
                 cleanup(db);
-                var errMsg = "opt_in_out_visitor:customerRegistrationCollection.findOne Failed " + error;
+                var errMsg = "optInOutVisitor:customerRegistrationCollection.findOne Failed " + error;
                 console.error(errMsg);
                 var response = createVisitorOptInOutResponse(opt_request, opt_mode, false, errMsg);
                 res.status(400);
@@ -279,7 +279,7 @@ exports.opt_in_out_visitor = functions.https.onRequest((req, res) => {
         })
         .catch(function(error){
             
-            var errMsg = "opt_in_out_visitor: Connected DB Server Failed  tenantId = " + opt_request.tenant_id + " visitor_id =  " + opt_request.visitor_id + " " + error;
+            var errMsg = "optInOutVisitor: Connected DB Server Failed  tenantId = " + opt_request.tenant_id + " visitor_id =  " + opt_request.visitor_id + " " + error;
             console.error(errMsg);
             var response = createVisitorOptInOutResponse(opt_request, opt_mode, false, errMsg);
             res.status(400);
@@ -291,7 +291,7 @@ exports.opt_in_out_visitor = functions.https.onRequest((req, res) => {
 
 
 //-----------------------------------------------------------------------------
-// functions: opt_in_out_customer
+// functions: optInOutCustomer
 // args: register device/user data in the body
 // description:mock for the register
 // format example:
@@ -305,7 +305,7 @@ exports.opt_in_out_visitor = functions.https.onRequest((req, res) => {
 //     }
 //  }
 //---------------------------------------------------------------------------
-exports.opt_in_out_customer = functions.https.onRequest((req, res) => {
+exports.optInOutCustomer = functions.https.onRequest((req, res) => {
     
     var err = undefined;
     var status = undefined;
@@ -325,7 +325,7 @@ exports.opt_in_out_customer = functions.https.onRequest((req, res) => {
     if(opt_request == undefined)
     {
 
-        var errMsg = "opt_in_out_customer:opt_request is missing data Failed !!!";
+        var errMsg = "optInOutCustomer:opt_request is missing data Failed !!!";
         console.error(errMsg);
         var response = createCustomerOptInOutResponse(opt_request, opt_mode, false, errMsg);
         res.status(400);
@@ -339,7 +339,7 @@ exports.opt_in_out_customer = functions.https.onRequest((req, res) => {
     
     if(validationResult.status == false){
 
-        var errMsg = "opt_in_out_customer:validateCustomerOptInOutData Failed " +validationResult.error;
+        var errMsg = "optInOutCustomer:validateCustomerOptInOutData Failed " +validationResult.error;
         console.error(errMsg);
         var response = createCustomerOptInOutResponse(opt_request, opt_mode, false, errMsg);
         res.status(400);
@@ -351,7 +351,7 @@ exports.opt_in_out_customer = functions.https.onRequest((req, res) => {
     
     MongoClient.connect(url)
     .then(function(db){
-        console.log("opt_in_out_customer:Connected correctly to server");
+        console.log("optInOutCustomer:Connected correctly to server");
         status = true;           
         var tenantId = opt_request.tenant_id;
         var customerRegistrationCollection = db.collection(registrationCollectionName);
@@ -365,7 +365,7 @@ exports.opt_in_out_customer = functions.https.onRequest((req, res) => {
                 res.json(response);
             })
             .catch(function(error){
-                var errMsg = "opt_in_out_customer:handleOptInOutUpdate Failed " + error;
+                var errMsg = "optInOutCustomer:handleOptInOutUpdate Failed " + error;
                 console.error(errMsg);
                 var response = createCustomerOptInOutResponse(opt_request, opt_mode, false, errMsg);
                 res.status(400);
@@ -375,7 +375,7 @@ exports.opt_in_out_customer = functions.https.onRequest((req, res) => {
         })
         .catch(function(error){
             cleanup(db);
-            var errMsg = "opt_in_out_customer: customerRegistrationCollection.findOne Failed " + error;
+            var errMsg = "optInOutCustomer: customerRegistrationCollection.findOne Failed " + error;
             console.error(errMsg);
             var response = createCustomerOptInOutResponse(opt_request, opt_mode, false, errMsg);
             res.status(400);
@@ -386,7 +386,7 @@ exports.opt_in_out_customer = functions.https.onRequest((req, res) => {
     })
     .catch(function(error){
         
-            var errMsg = "opt_in_out_customer: Connected DB Server Failed  tenantId = " + opt_request.tenant_id + " public_customer_id =  " + opt_request.public_customer_id + " " + error;
+            var errMsg = "optInOutCustomer: Connected DB Server Failed  tenantId = " + opt_request.tenant_id + " public_customer_id =  " + opt_request.public_customer_id + " " + error;
             console.error(errMsg);
             var response = createCustomerOptInOutResponse(opt_request, opt_mode, false, errMsg);
             res.status(400);
@@ -456,6 +456,7 @@ var handleOptInOutUpdate = function(db, registrationCollection, docId,existingDo
 
 
 
+
 //-----------------------------------------------------------------------------
 // functions: updateDocumentOptInStatus
 // args: existingDocument
@@ -464,7 +465,7 @@ var handleOptInOutUpdate = function(db, registrationCollection, docId,existingDo
 // if one is true then root should be true.
 //---------------------------------------------------------------------------
 var updateDocumentOptInStatus = function (existingDocument){
-
+    
     var opt_in = false;
     var androidDeviceGroup = existingDocument.android_tokens;
     var iosDeviceGroup = existingDocument.ios_tokens;    
@@ -509,7 +510,7 @@ var updateDocumentOptInStatus = function (existingDocument){
             })
         }   
     } 
-
+    
     if(opt_in == false)
     {
         existingDocument.opt_in = false;        
@@ -623,7 +624,7 @@ var  createVisitorOptInOutResponse = function (opt_data, opt_mode, opt_status, e
 // -----------------------------------  Register/unRegister Customer Protocol ---------------------------------------------
 
  //-----------------------------------------------------------------------------
-// functions: register_customer
+// functions: register-customer
 // args: register device/user data in the body
 // description:mock for the register
 // format example:
@@ -644,7 +645,7 @@ var  createVisitorOptInOutResponse = function (opt_data, opt_mode, opt_status, e
 //     }
 // }
 //---------------------------------------------------------------------------
-exports.register_customer =  functions.https.onRequest((req, res) => {
+exports.registerCustomer =  functions.https.onRequest((req, res) => {
     
     var err = undefined;
     var status = undefined;
@@ -657,7 +658,7 @@ exports.register_customer =  functions.https.onRequest((req, res) => {
     if(registration_data == undefined)
     {
 
-        var errMsg = "register_customer:registration_data is missing Failed !!!";
+        var errMsg = "registerCustomer:registration_data is missing Failed !!!";
         console.error(errMsg);
         var response = createCustomerRegisterResponse(registration_data, false, errMsg);
         res.status(400);
@@ -668,7 +669,7 @@ exports.register_customer =  functions.https.onRequest((req, res) => {
     var validationResult = validateCustomerRegistrationData(registration_data);
     if(validationResult.status == false){
 
-        var errMsg = "register_customer:validateCustomerRegistrationData Failed " +validationResult.error;
+        var errMsg = "registerCustomer:validateCustomerRegistrationData Failed " +validationResult.error;
         console.error(errMsg);
         var response = createCustomerRegisterResponse(registration_data, false, errMsg);
         res.status(400);
@@ -681,13 +682,22 @@ exports.register_customer =  functions.https.onRequest((req, res) => {
 
     MongoClient.connect(url)
         .then(function(db){
-            console.log("register_customer: Connected correctly to server");
+            console.log("registerCustomer: Connected correctly to server");
             status = true;
 
-            var orig_visitor_id = registration_data.visitor_id;
+            var orig_visitor_id = registration_data.orig_visitor_id;
             var tenantId = registration_data.tenant_id;
 
             var customerRegistrationCollection = db.collection(registrationCollectionName);
+            if(customerRegistrationCollection == undefined){
+                var errMsg = "registerCustomer: failed connection to collection registrationCollectionName=" +registrationCollectionName;
+                console.error(errMsg);
+                var response = createCustomerRegisterResponse(registration_data, false, errMsg);
+                res.status(400);
+                res.json(response);
+               
+                return;
+            }
            
             // check scenario:
             // 1. Is this Conversion of the visitor or update ==> new Customer Document
@@ -701,12 +711,12 @@ exports.register_customer =  functions.https.onRequest((req, res) => {
                     // check if customer already exist
                         status = findAndDeletExistDocument(db, visitorsRegistrationCollection, tenantId, orig_visitor_id )
                         .then(function (status){
-                            console.log("register_customer: findAndDeletExistDocument() removed visitor = " + tenantId + " orig_visitor_id =  " + orig_visitor_id );
+                            console.log("registerCustomer: findAndDeletExistDocument() removed visitor = " + tenantId + " orig_visitor_id =  " + orig_visitor_id );
                         }).catch(function(error){
 
                             cleanup(db);
-                            console.error("register_customer: findAndDeletExistDocument() Failed");
-                            var errMsg = "register_customer: findAndDeletExistDocument() Failed tenantId = " + tenantId + " orig_visitor_id =  " + orig_visitor_id + " " + error;
+                            console.error("registerCustomer: findAndDeletExistDocument() Failed");
+                            var errMsg = "registerCustomer: findAndDeletExistDocument() Failed tenantId = " + tenantId + " orig_visitor_id =  " + orig_visitor_id + " " + error;
                             console.error(errMsg);
                             var response = createCustomerRegisterResponse(registration_data, false, errMsg);
                             res.status(400);
@@ -723,8 +733,8 @@ exports.register_customer =  functions.https.onRequest((req, res) => {
             })
             .catch(function(error){
                 cleanup(db);
-                console.error("register_customer() Failed");
-                var errMsg = "register_customer: handleCustomerRegistration() Failed tenantId = " + tenantId + " orig_visitor_id =  " + orig_visitor_id + " " + error;
+                console.error("registerCustomer() Failed");
+                var errMsg = "registerCustomer: handleCustomerRegistration() Failed tenantId = " + tenantId + " orig_visitor_id =  " + orig_visitor_id + " " + error;
                 console.error(errMsg);
                 var response = createCustomerRegisterResponse(registration_data, false, errMsg);
                 res.status(400);
@@ -735,7 +745,7 @@ exports.register_customer =  functions.https.onRequest((req, res) => {
     })
     .catch(function(error){
         cleanup(db);
-        var errMsg = "register_customer: Connected DB Server Failed  tenantId = " + tenantId + " orig_visitor_id =  " + orig_visitor_id + " " + error;
+        var errMsg = "registerCustomer: Connected DB Server Failed  tenantId = " + tenantId + " orig_visitor_id =  " + orig_visitor_id + " " + error;
         console.error(errMsg);
         var response = createCustomerRegisterResponse(registration_data, false, errMsg);
         res.status(400);
@@ -747,7 +757,7 @@ exports.register_customer =  functions.https.onRequest((req, res) => {
 
 
 //-----------------------------------------------------------------------------
-// functions: unregister_customer
+// functions: unregisterCustomer
 // args: register device/user data in the body
 // description:mock for the register
 // format example:
@@ -762,7 +772,7 @@ exports.register_customer =  functions.https.onRequest((req, res) => {
 //     }
 // }
 //---------------------------------------------------------------------------
-exports.unregister_customer = functions.https.onRequest((req, res) => {
+exports.unregisterCustomer = functions.https.onRequest((req, res) => {
     
     var err = undefined;
     var status = undefined;
@@ -775,7 +785,7 @@ exports.unregister_customer = functions.https.onRequest((req, res) => {
     if(unregistration_data == undefined)
     {
 
-        var errMsg = "unregister_customer:unregistration_data is missing Failed !!!";
+        var errMsg = "unregisterCustomer:unregistration_data is missing Failed !!!";
         console.error(errMsg);
         var response = createCustomerRegisterResponse(registration_data, false, errMsg);
         res.status(400);
@@ -786,7 +796,7 @@ exports.unregister_customer = functions.https.onRequest((req, res) => {
     var validationResult = validateCustomerUnRegistrationData(unregistration_data);
     if(validationResult.status == false){
 
-        var errMsg = "unregister_customer:validateCustomerUnRegistrationData Failed " +validationResult.error;
+        var errMsg = "unregisterCustomer:validateCustomerUnRegistrationData Failed " +validationResult.error;
         console.error(errMsg);
         var response = createCustomerUnRegisterResponse(unregistration_data, false, errMsg);
         res.status(400);
@@ -798,7 +808,7 @@ exports.unregister_customer = functions.https.onRequest((req, res) => {
    
     MongoClient.connect(url)
         .then(function(db){
-            console.log("unregister_customer: Connected correctly to server");
+            console.log("unregisterCustomer: Connected correctly to server");
             status = true;
 
            
@@ -821,8 +831,8 @@ exports.unregister_customer = functions.https.onRequest((req, res) => {
             })
             .catch(function(error){
                 cleanup(db);
-                console.error("unregister_customer() Failed");
-                var errMsg = "unregister_customer: handleCustomerRegistration() Failed tenantId = " + tenantId + " public_customer_id =  " + public_customer_id + " " + error;
+                console.error("unregisterCustomer() Failed");
+                var errMsg = "unregisterCustomer: handleCustomerUnRegistration() Failed tenantId = " + tenantId + " public_customer_id =  " + public_customer_id + " " + error;
                 console.error(errMsg);
                 var response = createCustomerRegisterResponse(unregistration_data, false, errMsg);
                 res.status(400);
@@ -833,7 +843,7 @@ exports.unregister_customer = functions.https.onRequest((req, res) => {
     })
     .catch(function(error){
         cleanup(db);
-        var errMsg = "unregister_customer: Connected DB Server Failed  tenantId = " + tenantId + " public_customer_id =  " + public_customer_id + " " + error;
+        var errMsg = "unregisterCustomer: Connected DB Server Failed  tenantId = " + tenantId + " public_customer_id =  " + public_customer_id + " " + error;
         console.error(errMsg);
         var response = createCustomerRegisterResponse(unregistration_data, false, errMsg);
         res.status(400);
@@ -913,7 +923,7 @@ var  createCustomerRegisterResponse = function (registration_data, registration_
 }
 
 
-    
+   
 //-----------------------------------------------------------------------------
 // functions: handleCustomerRegistration
 // args: db, customerRegistrationCollection, registration_data 
@@ -921,11 +931,10 @@ var  createCustomerRegisterResponse = function (registration_data, registration_
 //---------------------------------------------------------------------------
 var handleCustomerRegistration = function(db, customerRegistrationCollection, registration_data ){
     
-    return new Promise( function (resolve, reject) {
+    return new Promise( function (resolve, reject) {      
         var docId = "tid:" + registration_data.tenant_id + "_pcid:" + registration_data.public_customer_id;
         checkIfCustomerDocumentExists(db, customerRegistrationCollection, registration_data.tenant_id, registration_data.public_customer_id )
-        .then(function(foundCustomerDocument){
-
+        .then(function(foundCustomerDocument){           
             if(foundCustomerDocument != undefined){ //customer Exist! shoud update
                 
                 updateDeviceInExistingCustomerDocument(db, customerRegistrationCollection, registration_data, foundCustomerDocument, docId)
@@ -953,6 +962,7 @@ var handleCustomerRegistration = function(db, customerRegistrationCollection, re
             reject(false);
         });
     });
+
 }
 
 
@@ -1004,9 +1014,11 @@ var checkIfCustomerDocumentExists = function(db, customerRegistrationCollection,
     
     return new Promise( function (resolve, reject) {
         var id = "tid:" + tenantId + "_pcid:" + public_customer_id;
-        customerRegistrationCollection.findOne({"_id": id}).then(function (foundDocument) {
+        customerRegistrationCollection.findOne({"_id": id})
+        .then(function (foundDocument) {
             resolve(foundDocument);
-        }).catch(function (error) {
+        })
+        .catch(function (error) {
             console.error("checkIfCustomerDocumentExists:  Failed Deletion - " + {_id: id});
             reject(false);
         });
@@ -1014,6 +1026,7 @@ var checkIfCustomerDocumentExists = function(db, customerRegistrationCollection,
 
 }
 
+    
     
 //-----------------------------------------------------------------------------
 // functions: insertNewCustomerDocument
@@ -1028,15 +1041,18 @@ var insertNewCustomerDocument = function(db, customerRegistrationCollection, reg
         if(dataResult.status == true){
             customerRegistrationCollection.insertOne(dataResult.data)
             .then(function(reultInsert){
+                console.log("insertNewCustomerDocument 3")
                 resolve(true);   
             })
             .catch(function(reultInsert){
+                console.error("insertNewCustomerDocument 1****");
                 reject(false);
                 });
         }
     });
-
 }
+
+
 
 //-----------------------------------------------------------------------------
 // functions: updateDeviceInExistingCustomerDocument
@@ -1060,8 +1076,8 @@ var updateDeviceInExistingCustomerDocument = function(db, customerRegistrationCo
             
         }
     });
-
 }
+
 
 
 //-----------------------------------------------------------------------------
@@ -1087,9 +1103,9 @@ var updateDeviceInExistingCustomerDocument = function(db, customerRegistrationCo
 //       }
 //     }
 //   }
-//---------------------------------------------------------------------------   
+//---------------------------------------------------------------------------
 var createCustomerRegisterDocumentFromExisting= function (registration_data, existingDocument){
-
+    
     var dataResult = {status : false, data: undefined};
 
     try{
@@ -1143,7 +1159,6 @@ var createCustomerRegisterDocumentFromExisting= function (registration_data, exi
     
 }
 
-
    
 //-----------------------------------------------------------------------------
 // functions: validateCustomerRegistrationData
@@ -1184,7 +1199,7 @@ var validateCustomerRegistrationData = function (registration_data){
         status = false;
     }
 
-    if(registration_data.orig_visitor_id == undefined ){
+    if(registration_data.is_conversion == true  && registration_data.orig_visitor_id == undefined ){
         err = 'validateCustomerRegistrationData: registration_data.orig_visitor_id  is missing';
         validationResult.error += "\n" + err;
         console.error(err);
@@ -1294,7 +1309,6 @@ var validateCustomerUnRegistrationData = function (unregistration_data){
     
     
 
-
 //-----------------------------------------------------------------------------
 // functions: createCustomerRegisterData
 // args: registration_data
@@ -1318,35 +1332,37 @@ var validateCustomerUnRegistrationData = function (unregistration_data){
 // }
 //---------------------------------------------------------------------------
 var  createCustomerRegisterData = function (registration_data){
+    
+        var data = {
+            
+            "_id": undefined, 
+            "tenant_id": undefined, 
+            "public_customer_id": undefined, 
+            "opt_in": true,
+    
+        };
+    
+        var status = {status: true, data:undefined};
+    
+        data.public_customer_id = registration_data.public_customer_id;
+        data.tenant_id = registration_data.tenant_id;
+        var id = "tid:"+ data.tenant_id + "_pcid:" + data.public_customer_id;
+        data._id = id;              
+        console.log("id = " + data._id);
 
-    var data = {
+        if(registration_data.android_token != undefined){
         
-        "_id": undefined, 
-        "tenant_id": undefined, 
-        "public_customer_id": undefined, 
-        "opt_in": true,
-
-    };
-
-    var status = {status: true, data:undefined};
-
-    data.public_customer_id = registration_data.public_customer_id;
-    data.tenant_id = registration_data.tenant_id;
-    var id = "tid:"+ data.tenant_id + "_pcid:" + data.public_customer_id;
-    data._id = id;              
-
-    if(registration_data.android_token != undefined){
-        
-        data.android_tokens = registration_data.android_token ;
-        
-    }else if(registration_data.ios_token != undefined){
-        
-        data.ios_tokens = registration_data.ios_token ;
+            data.android_tokens = registration_data.android_token ;
+           
+        }else if(registration_data.ios_token != undefined){
+           
+            data.ios_tokens = registration_data.ios_token ;
+        }
+            
+        status.data = data;
+        return status;
     }
-        
-    status.data = data;
-    return status;
-}
+
 
 
 // ----------------------------------- End  Register/unRegister Customer Protocol ---------------------------------------------
@@ -1354,7 +1370,7 @@ var  createCustomerRegisterData = function (registration_data){
 // ----------------------------------- End  Register/unRegister Visitor Protocol ---------------------------------------------
 
 //-----------------------------------------------------------------------------
-// functions: register_visitor
+// functions: registerVisitor
 // args: register device/user data in the body
 // description:mock for the register
 // format example:
@@ -1374,7 +1390,7 @@ var  createCustomerRegisterData = function (registration_data){
 // }
 // }
 //---------------------------------------------------------------------------
-exports.register_visitor = functions.https.onRequest((req, res) => {
+exports.registerVisitor = functions.https.onRequest((req, res) => {
     var err = undefined;
     var status = undefined;
 
@@ -1386,7 +1402,7 @@ exports.register_visitor = functions.https.onRequest((req, res) => {
     if(registration_data == undefined)
     {
 
-        var errMsg = "register_visitor:registration_data is missing Failed !!!";
+        var errMsg = "registerVisitor:registration_data is missing Failed !!!";
         console.error(errMsg);
         var response = createVisitorRegisterResponse(registration_data, false, errMsg);
         res.status(400);
@@ -1397,7 +1413,7 @@ exports.register_visitor = functions.https.onRequest((req, res) => {
     var validationResult = validateVisitorRegistrationData(registration_data);
     if(validationResult.status == false){
 
-        var errMsg = "register_visitor:validateVisitorRegistrationData Failed " +validationResult.error;
+        var errMsg = "registerVisitor:validateVisitorRegistrationData Failed " +validationResult.error;
         console.error(errMsg);
         var response = createVisitorRegisterResponse(registration_data, false, errMsg);
         res.status(400);
@@ -1410,7 +1426,7 @@ exports.register_visitor = functions.https.onRequest((req, res) => {
 
     MongoClient.connect(url)
         .then(function(db){
-            console.log("register_Visitor: Connected correctly to server");
+            console.log("registerVisitor: Connected correctly to server");
             status = true;
 
             var orig_visitor_id = registration_data.visitor_id;
@@ -1425,7 +1441,7 @@ exports.register_visitor = functions.https.onRequest((req, res) => {
 
                     var resultData = createVisitorRegisterData(registration_data);
                     registrationCollection.insertOne(resultData.data).then(function (r) {
-                        console.log("register_visitor: Insert One correctly to server");
+                        console.log("registerVisitor: Insert One correctly to server");
                         db.close();
 
                         var response = createVisitorRegisterResponse(registration_data, true, undefined);
@@ -1434,7 +1450,7 @@ exports.register_visitor = functions.https.onRequest((req, res) => {
                     })
                     .catch(function (error) {
                         cleanup(db);
-                        var errMsg = "register_visitor: InsertOne  DB Server Failed tenantId = " + tenantId + " orig_visitor_id =  " + orig_visitor_id + " " +error;
+                        var errMsg = "registerVisitor: InsertOne  DB Server Failed tenantId = " + tenantId + " orig_visitor_id =  " + orig_visitor_id + " " +error;
                         console.error(errMsg);
                         var response = createVisitorRegisterResponse(registration_data, false, errMsg);
                         res.status(400);
@@ -1447,7 +1463,7 @@ exports.register_visitor = functions.https.onRequest((req, res) => {
             }).catch(function(error){
                 cleanup(db);
                 console.error("findAndDeletExistDocument() Failed");
-                var errMsg = "register_visitor: findAndDeletExistDocument() Failed tenantId = " + tenantId + " orig_visitor_id =  " + orig_visitor_id + " " + error;
+                var errMsg = "registerVisitor: findAndDeletExistDocument() Failed tenantId = " + tenantId + " orig_visitor_id =  " + orig_visitor_id + " " + error;
                 console.error(errMsg);
                 var response = createVisitorRegisterResponse(registration_data, false, errMsg);
                 res.status(400);
@@ -1458,7 +1474,7 @@ exports.register_visitor = functions.https.onRequest((req, res) => {
         })
         .catch(function(error){
             cleanup(db);
-            var errMsg = "register_visitor: Connected DB Server Failed  tenantId = " + tenantId + " orig_visitor_id =  " + orig_visitor_id + " " + error;
+            var errMsg = "registerVisitor: Connected DB Server Failed  tenantId = " + tenantId + " orig_visitor_id =  " + orig_visitor_id + " " + error;
             console.error(errMsg);
             var response = createVisitorRegisterResponse(registration_data, false, errMsg);
             res.status(400);
@@ -1470,7 +1486,7 @@ exports.register_visitor = functions.https.onRequest((req, res) => {
 
 
 //-----------------------------------------------------------------------------
-// functions: unregister_visitor
+// functions: unregisterVisitor
 // args: register device/user data in the body
 // description:mock for the register
 // format example:
@@ -1485,7 +1501,7 @@ exports.register_visitor = functions.https.onRequest((req, res) => {
 //      }
 //  }
 //---------------------------------------------------------------------------
-exports.unregister_visitor  = functions.https.onRequest((req, res) => {
+exports.unregisterVisitor  = functions.https.onRequest((req, res) => {
     
     var err = undefined;
     var status = undefined;
@@ -1497,7 +1513,7 @@ exports.unregister_visitor  = functions.https.onRequest((req, res) => {
     if(unregistration_data == undefined)
     {
 
-        var errMsg = "unregister_visitor:registration_data is missing Failed !!!";
+        var errMsg = "unregisterVisitor:registration_data is missing Failed !!!";
         console.error(errMsg);
         var response = createVisitorRegisterResponse(unregistration_data, false, errMsg);
         res.status(400);
@@ -1508,7 +1524,7 @@ exports.unregister_visitor  = functions.https.onRequest((req, res) => {
     var validationResult = validateVisitorUnRegistrationData(unregistration_data);
     if(validationResult.status == false){
 
-        var errMsg = "unregister_visitor:validateVisitorUnRegistrationData Failed " +validationResult.error;
+        var errMsg = "unregisterVisitor:validateVisitorUnRegistrationData Failed " +validationResult.error;
         console.error(errMsg);
         var response = createVisitorRegisterResponse(unregistration_data, false, errMsg);
         res.status(400);
@@ -1536,8 +1552,8 @@ exports.unregister_visitor  = functions.https.onRequest((req, res) => {
 
             }).catch(function(error){
                 cleanup(db);
-                console.error("unregister_visitor: findAndDeletExistDocument() Failed");
-                var errMsg = "unregister_visitor: findAndDeletExistDocument() Failed tenantId = " + tenantId + " orig_visitor_id =  " + orig_visitor_id + " " + error;
+                console.error("unregisterVisitor: findAndDeletExistDocument() Failed");
+                var errMsg = "unregisterVisitor: findAndDeletExistDocument() Failed tenantId = " + tenantId + " orig_visitor_id =  " + orig_visitor_id + " " + error;
                 console.error(errMsg);
                 var response = createVisitorRegisterResponse(unregistration_data, false, errMsg);
                 res.status(400);
@@ -1548,7 +1564,7 @@ exports.unregister_visitor  = functions.https.onRequest((req, res) => {
         })
         .catch(function(error){
             cleanup(db);
-            var errMsg = "unregister_visitor: Connected DB Server Failed  tenantId = " + tenantId + " orig_visitor_id =  " + orig_visitor_id + " " + error;
+            var errMsg = "unregisterVisitor: Connected DB Server Failed  tenantId = " + tenantId + " orig_visitor_id =  " + orig_visitor_id + " " + error;
             console.error(errMsg);
             var response = createVisitorRegisterResponse(registration_data, false, errMsg);
             res.status(400);
