@@ -1455,11 +1455,7 @@ var  createVisitorRegisterData = function (registration_data){
         "tenant_id": undefined,
         "visitor_id":undefined,
         "opt_in": "true",
-        "is_visitor": "true",
-
-        "android_token": {
-
-        }
+        "is_visitor": "true"
     };
 
     var status = {status: true, data:undefined};
@@ -1473,7 +1469,7 @@ var  createVisitorRegisterData = function (registration_data){
     if(registration_data.android_token != undefined){
         data.android_token = registration_data.android_token ;
     }else if(registration_data.ios_token != undefined){
-        data.android_token = registration_data.ios_token ;
+        data.ios_token = registration_data.ios_token ;
     }
 
     status.data = data;
