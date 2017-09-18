@@ -1,0 +1,31 @@
+{
+  "name": "registration-service-testing",
+  "version": "1.0.0",
+  "description": "testing environment for the mbass registration service",
+  "main": "server.js",
+  "scripts": {
+    "test": "test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/optimovedevelopmobile/mbass.git"
+  },
+  "keywords": [
+    "moble",
+    "token",
+    "registration"
+  ],
+  "author": "Yossi Cohn",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/optimovedevelopmobile/mbass/issues"
+  },
+  "homepage": "https://github.com/optimovedevelopmobile/mbass#readme",
+  "dependencies": {
+    "body-parser": "^1.17.2",
+    "express": "^4.15.4",
+    "mongodb": "^2.2.31",
+    "nodemon": "^1.11.0",
+    "uuid": "^3.1.0"
+  }
+}
