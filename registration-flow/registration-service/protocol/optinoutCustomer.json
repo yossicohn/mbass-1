@@ -1,0 +1,43 @@
+
+------------------- Customer opt_out Request -------------------------
+
+{
+    "opt_out": {
+      "tenant_id": 85,
+      "public_customer_id": "32862a06-cdcd-4f75-ace4-a721aea02c98",
+      "android_token": {
+        "device_id": "2b14fa8b-abcf-4347-aca9-ea3e03be657e",
+        "app_ns": "app_ns_com"
+      }
+    }
+  }
+------------------- Customer opt_out Response -------------------------
+
+{
+    "opt-out_status": {
+      "tenant_id": 85,
+      "public_customer_id": "eb3b6e8b-97b3-47fe-9d05-3b134e7e040f",
+      "app_ns": "app_ns_org",
+      "success_status": true
+    }
+  }
+
+
+
+    
+
+    
+curl --header "Content-Type: application/json" \
+http://localhost:8010/mobilepush-161510/us-central1/optInOutCustomer \
+-d "
+{
+    \"opt_out\": {
+      \"tenant_id\": 85,
+      \"public_customer_id\": \"32862a06-cdcd-4f75-ace4-a721aea02c98\,
+      \"android_token\": {
+        \"device_id\": \"2b14fa8b-abcf-4347-aca9-ea3e03be657e\",
+        \"app_ns\": \"app_ns_com\"
+      }
+    }
+  }
+  "
