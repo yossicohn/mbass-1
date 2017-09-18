@@ -1,0 +1,106 @@
+------------------- Visitor opt_out Request -------------------------
+
+
+{
+  "opt_out": {
+    "tenant_id": 85,
+    "visitor_id": "32862a06-cdcd-4f75-ace4-a721aea02c98",
+    "android_token": {
+      "device_id": "2b14fa8b-abcf-4347-aca9-ea3e03be657e",
+      "app_ns": "app_ns_com"
+    }
+  }
+}
+
+
+  ------------------- Visitor opt_out Response -------------------------
+
+  {
+    "opt_out_status": {
+      "tenant_id": 85,
+      "visitor_id": "eb3b6e8b-97b3-47fe-9d05-3b134e7e040f",
+      "success_status": true
+    }
+  }
+
+  ------------------- Visitor opt_in Request -------------------------
+  {
+    "opt_in": {
+      "tenant_id": 85,
+      "visitor_id": "eb3b6e8b-97b3-47fe-9d05-3b134e7e040f",
+      "android_token": {
+        "device_id": "2b14fa8b-abcf-4347-aca9-ea3e03be657e",
+        "app_ns": "app_ns_org"
+      }
+    }
+  }
+  ------------------- Visitor opt_in Response -------------------------
+
+  {
+    "opt_in_status": {
+      "tenant_id": 85,
+      "visitor_id": "eb3b6e8b-97b3-47fe-9d05-3b134e7e040f",
+      "success_status": true
+    }
+  }
+
+
+
+  
+  ------------------------------- CURL ------------------------------------
+  curl --header "Content-Type: application/json" \
+  http://localhost:3001/optinout-visitor \
+  -d 
+"
+{
+    \"opt_in\": {
+      \"tenant_id\": 85,
+      \"visitor_id\": \"eb3b6e8b-97b3-47fe-9d05-3b134e7e040f\",
+      \"android_token\": {
+        \"device_id\": \"2b14fa8b-abcf-4347-aca9-ea3e03be657e\",
+        \"app_ns\": \"app_ns_com\"
+      }
+    }
+  }
+"
+
+
+
+curl --header "Content-Type: application/json" \
+http://localhost:3001/optinout-visitor \
+-d 
+"
+{
+    \"opt_out\": {
+      \"tenant_id\": 85,
+      \"visitor_id\": \"32862a06-cdcd-4f75-ace4-a721aea02c98\",
+      \"android_token\": {
+        \"device_id\": \"2b14fa8b-abcf-4347-aca9-ea3e03be657e\",
+        \"app_ns\": \"app_ns_com\"
+      }
+    }
+  }
+"
+
+
+// ------------------ local emulator -------------
+// functions deploy <fn> --trigger-http
+// functions debug <fn>
+
+curl --header "Content-Type: application/json" \
+http://localhost:8010/mobilepush-161510/us-central1/optInOutVisitor \
+-d 
+"
+{
+    \"opt_out\": {
+      \"tenant_id\": 85,
+      \"visitor_id\": \"32862a06-cdcd-4f75-ace4-a721aea02c98\",
+      \"android_token\": {
+        \"device_id\": \"2b14fa8b-abcf-4347-aca9-ea3e03be657e\",
+        \"app_ns\": \"app_ns_com\"
+      }
+    }
+  }
+  "
+
+  

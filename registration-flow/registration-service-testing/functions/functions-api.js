@@ -1368,6 +1368,7 @@ var handleOptInOutUpdate = function(db, registrationCollection, docId,existingDo
 }
 
 
+
 //-----------------------------------------------------------------------------
 // functions: updateDocumentOptInStatus
 // args: existingDocument
