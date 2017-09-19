@@ -1429,6 +1429,69 @@ var updateDocumentOptInStatus = function (existingDocument){
     }
 }
 
+//-----------------------------------------------------------------------------
+// functions: updateDocumentOptInStatus
+// args: existingDocument
+// description: update the general optin status.
+// Go over all the opt-in keys if all are false set the root optin key to false.
+// if one is true then root should be true.
+//---------------------------------------------------------------------------
+var updateDocumentOptInStatus = function (existingDocument){
+    
+    var opt_in = false;
+    var opt_in_result = false;
+    var androidDeviceGroup = existingDocument.android_tokens;
+    var iosDeviceGroup = existingDocument.ios_tokens;    
+    if(androidDeviceGroup != undefined){
+        var androidKeys = Object.keys(androidDeviceGroup);
+        if(androidKeys[0] != undefined){               
+            androidKeys.forEach(function(key){
+                var device = androidDeviceGroup[key];
+                var apps = device.apps;
+                var Apps_ns_Keys = Object.keys(apps);
+                Apps_ns_Keys.forEach(function(app_ns){
+                if(apps[app_ns].opt_in == true){                    
+                    opt_in = true;
+                    opt_in_result = true;
+                    return;
+                }
+                    
+                })                
+            })
+        }
+
+    }
+        
+    if(opt_in == true && opt_in_result == true)
+    {
+        existingDocument.opt_in = true;
+        return;
+    }
+        
+    if(iosDeviceGroup != undefined){
+        var iosKeys = Object.keys(iosDeviceGroup);
+        if(iosKeys[0] != undefined){               
+                iosKeys.forEach(function(key){
+                    var device = iosDeviceGroup[key];
+                    var apps = device.apps;
+                    var Apps_ns_Keys = Object.keys(apps);
+                    Apps_ns_Keys.forEach(function(app_ns){
+                    if(apps[app_ns].opt_in == true){
+                        existingDocument.opt_in = true;
+                        opt_in_result = true;
+                        return;
+                    }                
+                })
+            })
+        }   
+    } 
+    
+    if(opt_in == false && opt_in_result == false)
+    {
+        existingDocument.opt_in = false;        
+    }
+}
+
 
 //-----------------------------------------------------------------------------
 // functions: createVisitorRegisterData

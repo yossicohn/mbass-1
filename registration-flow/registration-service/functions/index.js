@@ -467,6 +467,7 @@ var handleOptInOutUpdate = function(db, registrationCollection, docId,existingDo
 var updateDocumentOptInStatus = function (existingDocument){
     
     var opt_in = false;
+    var opt_in_result = false;
     var androidDeviceGroup = existingDocument.android_tokens;
     var iosDeviceGroup = existingDocument.ios_tokens;    
     if(androidDeviceGroup != undefined){
@@ -479,6 +480,7 @@ var updateDocumentOptInStatus = function (existingDocument){
                 Apps_ns_Keys.forEach(function(app_ns){
                 if(apps[app_ns].opt_in == true){                    
                     opt_in = true;
+                    opt_in_result = true;
                     return;
                 }
                     
@@ -488,7 +490,7 @@ var updateDocumentOptInStatus = function (existingDocument){
 
     }
         
-    if(opt_in == true)
+    if(opt_in == true && opt_in_result == true)
     {
         existingDocument.opt_in = true;
         return;
@@ -504,6 +506,7 @@ var updateDocumentOptInStatus = function (existingDocument){
                     Apps_ns_Keys.forEach(function(app_ns){
                     if(apps[app_ns].opt_in == true){
                         existingDocument.opt_in = true;
+                        opt_in_result = true;
                         return;
                     }                
                 })
@@ -511,7 +514,7 @@ var updateDocumentOptInStatus = function (existingDocument){
         }   
     } 
     
-    if(opt_in == false)
+    if(opt_in == false && opt_in_result == false)
     {
         existingDocument.opt_in = false;        
     }
