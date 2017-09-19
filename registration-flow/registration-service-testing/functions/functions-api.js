@@ -1328,7 +1328,7 @@ var handleOptInOutUpdate = function(db, registrationCollection, docId,existingDo
                 devicePlatform = 2;
             if(existingDocument.ios_tokens != undefined && Object.keys(existingDocument.ios_tokens)[0] != undefined){
                 existsingDeviceGroup = existingDocument.ios_tokens[updatedDeviceId];
-                app_ns = opt_request.ios_tokens.app_ns;
+                app_ns = opt_request.ios_token.app_ns;
                 needUpdated = true;
             }else{
                 reject("No existsingDeviceGroup");
