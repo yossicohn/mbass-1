@@ -1770,9 +1770,9 @@ var  createVisitorRegisterData = function (registration_data){
     data._id = id;
     data.tenant_id  = tenantId;
     data.visitor_id = visitor_id;
-    if(registration_data.android_tokens != undefined){
+    if(registration_data.android_token != undefined){
         data.android_tokens = registration_data.android_token ;
-    }else if(registration_data.ios_tokens != undefined){
+    }else if(registration_data.ios_token != undefined){
         data.ios_tokens = registration_data.ios_token ;
     }
 
