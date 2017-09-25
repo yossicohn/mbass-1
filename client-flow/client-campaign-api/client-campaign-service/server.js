@@ -16,4 +16,4 @@ routes(app); //register the route
 app.listen(port);
 
 
-console.log('**************** MBASS Register Service RESTful API Testing server started on: ' + port + ' ****************');
+console.log('**************** MBASS Client Campaign API Service RESTful API server started on: ' + port + ' ****************');

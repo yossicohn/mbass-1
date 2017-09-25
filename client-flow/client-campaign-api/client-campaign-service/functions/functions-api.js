@@ -1,16 +1,68 @@
 'use strict';
+const Logging = require('@google-cloud/logging');
+const logging = Logging();
+
 
 var MongoClient = require('mongodb').MongoClient
 , assert = require('assert');
 const uuidV4 = require('uuid/v4');
 var url = 'mongodb://104.154.65.252:27017/mbassdb';
 var tenantCampaignsDataCollectionNameBase = 'CampaignsData_';
-var processTimeDelta = 30000 // 1/2 Minute ago.
+var processTimeDelta = 30000000000 // 1/2 Minute ago.
 
 
+/**
+ * Report an error to StackDriver Error Reporting. Writes the minimum data
+ * required for the error to be picked up by StackDriver Error Reporting.
+ *
+ * @param {Error} err The Error object to report.
+ * @param {Function} callback Callback function.
+ */
+var reportError = function (err, callback) {
+    // This is the name of the StackDriver log stream that will receive the log
+    // entry. This name can be any valid log stream name, but must contain "err"
+    // in order for the error to be picked up by StackDriver Error Reporting.
+    const logName = 'errors';
+    const log = logging.log(logName);
+  
+    const metadata = {
+      // https://cloud.google.com/logging/docs/api/ref_v2beta1/rest/v2beta1/MonitoredResource
+      resource: {
+        type: 'client_campaign_api',
+        labels: {
+          function_name: 'createCampaign'
+        }
+      }
+    };
+  
+    // https://cloud.google.com/error-reporting/reference/rest/v1beta1/ErrorEvent
+    const errorEvent = {
+      message: err.stack,
+      serviceContext: {
+        service: `client_campaign_api:${'createCampaign'}`,
+        version: require('./package.json').version || 'unknown'
+      }
+    };
+  
+    // Write the error log entry
+    log.write(log.entry(metadata, errorEvent), callback);
+  }
+  
+ 
+  
 // -------------------------------------- Functions -----------------------------------
 
-
+ // --------------------------- Utilitu member functions -----------------------
+  //-----------------------------------------------------------------------------
+  // functions: cleanup
+  // args: db
+  // description: Clean up.
+  //---------------------------------------------------------------------------
+  var  cleanup = function (db){
+    if(db != undefined){
+        db.close();
+    }
+}
 //-----------------------------------------------------------------------------
 // functions: createCampaign
 // args: campaign meta data
@@ -85,26 +137,30 @@ exports.createCampaign = function (req, res){
         .then(function(db){
             console.log("createCampaign: Connected correctly to server");
             status = true;           
-            var tenantId = createReq.tenant_id;
+            var tenantId = createCampaignData.tenant_id;
             var tenantCampaignCollectionName = tenantCampaignsDataCollectionNameBase + tenantId;
             var tenantCampaignsDataCollection = db.collection(tenantCampaignCollectionName);
-            var docId = getDocId();
+            var docId = getDocId(createCampaignData);
             tenantCampaignsDataCollection.findOne({_id: docId})
             .then(function(exisitingDoc){
                 if(exisitingDoc != undefined){
                     cleanup(db);
+                    res.status(400);
                     var errMsg = "createCampaign:campaign already exist, please delete campaign";              db.close();                   
-                    var response = createResponse(createReq, undefined, false, errMsg);                    
+                    var response = createResponse(createCampaignData, undefined, false, errMsg);                    
                     res.json(response);
                 }else{
-                    handleCreateCampaign(db, createReq, docId)
-                    .then(function (status){
-
+                    handleCreateCampaign(db, tenantCampaignsDataCollection,createCampaignData, docId)
+                    .then(function (doc){
+                        cleanup(db);
+                        var response = createResponse(createCampaignData, undefined, true, undefined);                    
+                        res.json(response);
                     })
                     .catch(function(error){
                         cleanup(db);
+                        res.status(400);
                         var errMsg = "createCampaign:handleCreateCampaign failed";                  
-                        var response = createResponse(createReq, undefined, false, errMsg);                    
+                        var response = createResponse(createCampaignData, undefined, false, errMsg);                    
                         res.json(response);
 
                     })
@@ -114,7 +170,7 @@ exports.createCampaign = function (req, res){
             .catch(function(error){
                 cleanup(db);
                 var errMsg = "createCampaign:" + tenantCampaignCollectionName +".findOne Failed " + error;                console.error(errMsg);
-                var response = createResponse(createReq, undefined, false, errMsg);
+                var response = createResponse(createCampaignData, undefined, false, errMsg);
                 res.status(400);
                 res.json(response);
                 return; 
@@ -169,22 +225,22 @@ var createResponse = function(createReq, pn_campaign_id, status, error){
 
       switch (createReq.command_name){
         case 'create_campaign':
-         response =  getCreateCampaignResponse();
+         response =  getCreateCampaignResponse(response, createReq, pn_campaign_id, status, error);
         break;
         case 'abort_campaign': 
-        response =  getAbortCampaignResponse();
+        response =  getAbortCampaignResponse(response);
         break;
         case 'delete_campaign': 
-        response =  getDeleteCampaignResponse();
+        response =  getDeleteCampaignResponse(response);
         break;
         case 'reschedule_campaign': 
-        response =  getRescheduleCampaignResponse();
+        response =  getRescheduleCampaignResponse(response);
         break;
         case 'stop_campaign': 
-        response =  getStopCampaignResponse();
+        response =  getStopCampaignResponse(response);
         break;
         case 'update_campaign': 
-        response =  getUpdateCampaignResponse();
+        response =  getUpdateCampaignResponse(response);
         break;
       }
     
@@ -402,7 +458,7 @@ var getUpdateCampaignResponse = function (response, createReq, status, error){
  var validateCreateCampaignData = function(createReq){
     
          var isValid = {
-            status: false,
+            status: true,
             error: undefined
          };
 
@@ -413,6 +469,22 @@ var getUpdateCampaignResponse = function (response, createReq, status, error){
           {
             error = "command_name should be create_campaign\n";
             status = false;
+          }
+
+
+          if(createReq.apps == undefined)
+          {
+            error = "crearte campaign should have targeted apps.\n";
+            status = false;
+          }else{
+              var foundApp = false;
+            createReq.apps.forEach(function(element) {
+                foundApp = true;
+            });
+            if(foundApp == false){
+                error = "crearte campaign should have targeted apps.\n";
+                status = false;
+            }
           }
 
 
@@ -518,6 +590,7 @@ var getDocId = function(createReq){
 //         "content" : "1 The quick brown fox jumps over the lazy dog",
 //         "type" : "simple/customView"
 //     },
+//     "apps" :["app_ns_1",  "app_ns_2", "app_ns_4"],
 //     "dynamic_links" : {
 //         "ios" : {
 //             "app_ns_1" : "www.dynamiclinkns1.com",
@@ -530,7 +603,7 @@ var getDocId = function(createReq){
 //     }
 // }
 //---------------------------------------------------------------------------
-var  createCampaignDocData = function (docId, createReq){
+var  createCampaignDocData = function (createReq, docId){
     
     var document = {status: true, data:undefined};
 
@@ -546,6 +619,7 @@ var  createCampaignDocData = function (docId, createReq){
         "action_serial" : createReq.action_serial,
         "template_id" : createReq.template_id,
         "personalized" : createReq.personalized,
+        "apps": createReq.apps,
         "tgt_group_size" : createReq.tgt_group_size,
         "schedule" : createReq.schedule,
         "time_to_live" : createReq.time_to_live,
@@ -561,61 +635,40 @@ var  createCampaignDocData = function (docId, createReq){
 
 
 //-----------------------------------------------------------------------------
-// functions: removeDeviceAndUpdateExistingDocument
-// args: db, createReq, docId 
+// functions: handleCreateCampaign
+// args: db, tenantCampaignsDataCollection, createReq, docId 
 // return: boolean/ error
-// description: create and Insert campaig document.
+// description: create and Insert campaign document.
 //---------------------------------------------------------------------------
-var handleCreateCampaign = function(db, createReq, docId){
+var handleCreateCampaign = function(db, tenantCampaignsDataCollection, createReq, docId){
     
         return new Promise( function (resolve, reject) {
-            var groupType = -1;
-            
-            if(unregistration_data.android_token != undefined){
-                groupType = 1;
-                var deviceGroup = unregistration_data.android_token;                
-            }else{
-                groupType = 2;
-                deviceGroup = unregistration_data.ios_token;
-            }
-            
-            var deviceId = deviceGroup.device_id;
-            var app_ns = deviceGroup.app_ns;
-            var needUpdated=false;
-            var app = {};
-            var exisitingDeviceGroup = {};
-            if(groupType == 1){//android               
-                exisitingDeviceGroup = existingDocument.android_tokens[deviceId];                            
-                needUpdated = true;
-    
-            }else if(groupType == 2){ //ios                
-                exisitingDeviceGroup = existingDocument.ios_tokens[deviceId];                          
-                needUpdated = true;
-            }
-            
-            if(needUpdated == true){   
-                delete exisitingDeviceGroup.apps[app_ns];
-                
-                if(Object.keys(exisitingDeviceGroup.apps).length == 0) 
-                {// if deveice has no apps then delete the device as well
-                    if(groupType == 1){
-                        delete  existingDocument.android_tokens[deviceId]; 
-                    }else if(groupType == 2){
-                        delete  existingDocument.ios_tokens[deviceId]; 
-                    }                    
-                }               
-                updateDocumentOptInStatus(existingDocument);
-                registrationCollection.update({_id: docId}, existingDocument)
-                .then(function(status){
-                    resolve(true);
-                })
-                .catch(function(error){
-                    reject(false);
-                })
-            }else{
-                reject(false);
-            }
+            var document = createCampaignDocData(createReq, docId)
+            tenantCampaignsDataCollection.insertOne(document.data)
+            .then(function(doc){
+                resolve(doc);
+            }) 
+            .catch(function(error){
+                reject(error);
+            })    
             
         });
     }
+   
     
+
+
+//-----------------------------------------------------------------------------
+// functions: Promise Template
+// args: db, createReq, docId 
+// return: boolean/ error
+// description: create and Insert campaign document.
+//---------------------------------------------------------------------------
+var PromiseTemplate = function(db, createReq, docId){
+    
+        return new Promise( function (resolve, reject) {
+           
+                
+            
+        });
+    }
