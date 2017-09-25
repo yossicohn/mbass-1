@@ -1,0 +1,33 @@
+{
+    "_id" : "tid:<int>_cid:<int>_acsl:<int>_tplid:<int>",
+    "campaign_status": "scheduled/started/stopped/completed/aborted/failed",
+    "campaign_type" : "push_notification",
+    "campaign_mode" : "schedule/realtime ",
+    "target_types" : "all|ios|and|webpush",
+    "tenant_id" : "int",
+    "campaign_id" : "int",
+    "action_serial" : "int",
+    "template_id" : "int",
+    "personalized" : "bool",
+    "tgt_group_size" : "int",
+    "schedule" : "unix epic timestamp",
+    "time_to_live" : "X seconds",
+    "template_type" : "simple|rich",
+    "data_queue_name": "",
+    "template_data" : {
+        "title" : "CustomView Text Title",
+        "content" : "1 The quick brown fox jumps over the lazy dog",
+        "type" : "simple/customView"
+    },
+    "apps" :["app_ns_1",  "app_ns_2", "app_ns_4"],
+    "dynamic_links" : {
+        "ios" : {
+            "app_ns_1" : "www.dynamiclinkns1.com",
+            "app_ns_2" : "www.dynamiclinkns2.com"
+        },
+        "android" : {
+            "app_ns_3" : "www.dynamiclinkns1.com",
+            "app_ns_4" : "www.dynamiclinkns2.com"
+        }
+    }
+}

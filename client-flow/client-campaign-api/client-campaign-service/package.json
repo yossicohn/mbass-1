@@ -23,6 +23,7 @@
   "homepage": "https://github.com/optimovedevelopmobile/mbass#readme",
   "dependencies": {
     "@google-cloud/logging": "^1.0.6",
+    "@google-cloud/pubsub": "^0.14.2",
     "body-parser": "^1.17.2",
     "express": "^4.15.4",
     "mongodb": "^2.2.31",

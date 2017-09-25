@@ -8,6 +8,9 @@ module.exports = function(app) {
     app.route('/create_campaign')
     .post(functions_api.createCampaign);
 
+    app.route('/delete_campaign')
+    .post(functions_api.deleteCampaign);
+
 
 }
 

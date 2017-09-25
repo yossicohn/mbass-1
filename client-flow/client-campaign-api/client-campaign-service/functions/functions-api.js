@@ -1,14 +1,25 @@
 'use strict';
-const Logging = require('@google-cloud/logging');
-const logging = Logging();
+//const Logging = require('@google-cloud/logging');
+//const logging = Logging();
 
-
+var readJson = require('read-package-json');
 var MongoClient = require('mongodb').MongoClient
 , assert = require('assert');
 const uuidV4 = require('uuid/v4');
 var url = 'mongodb://104.154.65.252:27017/mbassdb';
 var tenantCampaignsDataCollectionNameBase = 'CampaignsData_';
 var processTimeDelta = 30000000000 // 1/2 Minute ago.
+
+// Imports the Google Cloud client library
+const PubSub = require('@google-cloud/pubsub');
+
+// Your Google Cloud Platform project ID
+const projectId = 'mobilepush-161510';
+
+// Instantiates a client
+const pubsubClient = PubSub({
+  projectId: projectId
+});
 
 
 /**
@@ -18,35 +29,35 @@ var processTimeDelta = 30000000000 // 1/2 Minute ago.
  * @param {Error} err The Error object to report.
  * @param {Function} callback Callback function.
  */
-var reportError = function (err, callback) {
-    // This is the name of the StackDriver log stream that will receive the log
-    // entry. This name can be any valid log stream name, but must contain "err"
-    // in order for the error to be picked up by StackDriver Error Reporting.
-    const logName = 'errors';
-    const log = logging.log(logName);
+// var reportError = function (err, callback) {
+//     // This is the name of the StackDriver log stream that will receive the log
+//     // entry. This name can be any valid log stream name, but must contain "err"
+//     // in order for the error to be picked up by StackDriver Error Reporting.
+//     const logName = 'errors';
+//     const log = logging.log(logName);
   
-    const metadata = {
-      // https://cloud.google.com/logging/docs/api/ref_v2beta1/rest/v2beta1/MonitoredResource
-      resource: {
-        type: 'client_campaign_api',
-        labels: {
-          function_name: 'createCampaign'
-        }
-      }
-    };
+//     const metadata = {
+//       // https://cloud.google.com/logging/docs/api/ref_v2beta1/rest/v2beta1/MonitoredResource
+//       resource: {
+//         type: 'client_campaign_api',
+//         labels: {
+//           function_name: 'createCampaign'
+//         }
+//       }
+//     };
   
-    // https://cloud.google.com/error-reporting/reference/rest/v1beta1/ErrorEvent
-    const errorEvent = {
-      message: err.stack,
-      serviceContext: {
-        service: `client_campaign_api:${'createCampaign'}`,
-        version: require('./package.json').version || 'unknown'
-      }
-    };
+//     // https://cloud.google.com/error-reporting/reference/rest/v1beta1/ErrorEvent
+//     const errorEvent = {
+//       message: err.stack,
+//       serviceContext: {
+//         service: `client_campaign_api:${'createCampaign'}`,
+//         version: '1.0.0'//require('package.json').version || 'unknown'
+//       }
+//     };
   
-    // Write the error log entry
-    log.write(log.entry(metadata, errorEvent), callback);
-  }
+//     // Write the error log entry
+//     log.write(log.entry(metadata, errorEvent), callback);
+//   }
   
  
   
@@ -63,6 +74,8 @@ var reportError = function (err, callback) {
         db.close();
     }
 }
+
+
 //-----------------------------------------------------------------------------
 // functions: createCampaign
 // args: campaign meta data
@@ -106,6 +119,8 @@ exports.createCampaign = function (req, res){
         var err = undefined;
         var status = undefined;
 
+        var testError= new Error("testing error");
+       // reportError(testError);
 
         var createReq = req.body;
         var createCampaignData = createReq.request;
@@ -153,13 +168,13 @@ exports.createCampaign = function (req, res){
                     handleCreateCampaign(db, tenantCampaignsDataCollection,createCampaignData, docId)
                     .then(function (doc){
                         cleanup(db);
-                        var response = createResponse(createCampaignData, undefined, true, undefined);                    
+                        var response = createResponse(createCampaignData, doc.data.data_queue_name, true, undefined);                    
                         res.json(response);
                     })
                     .catch(function(error){
                         cleanup(db);
                         res.status(400);
-                        var errMsg = "createCampaign:handleCreateCampaign failed";                  
+                        var errMsg = "createCampaign:handleCreateCampaign failed, " + error;                  
                         var response = createResponse(createCampaignData, undefined, false, errMsg);                    
                         res.json(response);
 
@@ -188,6 +203,115 @@ exports.createCampaign = function (req, res){
    
 }
     
+
+
+
+//-----------------------------------------------------------------------------
+// functions: deleteCampaign
+// args: campaign meta data
+// description:mock for the register
+// format example:
+// {
+//     "command_name": "delete_campaign",
+//     "tenant_id": "int",
+//     "campaign_id": "int",
+//     "action_serial": "int",
+//     "template_id": "int"
+//   }
+//---------------------------------------------------------------------------
+exports.deleteCampaign = function (req, res){
+    
+        var err = undefined;
+        var status = undefined;
+
+        var createReq = req.body;
+        var deleteCampaignData = createReq.request;
+        var pn_campaign_queue_id = undefined;
+        if(createReq == undefined)
+        {
+
+            var errMsg = "deleteCampaign:createReq is missing data, Failed !!!";
+            console.error(errMsg);
+            var response = createResponse(deleteCampaignData, undefined, false, errMsg);
+            res.status(400);
+            res.json(response);
+            return;
+        }
+
+        var validationResult = validateDeleteCampaignData(deleteCampaignData);
+
+        if(validationResult.status == false){
+
+            var errMsg = "deleteCampaign:validatedeleteCampaignData Failed " +validationResult.error;
+            console.error(errMsg);
+            var response = createResponse(createReq, pn_campaign_queue_id, false, errMsg);
+            res.status(400);
+            res.json(response);
+            return;
+        } 
+        
+        MongoClient.connect(url)
+        .then(function(db){
+            console.log("deleteCampaign: Connected correctly to server");
+            status = true;           
+            var tenantId = deleteCampaignData.tenant_id;
+            var tenantCampaignCollectionName = tenantCampaignsDataCollectionNameBase + tenantId;
+            var tenantCampaignsDataCollection = db.collection(tenantCampaignCollectionName);
+            var docId = getDocId(deleteCampaignData);
+            tenantCampaignsDataCollection.findOneAndDelete({_id: docId})
+            .then(function(exisitingDoc){
+                if(exisitingDoc.value == null){
+                    cleanup(db);
+                    res.status(400);
+                    var errMsg = "deleteCampaign:campaign not exist, please check campaign details";              db.close();                   
+                    var response = createResponse(deleteCampaignData, undefined, false, errMsg);                    
+                    res.json(response);
+                }else{
+                   // exisitingDoc.value
+                // References an existing topic, e.g. "my-topic"
+                    var topicName = exisitingDoc.value.data_queue_name;
+                    const topic = pubsubClient.topic(topicName);
+                    // Deletes the topic
+                    return topic.delete()
+                    .then(() => {
+                        cleanup(db);
+                        var Msg = "deleteCampaign:campaign succeeded, deleteing queue as well queue="+topicName ;              db.close();                   
+                        console.log(Msg);
+                        var response = createResponse(deleteCampaignData, topicName, true, errMsg);                    
+                        res.json(response);
+                    })
+                    .catch(() => {               
+                        cleanup(db);
+                        var errMsg = "deleteCampaign:campaign queue deletion failed, queue="+topicName ;
+                        console.error(errMsg);              db.close();                   
+                        var response = createResponse(deleteCampaignData, topicName, false, errMsg);                    
+                        res.json(response);
+                    })
+                }
+               
+            })
+            .catch(function(error){
+                cleanup(db);
+                var errMsg = "deleteCampaign:" + tenantCampaignCollectionName +".findOne Failed " + error;                console.error(errMsg);
+                var response = createResponse(deleteCampaignData, undefined, false, errMsg);
+                res.status(400);
+                res.json(response);
+                return; 
+            })                                          
+
+        })
+        .catch(function(error){
+            
+            var errMsg = "deleteCampaign: Connected DB Server Failed  tenantId = " + createReq.tenant_id + " visitor_id =  " + createReq.visitor_id + " " + error;
+            console.error(errMsg);
+            var response = createResponse(createReq, undefined, false, errMsg);
+            res.status(400);
+            res.json(response);
+        })         
+   
+}
+   
+
 
 // ----------------------------------------------------------------------------
 // ----------------------------------------------------------------
@@ -273,7 +397,7 @@ var getCreateCampaignResponse = function (response, createReq, pn_campaign_id, s
     response["command_name"] = "create_campaign";
     response["personalized"]= createReq.personalized;
     if(status == true){
-        response["pn_campaign_id"]= createReq.pn_campaign_id;
+        response["pn_campaign_id"]= pn_campaign_id;
         response["response_status"]= "scheduled";
     }else{
         response["error"] = error;
@@ -457,93 +581,177 @@ var getUpdateCampaignResponse = function (response, createReq, status, error){
  // ---------------------------------------------------------------- 
  var validateCreateCampaignData = function(createReq){
     
-         var isValid = {
-            status: true,
-            error: undefined
-         };
+    var isValid = {
+        status: true,
+        error: undefined
+    };
 
-          var status = true;
-          var error = "";
+    var status = true;
+    var error = "";
 
-          if(createReq.command_name != "create_campaign")
-          {
-            error = "command_name should be create_campaign\n";
-            status = false;
-          }
-
-
-          if(createReq.apps == undefined)
-          {
-            error = "crearte campaign should have targeted apps.\n";
-            status = false;
-          }else{
-              var foundApp = false;
-            createReq.apps.forEach(function(element) {
-                foundApp = true;
-            });
-            if(foundApp == false){
-                error = "crearte campaign should have targeted apps.\n";
-                status = false;
-            }
-          }
-
-
-          if(typeof createReq.campaign_id != "number")
-          {
-            error += "campaign_id should be type number\n";
-            status = false;
-          }else if(createReq.campaign_id <= 0){
-            error += "campaign_id should be positive number\n";
-            status = false;
-          }
-
-          if(typeof createReq.tenant_id != "number")
-          {
-            error += "tenant_id should be type number\n";
-            status = false;
-          }else if(createReq.tenant_id <= 0){
-            error += "tenant_id should be positive number\n";
-            status = false;
-          }
-
-          if(typeof createReq.action_serial != "number")
-          {
-            error += "action_serial should be type number\n";
-            status = false;
-          }else if(createReq.action_serial <= 0){
-            error += "action_serial should be positive number\n";
-            status = false;
-          }
-
-          if(typeof createReq.template_id != "number")
-          {
-            error += "template_id should be type number\n";
-            status = false;
-          }else if(createReq.template_id <= 0){
-            error += "template_id should be positive number\n";
-            status = false;
-          }
-
-          var currTime = new Date().getTime();
-          if(typeof createReq.schedule != "number")
-          {
-            error += "template_id should be type number\n";
-            status = false;
-          }else if(createReq.schedule <= currTime - processTimeDelta){
-            error += "schedule should be from now on to the futurer\n";
-            status = false;
-          }
-
-          if(status == false){
-            isValid.status = false;
-            isValid.error = error;
-          }
-        
-          return isValid;
-    
+    if(createReq.command_name != "create_campaign")
+    {
+        error = "command_name should be create_campaign\n";
+        status = false;
     }
 
 
+    if(createReq.apps == undefined)
+    {
+        error = "crearte campaign should have targeted apps.\n";
+        status = false;
+    }else{
+        var foundApp = false;
+        createReq.apps.forEach(function(element) {
+            foundApp = true;
+        });
+        if(foundApp == false){
+            error = "crearte campaign should have targeted apps.\n";
+            status = false;
+        }
+    }
+
+
+    if(typeof createReq.campaign_id != "number")
+    {
+        error += "campaign_id should be type number\n";
+        status = false;
+    }else if(createReq.campaign_id <= 0){
+        error += "campaign_id should be positive number\n";
+        status = false;
+    }
+
+    if(typeof createReq.tenant_id != "number")
+    {
+        error += "tenant_id should be type number\n";
+        status = false;
+    }else if(createReq.tenant_id <= 0){
+        error += "tenant_id should be positive number\n";
+        status = false;
+    }
+
+    if(typeof createReq.action_serial != "number")
+    {
+        error += "action_serial should be type number\n";
+        status = false;
+    }else if(createReq.action_serial <= 0){
+        error += "action_serial should be positive number\n";
+        status = false;
+    }
+
+    if(typeof createReq.template_id != "number")
+    {
+        error += "template_id should be type number\n";
+        status = false;
+    }else if(createReq.template_id <= 0){
+        error += "template_id should be positive number\n";
+        status = false;
+    }
+
+    var currTime = new Date().getTime();
+    if(typeof createReq.schedule != "number")
+    {
+        error += "template_id should be type number\n";
+        status = false;
+    }else if(createReq.schedule <= currTime - processTimeDelta){
+        error += "schedule should be from now on to the futurer\n";
+        status = false;
+    }
+
+    if(typeof createReq.personalized != "boolean")
+    {
+        error += "personalized should be type boolean\n";
+        status = false;
+    }
+
+    if(status == false){
+        isValid.status = false;
+        isValid.error = error;
+    }
+    
+    return isValid;
+
+}
+
+
+    
+
+
+// ----------------------------------------------------------------
+// function: validateDeleteCampaignData
+// args: delete campaign request
+// return: response object. 
+// ----------------------------------------------------------------
+// {
+//     "command_name": "delete_campaign",
+//     "tenant_id": "int",
+//     "campaign_id": "int",
+//     "action_serial": "int",
+//     "template_id": "int"
+//  }
+ // ---------------------------------------------------------------- 
+ var validateDeleteCampaignData = function(createReq){
+    
+    var isValid = {
+        status: true,
+        error: undefined
+    };
+
+    var status = true;
+    var error = "";
+
+    if(createReq.command_name != "delete_campaign")
+    {
+        error = "command_name should be delete_campaign\n";
+        status = false;
+    }
+
+    if(typeof createReq.campaign_id != "number")
+    {
+        error += "campaign_id should be type number\n";
+        status = false;
+
+    }else if(createReq.campaign_id <= 0){
+        error += "campaign_id should be positive number\n";
+        status = false;
+    }
+
+    if(typeof createReq.tenant_id != "number")
+    {
+        error += "tenant_id should be type number\n";
+        status = false;
+    }else if(createReq.tenant_id <= 0){
+        error += "tenant_id should be positive number\n";
+        status = false;
+    }
+
+    if(typeof createReq.action_serial != "number")
+    {
+        error += "action_serial should be type number\n";
+        status = false;
+    }else if(createReq.action_serial <= 0){
+        error += "action_serial should be positive number\n";
+        status = false;
+    }
+
+    if(typeof createReq.template_id != "number")
+    {
+        error += "template_id should be type number\n";
+        status = false;
+    }else if(createReq.template_id <= 0){
+        error += "template_id should be positive number\n";
+        status = false;
+    }
+
+
+    if(status == false){
+        isValid.status = false;
+        isValid.error = error;
+    }
+    
+    return isValid;
+
+}
 
 // ----------------------------------------------------------------
 // function: getDocId
@@ -555,10 +763,10 @@ var getUpdateCampaignResponse = function (response, createReq, status, error){
 // "_id": "tid:85_cid:1004_acsl:13_tplid:123"
 // ---------------------------------------------------------------- 
 var getDocId = function(createReq){
-    var docId = "tid:" + createReq.tenant_id +
-     "_cid:" + createReq.campaign_id +
-     "_acsl:" + createReq.action_serial +
-      "_tplid:" + createReq.template_id;
+    var docId = "tid-" + createReq.tenant_id +
+     "-cid-" + createReq.campaign_id +
+     "-acsl-" + createReq.action_serial +
+      "-tplid-" + createReq.template_id;
       return docId;
 }
     
@@ -606,7 +814,7 @@ var getDocId = function(createReq){
 var  createCampaignDocData = function (createReq, docId){
     
     var document = {status: true, data:undefined};
-
+    var queueName = docId;
     var data =
      {
         "_id" : docId,
@@ -624,6 +832,7 @@ var  createCampaignDocData = function (createReq, docId){
         "schedule" : createReq.schedule,
         "time_to_live" : createReq.time_to_live,
         "template_type" : createReq.template_type,
+        "data_queue_name": queueName,
         "template_data" : createReq.template_data,
         "dynamic_links" :createReq.dynamic_links
      };
@@ -642,18 +851,29 @@ var  createCampaignDocData = function (createReq, docId){
 //---------------------------------------------------------------------------
 var handleCreateCampaign = function(db, tenantCampaignsDataCollection, createReq, docId){
     
-        return new Promise( function (resolve, reject) {
-            var document = createCampaignDocData(createReq, docId)
-            tenantCampaignsDataCollection.insertOne(document.data)
-            .then(function(doc){
-                resolve(doc);
-            }) 
-            .catch(function(error){
+    return new Promise( function (resolve, reject) {
+        var document = createCampaignDocData(createReq, docId);
+        const topicName = document.data.data_queue_name;
+            // Creates the new topic
+            pubsubClient.createTopic(topicName)
+            .then((results) => {
+                const topic = results[0];
+                console.log(`Topic ${topic.name} created.`);
+                tenantCampaignsDataCollection.insertOne(document.data)
+                .then(function(doc){
+            // The name for the new topic
+                    resolve(document);
+                })
+                .catch(function(error){
+                    reject(error);
+                })
+            })
+            .catch((error) => {
+                console.error('ERROR:', error);
                 reject(error);
-            })    
-            
-        });
-    }
+            });
+        })                    
+}
    
     
 

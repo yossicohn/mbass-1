@@ -1,0 +1,54 @@
+// --------------------- Request delete_campaign: ---------------------------------
+{
+    "command_name": "delete_campaign",
+    "tenant_id": "int",
+    "campaign_id": "int",
+    "action_serial": "int",
+    "template_id": "int"
+  }
+
+// --------------------- Response delete_campaign: ---------------------------------
+{
+    "command_name": "delete_campaign",
+    "tenant_id": "int",
+    "campaign_id": "int",
+    "action_serial": "int",
+    "template_id": "int",
+    "response_status": "deleted/failed",
+    "error": "campaign already running, please abort/campaign not exist"
+  }
+
+
+
+  
+// --------------------- Response delete_campaign: ---------------------------------
+
+jsondata=" \"request\":{
+    \"command_name\": \"delete_campaign\",
+    \"tenant_id\":85,
+    \"campaign_id\": 85,
+    \"action_serial\": 85,
+    \"template_id\": 85
+  }
+";
+
+curl --header "Content-Type: application/json" \
+http://localhost:3001/create_campaign \
+-d "{ \"$jsondata\"}"
+
+
+}"
+
+
+curl --header "Content-Type: application/json" \
+http://localhost:3001/delete_campaign \
+-d "{
+    \"request\":{
+    \"command_name\": \"delete_campaign\",
+    \"tenant_id\":85,
+    \"campaign_id\": 85,
+    \"action_serial\": 85,
+    \"template_id\": 85
+  }
+}
+"
