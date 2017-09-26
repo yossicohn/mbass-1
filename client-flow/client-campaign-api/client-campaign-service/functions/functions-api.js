@@ -83,35 +83,39 @@ const pubsubClient = PubSub({
 // format example:
 // {
 //     "request": {
-//      "_id" : "tid:<int>_cid:<int>_acsl:<int>_tplid:<int>",
-//     "campaign_status": "scheduled/started/stopped/completed/aborted/failed",
-//     "campaign_type" : "push_notification",
-//     "campaign_mode" : "schedule/realtime ",
-//     "target_types" : "all|ios|and|webpush",
-//     "tenant_id" : "int",
-//     "campaign_id" : "int",
-//     "action_serial" : "int",
-//     "template_id" : "int",
-//     "personalized" : false,
-//     "tgt_group_size" : "int",
-//     "schedule" : "unix epic timestamp",
-//     "time_to_live" : "X seconds",
-//     "template_type" : "simple|rich",
-//     "template_data" : {
-//     "title" : "CustomView Text Title",
-//         "content" : "1 The quick brown fox jumps over the lazy dog",
-//         "type" : "simple/customView"
-// },
-// "dynamic_links" : {
-//     "ios" : {
-//         "app_ns_1" : "www.dynamiclinkns1.com",
-//             "app_ns_2" : "www.dynamiclinkns2.com"
+//   "command_name": "create_campaign",
+//   "campaign_type": "push_notification",
+//   "campaign_mode": "schedule/realtime ",
+//   "target_types": "all|ios|and|webpush",
+//   "tenant_id": "int",
+//   "campaign_id": "int",
+//   "action_serial": "int",
+//   "template_id": "int",
+//   "personalized" : "bool",
+//   "tgt_group_size": "int",
+//   "schedule": "unix epic timestamp",
+//   "time_to_live": "X seconds",
+//   "template_type" : "simple|rich",
+//   "template_data": {
+//     "title": "CustomView Text Title",
+//     "content": "1 The quick brown fox jumps over the lazy dog"
+//   },
+//   "apps" :["app_ns_1",  "app_ns_2", "app_ns_4"],
+//   "dynamic_links": {
+//     "ios": {
+//       "app_ns_1": "www.dynamiclinkns1.com",
+//       "app_ns_2": "www.dynamiclinkns2.com"
 //     },
-//     "android" : {
-//         "app_ns_3" : "www.dynamiclinkns1.com",
-//             "app_ns_4" : "www.dynamiclinkns2.com"
+//     "android": {
+//       "app_ns_3": "www.dynamiclinkns1.com",
+//       "app_ns_4": "www.dynamiclinkns2.com"
 //     }
-// }
+//   },
+//   "campaign_process" :{
+//       "support_throtteling": "bool",     
+//       "max_push_bulk_size": "int",
+//       "sleep_time_between_bulks": "int",
+//   }
 // }
 //---------------------------------------------------------------------------
 exports.createCampaign = function (req, res){
@@ -834,7 +838,16 @@ var  createCampaignDocData = function (createReq, docId){
         "template_type" : createReq.template_type,
         "data_queue_name": queueName,
         "template_data" : createReq.template_data,
-        "dynamic_links" :createReq.dynamic_links
+        "dynamic_links" :createReq.dynamic_links,
+        "campaign_process" :createReq.campaign_process,
+        "campaign_stats" :{
+            "successfull_push": -1,
+            "failed_push": -1,
+            "successfull_push_retries": -1,
+            "failed_push_retries": -1,
+            "push_bulk_size": -1,
+            "sleep_time_between_bulks": -1,
+        }
      };
 
      document.data = data;

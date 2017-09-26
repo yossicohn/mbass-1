@@ -1,33 +1,94 @@
+// --------------------- PN Campaign Collection Schema ---------------------------------
+ 
 {
-    "_id" : "tid:<int>_cid:<int>_acsl:<int>_tplid:<int>",
+    "_id": "tid:<int>_cid:<int>_acsl:<int>_tplid:<int>",
     "campaign_status": "scheduled/started/stopped/completed/aborted/failed",
-    "campaign_type" : "push_notification",
-    "campaign_mode" : "schedule/realtime ",
-    "target_types" : "all|ios|and|webpush",
-    "tenant_id" : "int",
-    "campaign_id" : "int",
-    "action_serial" : "int",
-    "template_id" : "int",
-    "personalized" : "bool",
-    "tgt_group_size" : "int",
-    "schedule" : "unix epic timestamp",
-    "time_to_live" : "X seconds",
-    "template_type" : "simple|rich",
-    "data_queue_name": "",
-    "template_data" : {
-        "title" : "CustomView Text Title",
-        "content" : "1 The quick brown fox jumps over the lazy dog",
-        "type" : "simple/customView"
+    "campaign_type": "push_notification",
+    "campaign_mode": "schedule/realtime ",
+    "target_types": "all|ios|and|webpush",
+    "tenant_id": "int",
+    "campaign_id": "int",
+    "action_serial": "int",
+    "template_id": "int",
+    "personalized": "bool",
+    "tgt_group_size": "int",
+    "schedule": "unix epic timestamp",
+    "time_to_live": "X seconds",
+    "template_type": "simple|rich",
+    "template_data": {
+      "title": "CustomView Text Title",
+      "content": "1 The quick brown fox jumps over the lazy dog"
+    },
+    "apps": [ "app_ns_1", "app_ns_2", "app_ns_4" ],
+    "dynamic_links": {
+      "ios": {
+        "app_ns_1": "www.dynamiclinkns1.com",
+        "app_ns_2": "www.dynamiclinkns2.com"
+      },
+      "android": {
+        "app_ns_3": "www.dynamiclinkns1.com",
+        "app_ns_4": "www.dynamiclinkns2.com"
+      }
+    },
+    "campaign_process": {
+      "support_throtteling": "bool",
+      "max_push_bulk_size": "int",
+      "sleep_time_between_bulks": "int"
+    },
+    "campaign_stats": {
+      "successfull_push": "int",
+      "failed_push": "int",
+      "successfull_push_retries": "int",
+      "failed_push_retries": "int",
+      "push_bulk_size": "int",
+      "sleep_time_between_bulks": "int"
+    }
+  }
+
+
+// --------------------- PN Campaign Collection Schema Example: ---------------------------------
+
+{
+    "_id": "tid:85_cid:1004_acsl:13_tplid:123",
+    "campaign_status": "scheduled",
+    "campaign_type": "push_notification",
+    "campaign_mode": "schedule",
+    "target_types": "ios|and",
+    "tenant_id": 85,
+    "campaign_id": 1004,
+    "action_serial": 13,
+    "template_id": 123,
+    "tgt_group_size": 1000,
+    "schedule": 1505641473,
+    "time_to_live": 5184000,
+    "template_type": "normal",
+    "template_data": {
+      "title": "CustomView Text Title",
+      "content": "1 The quick brown fox jumps over the lazy dog",
+      "type": "simple/customView"
     },
     "apps" :["app_ns_1",  "app_ns_2", "app_ns_4"],
-    "dynamic_links" : {
-        "ios" : {
-            "app_ns_1" : "www.dynamiclinkns1.com",
-            "app_ns_2" : "www.dynamiclinkns2.com"
-        },
-        "android" : {
-            "app_ns_3" : "www.dynamiclinkns1.com",
-            "app_ns_4" : "www.dynamiclinkns2.com"
-        }
+    "dynamic_links": {
+      "ios": {
+        "app_ns_1": "www.dynamiclinkns1.com",
+        "app_ns_2": "www.dynamiclinkns2.com"
+      },
+      "android": {
+        "app_ns_3": "www.dynamiclinkns1.com",
+        "app_ns_4": "www.dynamiclinkns2.com"
+      }
+    },
+    "campaign_process" :{
+        "support_throtteling": false,     
+        "max_push_bulk_size": 1000,
+        "sleep_time_between_bulks": 300,
+    },
+    "campaign_stats" :{
+        "successfull_push": -1,
+        "failed_push": -1,
+        "successfull_push_retries": -1,
+        "failed_push_retries": -1,
+        "push_bulk_size": -1,
+        "sleep_time_between_bulks": -1,
     }
-}
+  }
