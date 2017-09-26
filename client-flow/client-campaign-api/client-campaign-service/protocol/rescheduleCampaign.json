@@ -1,0 +1,40 @@
+// --------------------- Request reschedule_campaign: ---------------------------------
+{
+  "command_name": "reschdule_campaign",
+  "campaign_mode": "schedule/realtime/retry",
+  "tenant_id": "int",
+  "campaign_id": "int",
+  "action_serial": "int",
+  "template_id": "int",
+  "schedule": "unix epic timestamp",
+  "time_to_live": "X seconds"
+}
+
+// --------------------- Response reschedule_campaign: ---------------------------------
+{
+  "command_name": "reschdule_campaign",
+  "tenant_id": "int",
+  "campaign_id": "int",
+  "action_serial": "int",
+  "template_id": "int",
+  "response_status": "scheduled/failed",
+  "error": "campaign already exist"
+}
+
+
+
+curl --header "Content-Type: application/json" \
+http://localhost:3001/reschedule_campaign \
+-d "{
+\"request\":{
+  \"command_name\": \"reschedule_campaign\",
+  \"campaign_mode\": \"schedule\",
+  \"tenant_id\": 85,
+  \"campaign_id\": 85,
+  \"action_serial\": 85,
+  \"template_id\": 85,
+  \"schedule\": 1506439496,
+  \"time_to_live\": 350
+  }
+}
+"

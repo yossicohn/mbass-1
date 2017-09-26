@@ -14,6 +14,9 @@ module.exports = function(app) {
     app.route('/stop_campaign')
         .post(functions_api.stopCampaign);
 
+    app.route('/reschedule_campaign')
+        .post(functions_api.rescheduleCampaign);
+
 
 }
 

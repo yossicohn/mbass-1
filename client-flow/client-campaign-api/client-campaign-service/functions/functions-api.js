@@ -435,6 +435,123 @@ exports.stopCampaign = function (req, res){
 }
 
 
+//-----------------------------------------------------------------------------
+// functions: rescheduleCampaign
+// args: campaign meta data
+// description:mock for the register
+// format example:
+// {
+//     "command_name": "stop_campaign",
+//     "tenant_id": "int",
+//     "campaign_id": "int",
+//     "action_serial": "int",
+//     "template_id": "int"
+//   }
+//---------------------------------------------------------------------------
+exports.rescheduleCampaign = function (req, res){
+
+    var err = undefined;
+    var status = undefined;
+
+    var createReq = req.body;
+    var rescheduleCampaignData = createReq.request;
+    var pn_campaign_queue_id = undefined;
+    if(createReq == undefined)
+    {
+
+        var errMsg = "rescheduleCampaign:createReq is missing data, Failed !!!";
+        console.error(errMsg);
+        var response = createResponse(rescheduleCampaignData, undefined, false, errMsg);
+        res.status(400);
+        res.json(response);
+        return;
+    }
+
+    var validationResult = validateRescheduleCampaignData(rescheduleCampaignData);
+
+    if(validationResult.status == false){
+
+        var errMsg = "rescheduleCampaign:validateRescheduleCampaignData Failed " +validationResult.error;
+        console.error(errMsg);
+        var response = createResponse(createReq, pn_campaign_queue_id, false, errMsg);
+        res.status(400);
+        res.json(response);
+        return;
+    }
+
+    MongoClient.connect(url)
+        .then(function(db){
+            console.log("rescheduleCampaign: Connected correctly to server");
+            status = true;
+            var tenantId = rescheduleCampaignData.tenant_id;
+            var tenantCampaignCollectionName = tenantCampaignsDataCollectionNameBase + tenantId;
+            var tenantCampaignsDataCollection = db.collection(tenantCampaignCollectionName);
+            var docId = getDocId(rescheduleCampaignData);
+            tenantCampaignsDataCollection.findOne({_id: docId})
+                .then(function(exisitingDoc){
+                    if(exisitingDoc == null){
+                        cleanup(db);
+                        res.status(400);
+                        var errMsg = "rescheduleCampaign:campaign not exist, please check campaign details";
+                        var response = createResponse(rescheduleCampaignData, undefined, false, errMsg);
+                        res.json(response);
+                    }else{
+                        var errMsg = undefined;
+                        if(exisitingDoc.campaign_status != "scheduled" && exisitingDoc.campaign_status != "stopped") {
+                            var errMsg = "rescheduleCampaign:campaign status id not scheduled, campaign status=" + exisitingDoc.value.campaign_status;
+                            errMsg += " Note that only scheduled or stopped campaigns can be rescheduled"
+                        }
+
+                        if(errMsg != undefined){
+                            cleanup(db);
+                            res.status(400);
+                            var response = createResponse(rescheduleCampaignData, undefined, false, errMsg);
+                            res.json(response);
+                        }else{
+                            var document = exisitingDoc;
+                            document.campaign_status = "schedule";
+                            document.schedule = rescheduleCampaignData.schedule;
+                            document.time_to_live = rescheduleCampaignData.time_to_live;
+                            tenantCampaignsDataCollection.update({_id: docId}, document)
+                                .then(function(result){
+                                    cleanup(db);
+                                    var errMsg = undefined;
+                                    var response = createResponse(rescheduleCampaignData, undefined, true, errMsg);
+                                    res.json(response);
+                                })
+                                .catch(function(error){
+                                    cleanup(db);
+                                    var errMsg = "rescheduleCampaign:campaign rescheduled failed on updating document";
+                                    var response = createResponse(rescheduleCampaignData, undefined, false, errMsg);
+                                    res.json(response);
+                                })
+
+                        }
+                    }
+                })
+                .catch(function(error){
+                    cleanup(db);
+                    var errMsg = "rescheduleCampaign:" + tenantCampaignCollectionName +".findOne Failed " + error;
+                    console.error(errMsg);
+                    var response = createResponse(rescheduleCampaignData, undefined, false, errMsg);
+                    res.status(400);
+                    res.json(response);
+                    return;
+                })
+
+        })
+        .catch(function(error){
+
+            var errMsg = "rescheduleCampaign: Connected DB Server Failed  tenantId = " + createReq.tenant_id + " visitor_id =  " + createReq.visitor_id + " " + error;
+            console.error(errMsg);
+            var response = createResponse(createReq, undefined, false, errMsg);
+            res.status(400);
+            res.json(response);
+        })
+
+}
+
+
 
 // ----------------------------------------------------------------------------
 // ----------------------------------------------------------------
@@ -580,7 +697,10 @@ var getCreateCampaignResponse = function (response, createReq, pn_campaign_id, s
 var getRescheduleCampaignResponse = function (response, createReq, status, error){
     
     response["command_name"] = "reschdule_campaign";
+
     if(status == true){
+        response["schedule"] = createReq.schedule;
+        response["time_to_live"] = createReq.time_to_live;
         response["response_status"]= "scheduled";
     }else{
         response["error"] = error;
@@ -952,6 +1072,105 @@ var validateStopCampaignData = function(createReq){
     return isValid;
 
 }
+
+
+// ----------------------------------------------------------------
+// function: validateRescheduleCampaignData
+// args: delete campaign request
+// return: response object.
+// ----------------------------------------------------------------
+// {
+//     "command_name": "reschedule_campaign",
+//     "tenant_id": "int",
+//     "campaign_id": "int",
+//     "action_serial": "int",
+//     "template_id": "int",
+//     "schedule": "unix epic timestamp",
+//     "time_to_live": "X seconds"
+//  }
+// ----------------------------------------------------------------
+var validateRescheduleCampaignData = function(createReq){
+
+    var isValid = {
+        status: true,
+        error: undefined
+    };
+
+    var status = true;
+    var error = "";
+
+    if(createReq.command_name != "reschedule_campaign")
+    {
+        error = "command_name should be stop_campaign\n";
+        status = false;
+    }
+
+    if(typeof createReq.campaign_id != "number")
+    {
+        error += "campaign_id should be type number\n";
+        status = false;
+
+    }else if(createReq.campaign_id <= 0){
+        error += "campaign_id should be positive number\n";
+        status = false;
+    }
+
+    if(typeof createReq.tenant_id != "number")
+    {
+        error += "tenant_id should be type number\n";
+        status = false;
+    }else if(createReq.tenant_id <= 0){
+        error += "tenant_id should be positive number\n";
+        status = false;
+    }
+
+    if(typeof createReq.action_serial != "number")
+    {
+        error += "action_serial should be type number\n";
+        status = false;
+    }else if(createReq.action_serial <= 0){
+        error += "action_serial should be positive number\n";
+        status = false;
+    }
+
+    if(typeof createReq.template_id != "number")
+    {
+        error += "template_id should be type number\n";
+        status = false;
+    }else if(createReq.template_id <= 0){
+        error += "template_id should be positive number\n";
+        status = false;
+    }
+
+    if(typeof createReq.time_to_live != "number")
+    {
+        error += "time_to_live should be type number\n";
+        status = false;
+    }else if(createReq.time_to_live <= 0){
+        error += "time_to_live should be positive number\n";
+        status = false;
+    }
+
+
+    var currTime = new Date().getTime();
+    if(typeof createReq.schedule != "number")
+    {
+        error += "template_id should be type number\n";
+        status = false;
+    }else if(createReq.schedule <= currTime - processTimeDelta){
+        error += "schedule should be from now on to the futurer\n";
+        status = false;
+    }
+
+    if(status == false){
+        isValid.status = false;
+        isValid.error = error;
+    }
+
+    return isValid;
+
+}
+
 
 // ----------------------------------------------------------------
 // function: getDocId
