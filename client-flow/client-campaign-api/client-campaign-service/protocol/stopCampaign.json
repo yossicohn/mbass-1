@@ -1,0 +1,36 @@
+{
+    "command_name": "stop_campaign",
+    "tenant_id": "int",
+    "campaign_id": "int",
+    "action_serial": "int",
+    "template_id": "int"
+  }
+  
+
+// --------------------- Response stop_campaign: ---------------------------------
+{
+    "command_name": "stop_campaign",
+    "tenant_id": "int",
+    "campaign_id": "int",
+    "action_serial": "int",
+    "template_id": "int",
+    "response_status": "stopped/failed",
+    "error": "campaign already running, please abort/campaign not exist"
+  }
+  
+
+
+
+
+curl --header "Content-Type: application/json" \
+http://localhost:3001/stop_campaign \
+-d "{
+    \"request\":{
+    \"command_name\": \"stop_campaign\",
+    \"tenant_id\":85,
+    \"campaign_id\": 85,
+    \"action_serial\": 85,
+    \"template_id\": 85
+  }
+}
+"

@@ -165,7 +165,7 @@ exports.createCampaign = function (req, res){
                 if(exisitingDoc != undefined){
                     cleanup(db);
                     res.status(400);
-                    var errMsg = "createCampaign:campaign already exist, please delete campaign";              db.close();                   
+                    var errMsg = "createCampaign:campaign already exist, please delete campaign";                                
                     var response = createResponse(createCampaignData, undefined, false, errMsg);                    
                     res.json(response);
                 }else{
@@ -188,7 +188,8 @@ exports.createCampaign = function (req, res){
             })
             .catch(function(error){
                 cleanup(db);
-                var errMsg = "createCampaign:" + tenantCampaignCollectionName +".findOne Failed " + error;                console.error(errMsg);
+                var errMsg = "createCampaign:" + tenantCampaignCollectionName +".findOne Failed " + error;                
+                console.error(errMsg);
                 var response = createResponse(createCampaignData, undefined, false, errMsg);
                 res.status(400);
                 res.json(response);
@@ -267,7 +268,7 @@ exports.deleteCampaign = function (req, res){
                 if(exisitingDoc.value == null){
                     cleanup(db);
                     res.status(400);
-                    var errMsg = "deleteCampaign:campaign not exist, please check campaign details";              db.close();                   
+                    var errMsg = "deleteCampaign:campaign not exist, please check campaign details";                                 
                     var response = createResponse(deleteCampaignData, undefined, false, errMsg);                    
                     res.json(response);
                 }else{
@@ -279,7 +280,7 @@ exports.deleteCampaign = function (req, res){
                     return topic.delete()
                     .then(() => {
                         cleanup(db);
-                        var Msg = "deleteCampaign:campaign succeeded, deleteing queue as well queue="+topicName ;              db.close();                   
+                        var Msg = "deleteCampaign:campaign succeeded, deleteing queue as well queue="+topicName ;                                
                         console.log(Msg);
                         var response = createResponse(deleteCampaignData, topicName, true, errMsg);                    
                         res.json(response);
@@ -287,7 +288,7 @@ exports.deleteCampaign = function (req, res){
                     .catch(() => {               
                         cleanup(db);
                         var errMsg = "deleteCampaign:campaign queue deletion failed, queue="+topicName ;
-                        console.error(errMsg);              db.close();                   
+                        console.error(errMsg);                               
                         var response = createResponse(deleteCampaignData, topicName, false, errMsg);                    
                         res.json(response);
                     })
@@ -296,7 +297,8 @@ exports.deleteCampaign = function (req, res){
             })
             .catch(function(error){
                 cleanup(db);
-                var errMsg = "deleteCampaign:" + tenantCampaignCollectionName +".findOne Failed " + error;                console.error(errMsg);
+                var errMsg = "deleteCampaign:" + tenantCampaignCollectionName +".findOne Failed " + error;                
+                console.error(errMsg);
                 var response = createResponse(deleteCampaignData, undefined, false, errMsg);
                 res.status(400);
                 res.json(response);
@@ -314,7 +316,124 @@ exports.deleteCampaign = function (req, res){
         })         
    
 }
-   
+
+
+
+//-----------------------------------------------------------------------------
+// functions: stopCampaign
+// args: campaign meta data
+// description:mock for the register
+// format example:
+// {
+//     "command_name": "stop_campaign",
+//     "tenant_id": "int",
+//     "campaign_id": "int",
+//     "action_serial": "int",
+//     "template_id": "int"
+//   }
+//---------------------------------------------------------------------------
+exports.stopCampaign = function (req, res){
+
+    var err = undefined;
+    var status = undefined;
+
+    var createReq = req.body;
+    var stopCampaignData = createReq.request;
+    var pn_campaign_queue_id = undefined;
+    if(createReq == undefined)
+    {
+
+        var errMsg = "stopCampaign:createReq is missing data, Failed !!!";
+        console.error(errMsg);
+        var response = createResponse(stopCampaignData, undefined, false, errMsg);
+        res.status(400);
+        res.json(response);
+        return;
+    }
+
+    var validationResult = validateStopCampaignData(stopCampaignData);
+
+    if(validationResult.status == false){
+
+        var errMsg = "stopCampaign:validatestopCampaignData Failed " +validationResult.error;
+        console.error(errMsg);
+        var response = createResponse(createReq, pn_campaign_queue_id, false, errMsg);
+        res.status(400);
+        res.json(response);
+        return;
+    }
+
+    MongoClient.connect(url)
+        .then(function(db){
+            console.log("stopCampaign: Connected correctly to server");
+            status = true;
+            var tenantId = stopCampaignData.tenant_id;
+            var tenantCampaignCollectionName = tenantCampaignsDataCollectionNameBase + tenantId;
+            var tenantCampaignsDataCollection = db.collection(tenantCampaignCollectionName);
+            var docId = getDocId(stopCampaignData);
+            tenantCampaignsDataCollection.findOne({_id: docId})
+                .then(function(exisitingDoc){
+                    if(exisitingDoc == null){
+                        cleanup(db);
+                        res.status(400);
+                        var errMsg = "stopCampaign:campaign not exist, please check campaign details";              
+                        var response = createResponse(stopCampaignData, undefined, false, errMsg);
+                        res.json(response);
+                    }else{
+                        var errMsg = undefined;
+                        if(exisitingDoc.campaign_status != "scheduled" && exisitingDoc.campaign_status != "stopped"){
+                            var errMsg = "stopCampaign:campaign status id not scheduled, campaign status=" + exisitingDoc.value.campaign_status;
+                            errMsg += " Note that only scheduled campaign can be stopped"
+                        }else if( exisitingDoc.campaign_status == "stopped"){
+                            var errMsg = "stopCampaign:campaign status allready stopped";
+                        }
+                        if(errMsg != undefined){
+                            cleanup(db);
+                            res.status(400);                           
+                            var response = createResponse(stopCampaignData, undefined, false, errMsg);
+                            res.json(response);
+                        }else{
+                            var document = exisitingDoc;
+                            document.campaign_status = "stopped";                          
+                            tenantCampaignsDataCollection.update({_id: docId}, document)
+                            .then(function(result){
+                                cleanup(db);                               
+                                var errMsg = undefined;
+                                var response = createResponse(stopCampaignData, undefined, true, errMsg);
+                                res.json(response);
+                            })
+                            .catch(function(error){
+                                cleanup(db);
+                                var errMsg = "stopCampaign:campaign stpopped failed on updating document";
+                                var response = createResponse(stopCampaignData, undefined, false, errMsg);
+                                res.json(response);
+                             })
+
+                        }
+                    }
+                })
+                .catch(function(error){
+                    cleanup(db);
+                    var errMsg = "stopCampaign:" + tenantCampaignCollectionName +".findOne Failed " + error;    
+                    console.error(errMsg);
+                    var response = createResponse(stopCampaignData, undefined, false, errMsg);
+                    res.status(400);
+                    res.json(response);
+                    return;
+                })
+
+        })
+        .catch(function(error){
+
+            var errMsg = "stopCampaign: Connected DB Server Failed  tenantId = " + createReq.tenant_id + " visitor_id =  " + createReq.visitor_id + " " + error;
+            console.error(errMsg);
+            var response = createResponse(createReq, undefined, false, errMsg);
+            res.status(400);
+            res.json(response);
+        })
+
+}
+
 
 
 // ----------------------------------------------------------------------------
@@ -356,19 +475,19 @@ var createResponse = function(createReq, pn_campaign_id, status, error){
          response =  getCreateCampaignResponse(response, createReq, pn_campaign_id, status, error);
         break;
         case 'abort_campaign': 
-        response =  getAbortCampaignResponse(response);
+        response =  getAbortCampaignResponse(response, createReq, pn_campaign_id, status, error);
         break;
         case 'delete_campaign': 
-        response =  getDeleteCampaignResponse(response);
+        response =  getDeleteCampaignResponse(response, createReq, status, error);
         break;
         case 'reschedule_campaign': 
-        response =  getRescheduleCampaignResponse(response);
+        response =  getRescheduleCampaignResponse(response, createReq, status, error);
         break;
         case 'stop_campaign': 
-        response =  getStopCampaignResponse(response);
+        response =  getStopCampaignResponse(response, createReq,  status, error);
         break;
         case 'update_campaign': 
-        response =  getUpdateCampaignResponse(response);
+        response =  getUpdateCampaignResponse(response, createReq,  status, error);
         break;
       }
     
@@ -753,6 +872,83 @@ var getUpdateCampaignResponse = function (response, createReq, status, error){
         isValid.error = error;
     }
     
+    return isValid;
+
+}
+
+
+// ----------------------------------------------------------------
+// function: validateStopCampaignData
+// args: delete campaign request
+// return: response object.
+// ----------------------------------------------------------------
+// {
+//     "command_name": "delete_campaign",
+//     "tenant_id": "int",
+//     "campaign_id": "int",
+//     "action_serial": "int",
+//     "template_id": "int"
+//  }
+// ----------------------------------------------------------------
+var validateStopCampaignData = function(createReq){
+
+    var isValid = {
+        status: true,
+        error: undefined
+    };
+
+    var status = true;
+    var error = "";
+
+    if(createReq.command_name != "stop_campaign")
+    {
+        error = "command_name should be stop_campaign\n";
+        status = false;
+    }
+
+    if(typeof createReq.campaign_id != "number")
+    {
+        error += "campaign_id should be type number\n";
+        status = false;
+
+    }else if(createReq.campaign_id <= 0){
+        error += "campaign_id should be positive number\n";
+        status = false;
+    }
+
+    if(typeof createReq.tenant_id != "number")
+    {
+        error += "tenant_id should be type number\n";
+        status = false;
+    }else if(createReq.tenant_id <= 0){
+        error += "tenant_id should be positive number\n";
+        status = false;
+    }
+
+    if(typeof createReq.action_serial != "number")
+    {
+        error += "action_serial should be type number\n";
+        status = false;
+    }else if(createReq.action_serial <= 0){
+        error += "action_serial should be positive number\n";
+        status = false;
+    }
+
+    if(typeof createReq.template_id != "number")
+    {
+        error += "template_id should be type number\n";
+        status = false;
+    }else if(createReq.template_id <= 0){
+        error += "template_id should be positive number\n";
+        status = false;
+    }
+
+
+    if(status == false){
+        isValid.status = false;
+        isValid.error = error;
+    }
+
     return isValid;
 
 }
