@@ -509,7 +509,7 @@ exports.rescheduleCampaign = function (req, res){
                             res.json(response);
                         }else{
                             var document = exisitingDoc;
-                            document.campaign_status = "schedule";
+                            document.campaign_status = "scheduled";
                             document.schedule = rescheduleCampaignData.schedule;
                             document.time_to_live = rescheduleCampaignData.time_to_live;
                             tenantCampaignsDataCollection.update({_id: docId}, document)
@@ -552,6 +552,147 @@ exports.rescheduleCampaign = function (req, res){
 }
 
 
+//-----------------------------------------------------------------------------
+// functions: updateCampaign
+// args: campaign meta data
+// description:mock for the register
+// format example:
+// {
+//     "command_name": "update_campaign",
+//     "campaign_type": "push_notification",
+//     "campaign_mode": "schedule/realtime ",
+//     "target_types": "all|ios|and|webpush",
+//     "tenant_id": "int",
+//     "campaign_id": "int",
+//     "action_serial": "int",
+//     "template_id": "int",
+//     "personalized" : "bool",
+//     "tgt_group_size": "int",
+//     "schedule": "unix epic timestamp",
+//     "time_to_live": "X seconds",
+//     "template_type" : "simple|rich",
+//     "template_data": {
+//       "title": "CustomView Text Title",
+//       "content": "1 The quick brown fox jumps over the lazy dog"
+//     },
+//     "apps" :["app_ns_1",  "app_ns_2", "app_ns_4"],
+//     "dynamic_links": {
+//       "ios": {
+//         "app_ns_1": "www.dynamiclinkns1.com",
+//         "app_ns_2": "www.dynamiclinkns2.com"
+//       },
+//       "android": {
+//         "app_ns_3": "www.dynamiclinkns1.com",
+//         "app_ns_4": "www.dynamiclinkns2.com"
+//       }
+//     },
+//     "campaign_process" :{
+//       "support_throtteling": "bool",
+//       "max_push_bulk_size": "int",
+//       "sleep_time_between_bulks": "int"
+//     }
+//   }  
+//---------------------------------------------------------------------------
+exports.updateCampaign = function (req, res){
+    
+        var err = undefined;
+        var status = undefined;
+    
+        var createReq = req.body;
+        var updateCampaignData = createReq.request;
+        var pn_campaign_queue_id = undefined;
+        if(createReq == undefined)
+        {
+    
+            var errMsg = "updateCampaign:createReq is missing data, Failed !!!";
+            console.error(errMsg);
+            var response = createResponse(updateCampaignData, undefined, false, errMsg);
+            res.status(400);
+            res.json(response);
+            return;
+        }
+    
+        var validationResult = validateUpdateCampaignData(updateCampaignData);
+    
+        if(validationResult.status == false){
+    
+            var errMsg = "updateCampaign:validateupdateCampaignData Failed " +validationResult.error;
+            console.error(errMsg);
+            var response = createResponse(createReq, pn_campaign_queue_id, false, errMsg);
+            res.status(400);
+            res.json(response);
+            return;
+        }
+    
+        MongoClient.connect(url)
+            .then(function(db){
+                console.log("updateCampaign: Connected correctly to server");
+                status = true;
+
+                var tenantId = updateCampaignData.tenant_id;
+                var tenantCampaignCollectionName = tenantCampaignsDataCollectionNameBase + tenantId;
+                var tenantCampaignsDataCollection = db.collection(tenantCampaignCollectionName);
+                var docId = getDocId(updateCampaignData);
+                tenantCampaignsDataCollection.findOne({_id: docId})
+                    .then(function(exisitingDoc){
+                        if(exisitingDoc == null){
+                            cleanup(db);
+                            res.status(400);
+                            var errMsg = "updateCampaign:campaign not exist, please check campaign details";
+                            var response = createResponse(updateCampaignData, undefined, false, errMsg);
+                            res.json(response);
+                        }else{
+                            var errMsg = undefined;
+                            if(exisitingDoc.campaign_status != "scheduled" && exisitingDoc.campaign_status != "stopped") {
+                                var errMsg = "updateCampaign:campaign status id not scheduled, campaign status=" + exisitingDoc.value.campaign_status;
+                                errMsg += " Note that only scheduled or stopped campaigns can be updated"
+                            }
+    
+                            if(errMsg != undefined){
+                                cleanup(db);
+                                res.status(400);
+                                var response = createResponse(updateCampaignData, undefined, false, errMsg);
+                                res.json(response);
+                            }else{
+                                var document = exisitingDoc;
+                                handleUpdateCampaign(db, tenantCampaignsDataCollection, updateCampaignData, docId)                              
+                                    .then(function(result){
+                                        cleanup(db);
+                                        var errMsg = undefined;
+                                        var response = createResponse(updateCampaignData, undefined, true, errMsg);
+                                        res.json(response);
+                                    })
+                                    .catch(function(error){
+                                        cleanup(db);
+                                        var errMsg = "updateCampaign:campaign Update failed on updating document";
+                                        var response = createResponse(updateCampaignData, undefined, false, errMsg);
+                                        res.json(response);
+                                    })
+    
+                            }
+                        }
+                    })
+                    .catch(function(error){
+                        cleanup(db);
+                        var errMsg = "updateCampaign:" + tenantCampaignCollectionName +".findOne Failed " + error;
+                        console.error(errMsg);
+                        var response = createResponse(updateCampaignData, undefined, false, errMsg);
+                        res.status(400);
+                        res.json(response);
+                        return;
+                    })
+    
+            })
+            .catch(function(error){
+    
+                var errMsg = "updateCampaign: Connected DB Server Failed  tenantId = " + createReq.tenant_id + " visitor_id =  " + createReq.visitor_id + " " + error;
+                console.error(errMsg);
+                var response = createResponse(createReq, undefined, false, errMsg);
+                res.status(400);
+                res.json(response);
+            })
+    }
+    
 
 // ----------------------------------------------------------------------------
 // ----------------------------------------------------------------
@@ -810,16 +951,39 @@ var getUpdateCampaignResponse = function (response, createReq, status, error){
 // return: response object. 
 // ----------------------------------------------------------------
 // {
-//     "command_name": "create-campaign",
+//     "command_name": "create_campaign",
+//     "campaign_type": "push_notification",
+//     "campaign_mode": "schedule/realtime ",
+//     "target_types": "all|ios|and|webpush",
 //     "tenant_id": "int",
 //     "campaign_id": "int",
 //     "action_serial": "int",
 //     "template_id": "int",
-//     "template_type": "normal|personalized",
+//     "personalized" : "bool",
+//     "tgt_group_size": "int",
 //     "schedule": "unix epic timestamp",
-//     "response_status": "scheduled/failed",
-//     "pn_campaign_id": "created db id",
-//     "error": "campaign already exist"
+//     "time_to_live": "X seconds",
+//     "template_type" : "simple|rich",
+//     "template_data": {
+//       "title": "CustomView Text Title",
+//       "content": "1 The quick brown fox jumps over the lazy dog"
+//     },
+//     "apps" :["app_ns_1",  "app_ns_2", "app_ns_4"],
+//     "dynamic_links": {
+//       "ios": {
+//         "app_ns_1": "www.dynamiclinkns1.com",
+//         "app_ns_2": "www.dynamiclinkns2.com"
+//       },
+//       "android": {
+//         "app_ns_3": "www.dynamiclinkns1.com",
+//         "app_ns_4": "www.dynamiclinkns2.com"
+//       }
+//     },
+//     "campaign_process" :{
+//         "support_throtteling": "bool",     
+//         "max_push_bulk_size": "int",
+//         "sleep_time_between_bulks": "int"
+//     }
 //   }
  // ---------------------------------------------------------------- 
  var validateCreateCampaignData = function(createReq){
@@ -915,9 +1079,142 @@ var getUpdateCampaignResponse = function (response, createReq, status, error){
     return isValid;
 
 }
-
-
     
+
+// ----------------------------------------------------------------
+// function: validateUpdateCampaignData
+// args: update campaign request
+// return: response object. 
+// ----------------------------------------------------------------
+// {
+//     "command_name": "update_campaign",
+//     "campaign_type": "push_notification",
+//     "campaign_mode": "schedule/realtime ",
+//     "target_types": "all|ios|and|webpush",
+//     "tenant_id": "int",
+//     "campaign_id": "int",
+//     "action_serial": "int",
+//     "template_id": "int",
+//     "personalized" : "bool",
+//     "tgt_group_size": "int",
+//     "schedule": "unix epic timestamp",
+//     "time_to_live": "X seconds",
+//     "template_type" : "simple|rich",
+//     "template_data": {
+//       "title": "CustomView Text Title",
+//       "content": "1 The quick brown fox jumps over the lazy dog"
+//     },
+//     "apps" :["app_ns_1",  "app_ns_2", "app_ns_4"],
+//     "dynamic_links": {
+//       "ios": {
+//         "app_ns_1": "www.dynamiclinkns1.com",
+//         "app_ns_2": "www.dynamiclinkns2.com"
+//       },
+//       "android": {
+//         "app_ns_3": "www.dynamiclinkns1.com",
+//         "app_ns_4": "www.dynamiclinkns2.com"
+//       }
+//     },
+//     "campaign_process" :{
+//         "support_throtteling": "bool",     
+//         "max_push_bulk_size": "int",
+//         "sleep_time_between_bulks": "int"
+//     }
+//   }
+ // ---------------------------------------------------------------- 
+ var validateUpdateCampaignData = function(createReq){
+    
+    var isValid = {
+        status: true,
+        error: undefined
+    };
+
+    var status = true;
+    var error = "";
+
+    if(createReq.command_name != "update_campaign")
+    {
+        error = "command_name should be update_campaign\n";
+        status = false;
+    }
+
+
+    if(createReq.apps == undefined)
+    {
+        error = "update campaign should have targeted apps.\n";
+        status = false;
+    }else{
+        var foundApp = false;
+        createReq.apps.forEach(function(element) {
+            foundApp = true;
+        });
+        if(foundApp == false){
+            error = "update campaign should have targeted apps.\n";
+            status = false;
+        }
+    }
+
+
+    if(typeof createReq.campaign_id != "number")
+    {
+        error += "campaign_id should be type number\n";
+        status = false;
+    }else if(createReq.campaign_id <= 0){
+        error += "campaign_id should be positive number\n";
+        status = false;
+    }
+
+    if(typeof createReq.tenant_id != "number")
+    {
+        error += "tenant_id should be type number\n";
+        status = false;
+    }else if(createReq.tenant_id <= 0){
+        error += "tenant_id should be positive number\n";
+        status = false;
+    }
+
+    if(typeof createReq.action_serial != "number")
+    {
+        error += "action_serial should be type number\n";
+        status = false;
+    }else if(createReq.action_serial <= 0){
+        error += "action_serial should be positive number\n";
+        status = false;
+    }
+
+    if(typeof createReq.template_id != "number")
+    {
+        error += "template_id should be type number\n";
+        status = false;
+    }else if(createReq.template_id <= 0){
+        error += "template_id should be positive number\n";
+        status = false;
+    }
+
+    var currTime = new Date().getTime();
+    if(typeof createReq.schedule != "number")
+    {
+        error += "template_id should be type number\n";
+        status = false;
+    }else if(createReq.schedule <= currTime - processTimeDelta){
+        error += "schedule should be from now on to the futurer\n";
+        status = false;
+    }
+
+    if(typeof createReq.personalized != "boolean")
+    {
+        error += "personalized should be type boolean\n";
+        status = false;
+    }
+
+    if(status == false){
+        isValid.status = false;
+        isValid.error = error;
+    }
+    
+    return isValid;
+
+}
 
 
 // ----------------------------------------------------------------
@@ -1305,6 +1602,35 @@ var handleCreateCampaign = function(db, tenantCampaignsDataCollection, createReq
    
     
 
+//-----------------------------------------------------------------------------
+// functions: handleUpdateCampaign
+// args: db, tenantCampaignsDataCollection, createReq, docId 
+// return: boolean/ error
+// description: Updates and Insert campaign document.
+//---------------------------------------------------------------------------
+var handleUpdateCampaign = function(db, tenantCampaignsDataCollection, createReq, docId){
+    
+    return new Promise( function (resolve, reject) {
+        var document = createCampaignDocData(createReq, docId);
+
+        tenantCampaignsDataCollection.findOneAndDelete({_id: docId})
+            .then(function(deletedDoc) {
+                tenantCampaignsDataCollection.insertOne(document.data)
+                    .then(function (doc) {
+                        // The name for the new topic
+                        resolve(document);
+                    })
+                    .catch(function (error) {
+                        reject(error);
+                    })
+            })
+            .catch(function(error){
+            reject(error);
+        })
+       
+    })                   
+}
+   
 
 //-----------------------------------------------------------------------------
 // functions: Promise Template

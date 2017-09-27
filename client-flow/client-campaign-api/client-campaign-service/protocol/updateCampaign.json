@@ -117,7 +117,7 @@ http://localhost:3001/update_campaign \
 \"personalized\" :true,
 \"tgt_group_size\": 85,
 \"schedule\": 1506368521979,
-\"time_to_live\": 300000,
+\"time_to_live\": 400000,
 \"template_type\" : \"simple\",
 \"template_data\": {
 \"title\": \"CustomView Text Title\",
@@ -127,7 +127,7 @@ http://localhost:3001/update_campaign \
 \"dynamic_links\": {
 \"ios\": {
 \"app_ns_1\": \"www.dynamiclinkns1.com\",
-\"app_ns_2\": \"www.dynamiclinkns2.com\"
+\"app_ns_2\": \"www.dynamiclinkns22.com\"
 },
 \"android\": {
 \"app_ns_3\": \"www.dynamiclinkns1.com\",
