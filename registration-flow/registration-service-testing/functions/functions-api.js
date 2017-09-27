@@ -358,14 +358,14 @@ exports.registerCustomer = function (req, res) {
                     
                         var visitorsRegistrationCollection = db.collection(visitorsRegistrationCollectionName);
                     // check if customer already exist
-                        status = findAndDeletExistDocument(db, visitorsRegistrationCollection, tenantId, orig_visitor_id )
+                        status = findAndDeletExistVisitorDocument(db, visitorsRegistrationCollection, tenantId, orig_visitor_id )
                         .then(function (status){
-                            console.log("registerCustomer: findAndDeletExistDocument() removed visitor = " + tenantId + " orig_visitor_id =  " + orig_visitor_id );
+                            console.log("registerCustomer: findAndDeletExistVisitorDocument() removed visitor = " + tenantId + " orig_visitor_id =  " + orig_visitor_id );
                         }).catch(function(error){
 
                             cleanup(db);
-                            console.error("registerCustomer: findAndDeletExistDocument() Failed");
-                            var errMsg = "registerCustomer: findAndDeletExistDocument() Failed tenantId = " + tenantId + " orig_visitor_id =  " + orig_visitor_id + " " + error;
+                            console.error("registerCustomer: findAndDeletExistVisitorDocument() Failed");
+                            var errMsg = "registerCustomer: findAndDeletExistVisitorDocument() Failed tenantId = " + tenantId + " orig_visitor_id =  " + orig_visitor_id + " " + error;
                             console.error(errMsg);
                             var response = createCustomerRegisterResponse(registration_data, false, errMsg);
                             res.status(400);
@@ -569,7 +569,7 @@ exports.registerVisitor = function (req, res) {
             var tenantId = registration_data.tenant_id;
 
             var registrationCollection = db.collection(registrationCollectionName);
-            status = findAndDeletExistDocument(db, registrationCollection, tenantId, orig_visitor_id )
+            status = findAndDeletExistVisitorDocument(db, registrationCollection, tenantId, orig_visitor_id )
 
                 .then(function (status){
 
@@ -598,8 +598,8 @@ exports.registerVisitor = function (req, res) {
 
             }).catch(function(error){
                 cleanup(db);
-                console.error("findAndDeletExistDocument() Failed");
-                var errMsg = "registerVisitor: findAndDeletExistDocument() Failed tenantId = " + tenantId + " orig_visitor_id =  " + orig_visitor_id + " " + error;
+                console.error("findAndDeletExistVisitorDocument() Failed");
+                var errMsg = "registerVisitor: findAndDeletExistVisitorDocument() Failed tenantId = " + tenantId + " orig_visitor_id =  " + orig_visitor_id + " " + error;
                 console.error(errMsg);
                 var response = createVisitorRegisterResponse(registration_data, false, errMsg);
                 res.status(400);
@@ -678,7 +678,7 @@ exports.unregisterVisitor = function (req, res) {
                 var tenantId = unregistration_data.tenant_id;
     
                 var registrationCollection = db.collection(registrationCollectionName);
-                findAndDeletExistDocument(db, registrationCollection, tenantId, orig_visitor_id )
+                findAndDeletExistVisitorDocument(db, registrationCollection, tenantId, orig_visitor_id )
                 .then(function (status){
 
                     cleanup(db);
@@ -687,8 +687,8 @@ exports.unregisterVisitor = function (req, res) {
     
                 }).catch(function(error){
                     cleanup(db);
-                    console.error("unregisterVisitor: findAndDeletExistDocument() Failed");
-                    var errMsg = "unregisterVisitor: findAndDeletExistDocument() Failed tenantId = " + tenantId + " orig_visitor_id =  " + orig_visitor_id + " " + error;
+                    console.error("unregisterVisitor: findAndDeletExistVisitorDocument() Failed");
+                    var errMsg = "unregisterVisitor: findAndDeletExistVisitorDocument() Failed tenantId = " + tenantId + " orig_visitor_id =  " + orig_visitor_id + " " + error;
                     console.error(errMsg);
                     var response = createVisitorRegisterResponse(unregistration_data, false, errMsg);
                     res.status(400);
@@ -1091,23 +1091,24 @@ var checkIfVisitorDocumentExist = function(db, registrationCollection, tenantId,
 
 
 //-----------------------------------------------------------------------------
-// functions: findAndDeletExistDocument
+// functions: findAndDeletExistVisitorDocument
 // args: db, registrationCollection, tenantId, orig_visitor_id
 // description: find and delete document visitor.
 //---------------------------------------------------------------------------
-var findAndDeletExistDocument = function(db, registrationCollection, tenantId, orig_visitor_id ){
+var findAndDeletExistVisitorDocument = function(db, registrationCollection, tenantId, orig_visitor_id ){
 
     return new Promise( function (resolve, reject) {
-        var id = "tid-" + tenantId + "-vid-" + orig_visitor_id;
-
-        registrationCollection.findOneAndDelete({"_id": id}).then(function (foundDocument) {
+        var register_data = {
+            tenant_id: tenantId,
+            visitor_id: orig_visitor_id
+        };
+        var docId = getVisitorDocId(register_data);
+        registrationCollection.findOneAndDelete({"_id": docId}).then(function (foundDocument) {
             resolve(true);
         }).catch(function (error) {
-            console.error("findAndDeletExistDocument:  Failed Deletion - " + {_id: id});
+            console.error("findAndDeletExistVisitorDocument:  Failed Deletion - " + {_id: docId});
             reject(false);
         });
-    });
-
 }
 
 
