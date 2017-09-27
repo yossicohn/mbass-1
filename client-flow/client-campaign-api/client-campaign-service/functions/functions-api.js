@@ -277,7 +277,7 @@ exports.deleteCampaign = function (req, res){
                     var topicName = exisitingDoc.value.data_queue_name;
                     const topic = pubsubClient.topic(topicName);
                     // Deletes the topic
-                    return topic.delete()
+                     topic.delete()
                     .then(() => {
                         cleanup(db);
                         var Msg = "deleteCampaign:campaign succeeded, deleteing queue as well queue="+topicName ;                                
@@ -692,7 +692,115 @@ exports.updateCampaign = function (req, res){
                 res.json(response);
             })
     }
-    
+
+
+
+
+//-----------------------------------------------------------------------------
+// functions: abortCampaign
+// args: campaign meta data
+// description:mock for the register
+// format example:
+// {
+//     "command_name": "abort_campaign",
+//     "tenant_id": "int",
+//     "campaign_id": "int",
+//     "action_serial": "int",
+//     "template_id": "int"
+//   }
+//---------------------------------------------------------------------------
+exports.abortCampaign = function (req, res){
+
+    var err = undefined;
+    var status = undefined;
+
+    var createReq = req.body;
+    var abortCampaignData = createReq.request;
+    var pn_campaign_queue_id = undefined;
+    if(createReq == undefined)
+    {
+
+        var errMsg = "abortCampaign:createReq is missing data, Failed !!!";
+        console.error(errMsg);
+        var response = createResponse(abortCampaignData, undefined, false, errMsg);
+        res.status(400);
+        res.json(response);
+        return;
+    }
+
+    var validationResult = validateAbortCampaignData(abortCampaignData);
+
+    if(validationResult.status == false){
+
+        var errMsg = "abortCampaign:validateabortCampaignData Failed " +validationResult.error;
+        console.error(errMsg);
+        var response = createResponse(createReq, pn_campaign_queue_id, false, errMsg);
+        res.status(400);
+        res.json(response);
+        return;
+    }
+
+    MongoClient.connect(url)
+        .then(function(db){
+            console.log("abortCampaign: Connected correctly to server");
+            status = true;
+            var tenantId = abortCampaignData.tenant_id;
+            var tenantCampaignCollectionName = tenantCampaignsDataCollectionNameBase + tenantId;
+            var tenantCampaignsDataCollection = db.collection(tenantCampaignCollectionName);
+            var docId = getDocId(abortCampaignData);
+            tenantCampaignsDataCollection.findOne({_id: docId})
+                .then(function(exisitingDoc){
+                    if(exisitingDoc == null){
+                        cleanup(db);
+                        res.status(400);
+                        var errMsg = "abortCampaign:campaign not exist, please check campaign details";
+                        var response = createResponse(abortCampaignData, undefined, false, errMsg);
+                        res.json(response);
+                    }else{
+
+                        handleAbortCampaign(db, tenantCampaignsDataCollection, abortCampaignData, docId, exisitingDoc)
+                            .then(function(status){
+                                cleanup(db);
+                                console.log("abortCampaign: campaign was aborted succesfully, queue was deleted: " + exisitingDoc.data_queue_name);
+                                var response = createResponse(abortCampaignData, undefined, true, errMsg);
+                                res.json(response);
+                                return;
+                            })
+                            .catch(function(error){
+                                cleanup(db);
+                                var errMsg = "abortCampaign: handleAbortCampaign Failed, " + error;
+                                console.error(errMsg);
+                                var response = createResponse(abortCampaignData, undefined, false, errMsg);
+                                res.status(400);
+                                res.json(response);
+                                return;
+                            })
+                    }
+                })
+                .catch(function(error){
+                    cleanup(db);
+                    var errMsg = "abortCampaign:" + tenantCampaignCollectionName +".findOne Failed " + error;
+                    console.error(errMsg);
+                    var response = createResponse(abortCampaignData, undefined, false, errMsg);
+                    res.status(400);
+                    res.json(response);
+                    return;
+                })
+
+        })
+        .catch(function(error){
+
+            var errMsg = "abortCampaign: Connected DB Server Failed  tenantId = " + createReq.tenant_id + " visitor_id =  " + createReq.visitor_id + " " + error;
+            console.error(errMsg);
+            var response = createResponse(createReq, undefined, false, errMsg);
+            res.status(400);
+            res.json(response);
+        })
+
+}
+
+
+
 
 // ----------------------------------------------------------------------------
 // ----------------------------------------------------------------
@@ -733,7 +841,7 @@ var createResponse = function(createReq, pn_campaign_id, status, error){
          response =  getCreateCampaignResponse(response, createReq, pn_campaign_id, status, error);
         break;
         case 'abort_campaign': 
-        response =  getAbortCampaignResponse(response, createReq, pn_campaign_id, status, error);
+        response =  getAbortCampaignResponse(response, createReq, status, error);
         break;
         case 'delete_campaign': 
         response =  getDeleteCampaignResponse(response, createReq, status, error);
@@ -1469,6 +1577,83 @@ var validateRescheduleCampaignData = function(createReq){
 }
 
 
+
+// ----------------------------------------------------------------
+// function: validateAbortCampaignData
+// args: delete campaign request
+// return: response object.
+// ----------------------------------------------------------------
+// {
+//     "command_name": "abort_campaign",
+//     "tenant_id": "int",
+//     "campaign_id": "int",
+//     "action_serial": "int",
+//     "template_id": "int"
+//  }
+// ----------------------------------------------------------------
+var validateAbortCampaignData = function(createReq){
+
+    var isValid = {
+        status: true,
+        error: undefined
+    };
+
+    var status = true;
+    var error = "";
+
+    if(createReq.command_name != "abort_campaign")
+    {
+        error = "command_name should be abort_campaign\n";
+        status = false;
+    }
+
+    if(typeof createReq.campaign_id != "number")
+    {
+        error += "campaign_id should be type number\n";
+        status = false;
+
+    }else if(createReq.campaign_id <= 0){
+        error += "campaign_id should be positive number\n";
+        status = false;
+    }
+
+    if(typeof createReq.tenant_id != "number")
+    {
+        error += "tenant_id should be type number\n";
+        status = false;
+    }else if(createReq.tenant_id <= 0){
+        error += "tenant_id should be positive number\n";
+        status = false;
+    }
+
+    if(typeof createReq.action_serial != "number")
+    {
+        error += "action_serial should be type number\n";
+        status = false;
+    }else if(createReq.action_serial <= 0){
+        error += "action_serial should be positive number\n";
+        status = false;
+    }
+
+    if(typeof createReq.template_id != "number")
+    {
+        error += "template_id should be type number\n";
+        status = false;
+    }else if(createReq.template_id <= 0){
+        error += "template_id should be positive number\n";
+        status = false;
+    }
+
+
+    if(status == false){
+        isValid.status = false;
+        isValid.error = error;
+    }
+
+    return isValid;
+
+}
+
 // ----------------------------------------------------------------
 // function: getDocId
 // args: request
@@ -1630,7 +1815,38 @@ var handleUpdateCampaign = function(db, tenantCampaignsDataCollection, createReq
        
     })                   
 }
-   
+
+//-----------------------------------------------------------------------------
+// functions: handleAbortCampaign
+// args: db, tenantCampaignsDataCollection, createReq, docId, exisitingDoc
+// return: boolean/ error
+// description: Aborts the current running Campaigns
+// Notifies all processing instances that the campaign should be aborted.
+//---------------------------------------------------------------------------
+var handleAbortCampaign = function(db, tenantCampaignsDataCollection, createReq, docId, exisitingDoc) {
+    return new Promise(function (resolve, reject) {
+        exisitingDoc.campaign_status = "aborted";
+        tenantCampaignsDataCollection.update({_id: docId}, exisitingDoc)
+            .then(function (result) {
+                // Should notify instances that the campaign should be aborted.
+                //delete the topic so data would not be available
+                var topicName = exisitingDoc.data_queue_name;
+                const topic = pubsubClient.topic(topicName);
+                // Deletes the topic
+                topic.delete()
+                    .then(function () {
+                        resolve(true);
+                    })
+                    .catch(function (error) {
+                        reject(error);
+                    })
+            })
+            .catch(function (error) {
+                reject(error);
+            })
+
+    })
+}
 
 //-----------------------------------------------------------------------------
 // functions: Promise Template
@@ -1638,11 +1854,11 @@ var handleUpdateCampaign = function(db, tenantCampaignsDataCollection, createReq
 // return: boolean/ error
 // description: create and Insert campaign document.
 //---------------------------------------------------------------------------
-var PromiseTemplate = function(db, createReq, docId){
-    
-        return new Promise( function (resolve, reject) {
-           
-                
-            
-        });
-    }
+// var PromiseTemplate = function(db, createReq, docId){
+//
+//         return new Promise( function (resolve, reject) {
+//
+//
+//
+//         });
+//     }

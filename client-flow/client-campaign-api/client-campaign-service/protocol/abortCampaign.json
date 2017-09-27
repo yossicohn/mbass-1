@@ -19,3 +19,17 @@
   "response_status": "aborted/failed",
   "error": "failed to abort campaign"
 }
+
+
+// --------------------------------- curl -------------------------------------
+curl --header "Content-Type: application/json" \
+http://localhost:3001/abort_campaign \
+-d "{
+\"request\":{
+  \"command_name\": \"abort_campaign\",
+  \"tenant_id\": 85,
+  \"campaign_id\": 85,
+  \"action_serial\": 85,
+  \"template_id\": 85
+}
+}"

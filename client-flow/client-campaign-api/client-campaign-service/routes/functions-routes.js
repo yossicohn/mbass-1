@@ -20,7 +20,7 @@ module.exports = function(app) {
     app.route('/update_campaign')
         .post(functions_api.updateCampaign);
 
-    // app.route('/abort_campaign')
-    //     .post(functions_api.abortCampaign);
+    app.route('/abort_campaign')
+        .post(functions_api.abortCampaign);
 }
 
