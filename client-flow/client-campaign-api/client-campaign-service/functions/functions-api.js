@@ -312,41 +312,41 @@ exports.deleteCampaign = function (req, res){
 
 
 //-----------------------------------------------------------------------------
-// functions: stopCampaign
+// functions: holdCampaign
 // args: campaign meta data
 // description:mock for the register
 // format example:
 // {
-//     "command_name": "stop_campaign",
+//     "command_name": "hold_campaign",
 //     "tenant_id": "int",
 //     "campaign_id": "int",
 //     "action_serial": "int",
 //     "template_id": "int"
 //   }
 //---------------------------------------------------------------------------
-exports.stopCampaign = function (req, res){
+exports.holdCampaign = function (req, res){
 
     var err = undefined;
     var status = undefined;
 
     var createReq = req.body;
-    var stopCampaignData = createReq.request;
+    var holdCampaignData = createReq.request;
     var pn_campaign_queue_id = undefined;
     if(createReq == undefined)
     {
 
-        var errMsg = "stopCampaign:createReq is missing data, Failed !!!";
+        var errMsg = "holdCampaign:createReq is missing data, Failed !!!";
         console.error(errMsg);
-        var response = createResponse(stopCampaignData, undefined, false, errMsg);
+        var response = createResponse(holdCampaignData, undefined, false, errMsg);
         res.status(400);
         res.json(response);
     }
 
-    var validationResult = validateStopCampaignData(stopCampaignData);
+    var validationResult = validateHoldCampaignData(holdCampaignData);
 
     if(validationResult.status == false){
 
-        var errMsg = "stopCampaign:validatestopCampaignData Failed " +validationResult.error;
+        var errMsg = "holdCampaign:validateHoldCampaignData Failed " +validationResult.error;
         console.error(errMsg);
         var response = createResponse(createReq, pn_campaign_queue_id, false, errMsg);
         res.status(400);
@@ -355,47 +355,47 @@ exports.stopCampaign = function (req, res){
 
     MongoClient.connect(url)
         .then(function(db){
-            console.log("stopCampaign: Connected correctly to server");
+            console.log("holdCampaign: Connected correctly to server");
             status = true;
-            var tenantId = stopCampaignData.tenant_id;
+            var tenantId = holdCampaignData.tenant_id;
             var tenantCampaignCollectionName = tenantCampaignsDataCollectionNameBase + tenantId;
             var tenantCampaignsDataCollection = db.collection(tenantCampaignCollectionName);
-            var docId = getDocId(stopCampaignData);
+            var docId = getDocId(holdCampaignData);
             tenantCampaignsDataCollection.findOne({_id: docId})
                 .then(function(exisitingDoc){
                     if(exisitingDoc == null){
                         cleanup(db);
                         res.status(400);
-                        var errMsg = "stopCampaign:campaign not exist, please check campaign details";              
-                        var response = createResponse(stopCampaignData, undefined, false, errMsg);
+                        var errMsg = "holdCampaign:campaign not exist, please check campaign details";
+                        var response = createResponse(holdCampaignData, undefined, false, errMsg);
                         res.json(response);
                     }else{
                         var errMsg = undefined;
-                        if(exisitingDoc.campaign_status != "scheduled" && exisitingDoc.campaign_status != "stopped"){
-                            var errMsg = "stopCampaign:campaign status id not scheduled, campaign status=" + exisitingDoc.value.campaign_status;
-                            errMsg += " Note that only scheduled campaign can be stopped"
-                        }else if( exisitingDoc.campaign_status == "stopped"){
-                            var errMsg = "stopCampaign:campaign status allready stopped";
+                        if(exisitingDoc.campaign_status != "scheduled" && exisitingDoc.campaign_status != "halted"){
+                            var errMsg = "holdCampaign:campaign status id not scheduled, campaign status=" + exisitingDoc.value.campaign_status;
+                            errMsg += " Note that only scheduled campaign can be halted"
+                        }else if( exisitingDoc.campaign_status == "halted"){
+                            var errMsg = "holdCampaign:campaign status already halted";
                         }
                         if(errMsg != undefined){
                             cleanup(db);
                             res.status(400);                           
-                            var response = createResponse(stopCampaignData, undefined, false, errMsg);
+                            var response = createResponse(holdCampaignData, undefined, false, errMsg);
                             res.json(response);
                         }else{
                             var document = exisitingDoc;
-                            document.campaign_status = "stopped";                          
+                            document.campaign_status = "halted";
                             tenantCampaignsDataCollection.update({_id: docId}, document)
                             .then(function(result){
                                 cleanup(db);                               
                                 var errMsg = undefined;
-                                var response = createResponse(stopCampaignData, undefined, true, errMsg);
+                                var response = createResponse(holdCampaignData, undefined, true, errMsg);
                                 res.json(response);
                             })
                             .catch(function(error){
                                 cleanup(db);
-                                var errMsg = "stopCampaign:campaign stpopped failed on updating document";
-                                var response = createResponse(stopCampaignData, undefined, false, errMsg);
+                                var errMsg = "holdCampaign:campaign stpopped failed on updating document";
+                                var response = createResponse(holdCampaignData, undefined, false, errMsg);
                                 res.json(response);
                              })
 
@@ -404,9 +404,9 @@ exports.stopCampaign = function (req, res){
                 })
                 .catch(function(error){
                     cleanup(db);
-                    var errMsg = "stopCampaign:" + tenantCampaignCollectionName +".findOne Failed " + error;    
+                    var errMsg = "holdCampaign:" + tenantCampaignCollectionName +".findOne Failed " + error;
                     console.error(errMsg);
-                    var response = createResponse(stopCampaignData, undefined, false, errMsg);
+                    var response = createResponse(holdCampaignData, undefined, false, errMsg);
                     res.status(400);
                     res.json(response);
                 })
@@ -414,7 +414,7 @@ exports.stopCampaign = function (req, res){
         })
         .catch(function(error){
 
-            var errMsg = "stopCampaign: Connected DB Server Failed  tenantId = " + createReq.tenant_id + " visitor_id =  " + createReq.visitor_id + " " + error;
+            var errMsg = "holdCampaign: Connected DB Server Failed  tenantId = " + createReq.tenant_id + " visitor_id =  " + createReq.visitor_id + " " + error;
             console.error(errMsg);
             var response = createResponse(createReq, undefined, false, errMsg);
             res.status(400);
@@ -430,7 +430,7 @@ exports.stopCampaign = function (req, res){
 // description:mock for the register
 // format example:
 // {
-//     "command_name": "stop_campaign",
+//     "command_name": "reschedule_campaign",
 //     "tenant_id": "int",
 //     "campaign_id": "int",
 //     "action_serial": "int",
@@ -484,9 +484,9 @@ exports.rescheduleCampaign = function (req, res){
                         res.json(response);
                     }else{
                         var errMsg = undefined;
-                        if(exisitingDoc.campaign_status != "scheduled" && exisitingDoc.campaign_status != "stopped") {
+                        if(exisitingDoc.campaign_status != "scheduled" && exisitingDoc.campaign_status != "halted") {
                             var errMsg = "rescheduleCampaign:campaign status id not scheduled, campaign status=" + exisitingDoc.value.campaign_status;
-                            errMsg += " Note that only scheduled or stopped campaigns can be rescheduled"
+                            errMsg += " Note that only scheduled or halted campaigns can be rescheduled"
                         }
 
                         if(errMsg != undefined){
@@ -627,9 +627,9 @@ exports.updateCampaign = function (req, res){
                             res.json(response);
                         }else{
                             var errMsg = undefined;
-                            if(exisitingDoc.campaign_status != "scheduled" && exisitingDoc.campaign_status != "stopped") {
+                            if(exisitingDoc.campaign_status != "scheduled" && exisitingDoc.campaign_status != "halted") {
                                 var errMsg = "updateCampaign:campaign status id not scheduled, campaign status=" + exisitingDoc.value.campaign_status;
-                                errMsg += " Note that only scheduled or stopped campaigns can be updated"
+                                errMsg += " Note that only scheduled or halted campaigns can be updated"
                             }
     
                             if(errMsg != undefined){
@@ -828,8 +828,8 @@ var createResponse = function(createReq, pn_campaign_id, status, error){
         case 'reschedule_campaign': 
         response =  getRescheduleCampaignResponse(response, createReq, status, error);
         break;
-        case 'stop_campaign': 
-        response =  getStopCampaignResponse(response, createReq,  status, error);
+        case 'hold_campaign':
+        response =  getholdCampaignResponse(response, createReq,  status, error);
         break;
         case 'update_campaign': 
         response =  getUpdateCampaignResponse(response, createReq,  status, error);
@@ -971,25 +971,25 @@ var getDeleteCampaignResponse = function (response, createReq, status, error){
 
 
 // ----------------------------------------------------------------
-// function: getStopCampaignResponse
+// function: getholdCampaignResponse
 // args: createReq, pn_campaign_id, status, error
 // return: response object. 
 // // ----------------------------------------------------------------
 // {
-//     "command_name": "stop_campaign",
+//     "command_name": "hold_campaign",
 //     "tenant_id": "int",
 //     "campaign_id": "int",
 //     "action_serial": "int",
 //     "template_id": "int",
-//     "response_status": "stopped/failed",
+//     "response_status": "halted/failed",
 //     "error": "campaign already running, please abort/campaign not exist"
 //   }  
 // ---------------------------------------------------------------- 
-var getStopCampaignResponse = function (response, createReq, status, error){
+var getholdCampaignResponse = function (response, createReq, status, error){
     
-    response["command_name"] = "stop_campaign";
+    response["command_name"] = "hold_campaign";
     if(status == true){
-        response["response_status"]= "stopped";
+        response["response_status"]= "halted";
     }else{
         response["error"] = error;
         response["response_status"]= "failed";
@@ -1382,7 +1382,7 @@ var getUpdateCampaignResponse = function (response, createReq, status, error){
 
 
 // ----------------------------------------------------------------
-// function: validateStopCampaignData
+// function: validateHoldCampaignData
 // args: delete campaign request
 // return: response object.
 // ----------------------------------------------------------------
@@ -1394,7 +1394,7 @@ var getUpdateCampaignResponse = function (response, createReq, status, error){
 //     "template_id": "int"
 //  }
 // ----------------------------------------------------------------
-var validateStopCampaignData = function(createReq){
+var validateHoldCampaignData = function(createReq){
 
     var isValid = {
         status: true,
@@ -1404,9 +1404,9 @@ var validateStopCampaignData = function(createReq){
     var status = true;
     var error = "";
 
-    if(createReq.command_name != "stop_campaign")
+    if(createReq.command_name != "hold_campaign")
     {
-        error = "command_name should be stop_campaign\n";
+        error = "command_name should be hold_campaign\n";
         status = false;
     }
 
@@ -1485,7 +1485,7 @@ var validateRescheduleCampaignData = function(createReq){
 
     if(createReq.command_name != "reschedule_campaign")
     {
-        error = "command_name should be stop_campaign\n";
+        error = "command_name should be reschedule_campaign\n";
         status = false;
     }
 
@@ -1660,7 +1660,7 @@ var getDocId = function(createReq){
 // description: create Registration Data for the visitors Collection.
 // {
 //     "_id" : "tid:<int>_cid:<int>_acsl:<int>_tplid:<int>",
-//     "campaign_status": "scheduled/started/stopped/completed/aborted/failed",
+//     "campaign_status": "scheduled/started/halted/completed/aborted/failed",
 //     "campaign_type" : "push_notification",
 //     "campaign_mode" : "schedule/realtime ",
 //     "target_types" : "all|ios|and|webpush",

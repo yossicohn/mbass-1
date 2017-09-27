@@ -21,18 +21,18 @@
       <file leaf-file-name="functions-routes.js" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/routes/functions-routes.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="232">
-              <caret line="14" column="8" lean-forward="false" selection-start-line="14" selection-start-column="8" selection-end-line="14" selection-end-column="8" />
+            <state relative-caret-position="169">
+              <caret line="13" column="31" lean-forward="true" selection-start-line="13" selection-start-column="31" selection-end-line="13" selection-end-column="31" />
               <folding />
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="functions-api.js" pinned="false" current-in-tab="true">
+      <file leaf-file-name="functions-api.js" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/functions/functions-api.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="204">
-              <caret line="745" column="31" lean-forward="false" selection-start-line="745" selection-start-column="31" selection-end-line="745" selection-end-column="31" />
+            <state relative-caret-position="159">
+              <caret line="319" column="28" lean-forward="false" selection-start-line="319" selection-start-column="28" selection-end-line="319" selection-end-column="28" />
               <folding />
             </state>
           </provider>
@@ -48,11 +48,11 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="campaignSchema.json" pinned="false" current-in-tab="false">
+      <file leaf-file-name="campaignSchema.json" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/protocol/campaignSchema.json">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="0">
-              <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+            <state relative-caret-position="270">
+              <caret line="15" column="32" lean-forward="true" selection-start-line="15" selection-start-column="32" selection-end-line="15" selection-end-column="32" />
               <folding />
             </state>
           </provider>
@@ -61,18 +61,18 @@
       <file leaf-file-name="deleteCampaign.json" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/protocol/deleteCampaign.json">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="648">
-              <caret line="36" column="21" lean-forward="true" selection-start-line="36" selection-start-column="21" selection-end-line="36" selection-end-column="21" />
+            <state relative-caret-position="349">
+              <caret line="29" column="26" lean-forward="true" selection-start-line="29" selection-start-column="26" selection-end-line="29" selection-end-column="26" />
               <folding />
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="stopCampaign.json" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/protocol/stopCampaign.json">
+      <file leaf-file-name="holdCampaign.json" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/protocol/holdCampaign.json">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="630">
-              <caret line="35" column="1" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="35" selection-end-column="1" />
+            <state relative-caret-position="356">
+              <caret line="22" column="0" lean-forward="true" selection-start-line="0" selection-start-column="0" selection-end-line="35" selection-end-column="1" />
               <folding />
             </state>
           </provider>
@@ -82,7 +82,7 @@
         <entry file="file://$PROJECT_DIR$/protocol/createCampaign.json">
           <provider selected="true" editor-type-id="text-editor">
             <state relative-caret-position="414">
-              <caret line="23" column="44" lean-forward="true" selection-start-line="0" selection-start-column="0" selection-end-line="142" selection-end-column="4" />
+              <caret line="23" column="44" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="142" selection-end-column="4" />
               <folding />
             </state>
           </provider>
@@ -93,9 +93,7 @@
           <provider selected="true" editor-type-id="text-editor">
             <state relative-caret-position="360">
               <caret line="20" column="1" lean-forward="false" selection-start-line="20" selection-start-column="1" selection-end-line="20" selection-end-column="1" />
-              <folding>
-                <marker date="1506521180220" expanded="true" signature="305:843" ph="{&quot;command_name&quot;: &quot;abort_campaign&quot;...}" />
-              </folding>
+              <folding />
             </state>
           </provider>
         </entry>
@@ -124,8 +122,6 @@
   </component>
   <component name="FindInProjectRecents">
     <findStrings>
-      <find>findAndDeletExistDocument</find>
-      <find>createCustomerOptInOutResponse</find>
       <find>insertnew</find>
       <find>handleCustomerRegistration</find>
       <find>insertNewCustomerDocument</find>
@@ -133,7 +129,6 @@
       <find>createCustomerRegisterData</find>
       <find>deleteCampaignData</find>
       <find>validateStopCampaignData</find>
-      <find>stop</find>
       <find>validateSt</find>
       <find>validateRescheduleCampaignData</find>
       <find>getRescheduleCampaignResponse</find>
@@ -154,6 +149,9 @@
       <find>abort</find>
       <find>publishMessageToControlTopic</find>
       <find>handleAbortCampaign</find>
+      <find>stopcampaign</find>
+      <find>validateHoldCampaignData</find>
+      <find>stop</find>
     </findStrings>
     <replaceStrings>
       <replace>stopCampaignData</replace>
@@ -162,6 +160,7 @@
       <replace>rescheduleCampaign</replace>
       <replace>85</replace>
       <replace>abortCampaign</replace>
+      <replace>holdCampaign</replace>
     </replaceStrings>
   </component>
   <component name="IdeDocumentHistory">
@@ -171,8 +170,10 @@
         <option value="$PROJECT_DIR$/protocol/rescheduleCampaign.json" />
         <option value="$PROJECT_DIR$/protocol/abortCampaign.json" />
         <option value="$PROJECT_DIR$/protocol/updateCampaign.json" />
-        <option value="$PROJECT_DIR$/routes/functions-routes.js" />
         <option value="$PROJECT_DIR$/functions/functions-api.js" />
+        <option value="$PROJECT_DIR$/routes/functions-routes.js" />
+        <option value="$PROJECT_DIR$/protocol/stopCampaign.json" />
+        <option value="$PROJECT_DIR$/protocol/campaignSchema.json" />
       </list>
     </option>
   </component>
@@ -224,6 +225,8 @@
       <foldersAlwaysOnTop value="true" />
     </navigator>
     <panes>
+      <pane id="Scope" />
+      <pane id="Scratches" />
       <pane id="ProjectPane">
         <subPane>
           <expand>
@@ -250,8 +253,6 @@
           <select />
         </subPane>
       </pane>
-      <pane id="Scope" />
-      <pane id="Scratches" />
     </panes>
   </component>
   <component name="PropertiesComponent">
@@ -319,17 +320,18 @@
       <workItem from="1506508490923" duration="2825000" />
       <workItem from="1506512175711" duration="3452000" />
       <workItem from="1506517524017" duration="8580000" />
+      <workItem from="1506539445809" duration="1290000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="60365000" />
+    <option name="totallyTimeSpent" value="61655000" />
   </component>
   <component name="ToolWindowManager">
     <frame x="64" y="-11" width="1297" height="675" extended-state="6" />
     <editor active="true" />
     <layout>
-      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.114285715" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
+      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.2023166" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
       <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
       <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.1758437" sideWeight="0.2" order="7" side_tool="true" content_ui="tabs" />
       <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="false" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
@@ -338,7 +340,7 @@
       <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Favorites" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="2" side_tool="true" content_ui="tabs" />
-      <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.31616342" sideWeight="0.8" order="3" side_tool="false" content_ui="tabs" />
+      <window_info id="Debug" active="true" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.31616342" sideWeight="0.8" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="Cvs" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="4" side_tool="false" content_ui="tabs" />
       <window_info id="Message" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
       <window_info id="Commander" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.4" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
@@ -534,193 +536,161 @@
         <line-breakpoint enabled="true" type="javascript">
           <url>file://$PROJECT_DIR$/functions/functions-api.js</url>
           <line>742</line>
-          <properties />
           <option name="timeStamp" value="163" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="javascript">
           <url>file://$PROJECT_DIR$/functions/functions-api.js</url>
           <line>1845</line>
-          <properties />
           <option name="timeStamp" value="165" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="javascript">
           <url>file://$PROJECT_DIR$/functions/functions-api.js</url>
           <line>745</line>
-          <properties />
           <option name="timeStamp" value="166" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="javascript">
           <url>file://$PROJECT_DIR$/functions/functions-api.js</url>
           <line>1880</line>
-          <properties />
           <option name="timeStamp" value="170" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="javascript">
           <url>file://$PROJECT_DIR$/functions/functions-api.js</url>
           <line>1872</line>
-          <properties />
           <option name="timeStamp" value="171" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="javascript">
           <url>file://$PROJECT_DIR$/functions/functions-api.js</url>
           <line>1876</line>
-          <properties />
           <option name="timeStamp" value="173" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="javascript">
           <url>file://$PROJECT_DIR$/functions/functions-api.js</url>
           <line>751</line>
-          <properties />
           <option name="timeStamp" value="174" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="javascript">
           <url>file://$PROJECT_DIR$/functions/functions-api.js</url>
           <line>761</line>
-          <properties />
           <option name="timeStamp" value="175" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="javascript">
           <url>file://$PROJECT_DIR$/functions/functions-api.js</url>
           <line>772</line>
-          <properties />
           <option name="timeStamp" value="176" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="javascript">
           <url>file://$PROJECT_DIR$/functions/functions-api.js</url>
           <line>1851</line>
-          <properties />
           <option name="timeStamp" value="177" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="javascript">
           <url>file://$PROJECT_DIR$/functions/functions-api.js</url>
           <line>1853</line>
-          <properties />
           <option name="timeStamp" value="178" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="javascript">
           <url>file://$PROJECT_DIR$/functions/functions-api.js</url>
           <line>263</line>
-          <properties />
           <option name="timeStamp" value="182" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="javascript">
           <url>file://$PROJECT_DIR$/functions/functions-api.js</url>
           <line>273</line>
-          <properties />
           <option name="timeStamp" value="183" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="javascript">
           <url>file://$PROJECT_DIR$/functions/functions-api.js</url>
           <line>266</line>
-          <properties />
           <option name="timeStamp" value="184" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="javascript">
           <url>file://$PROJECT_DIR$/functions/functions-api.js</url>
           <line>302</line>
-          <properties />
           <option name="timeStamp" value="185" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="javascript">
           <url>file://$PROJECT_DIR$/functions/functions-api.js</url>
           <line>292</line>
-          <properties />
           <option name="timeStamp" value="186" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="javascript">
           <url>file://$PROJECT_DIR$/functions/functions-api.js</url>
           <line>265</line>
-          <properties />
           <option name="timeStamp" value="187" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="javascript">
           <url>file://$PROJECT_DIR$/functions/functions-api.js</url>
           <line>1781</line>
-          <properties />
           <option name="timeStamp" value="188" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="javascript">
           <url>file://$PROJECT_DIR$/functions/functions-api.js</url>
           <line>1778</line>
-          <properties />
           <option name="timeStamp" value="189" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="javascript">
           <url>file://$PROJECT_DIR$/functions/functions-api.js</url>
           <line>1896</line>
-          <properties />
           <option name="timeStamp" value="190" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="javascript">
           <url>file://$PROJECT_DIR$/functions/functions-api.js</url>
           <line>1907</line>
-          <properties />
           <option name="timeStamp" value="195" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="javascript">
           <url>file://$PROJECT_DIR$/functions/functions-api.js</url>
           <line>1912</line>
-          <properties />
           <option name="timeStamp" value="196" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="javascript">
           <url>file://$PROJECT_DIR$/functions/functions-api.js</url>
           <line>1850</line>
-          <properties />
           <option name="timeStamp" value="197" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="javascript">
           <url>file://$PROJECT_DIR$/functions/functions-api.js</url>
           <line>1916</line>
-          <properties />
           <option name="timeStamp" value="198" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="javascript">
           <url>file://$PROJECT_DIR$/functions/functions-api.js</url>
           <line>1909</line>
-          <properties />
           <option name="timeStamp" value="199" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="javascript">
           <url>file://$PROJECT_DIR$/functions/functions-api.js</url>
           <line>1915</line>
-          <properties />
           <option name="timeStamp" value="200" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="javascript">
           <url>file://$PROJECT_DIR$/functions/functions-api.js</url>
           <line>1864</line>
-          <properties />
           <option name="timeStamp" value="201" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="javascript">
           <url>file://$PROJECT_DIR$/functions/functions-api.js</url>
           <line>1862</line>
-          <properties />
           <option name="timeStamp" value="202" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="javascript">
           <url>file://$PROJECT_DIR$/functions/functions-api.js</url>
           <line>1867</line>
-          <properties />
           <option name="timeStamp" value="203" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="javascript">
           <url>file://$PROJECT_DIR$/functions/functions-api.js</url>
           <line>1870</line>
-          <properties />
           <option name="timeStamp" value="204" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="javascript">
           <url>file://$PROJECT_DIR$/functions/functions-api.js</url>
           <line>1875</line>
-          <properties />
           <option name="timeStamp" value="205" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="javascript">
           <url>file://$PROJECT_DIR$/functions/functions-api.js</url>
           <line>1855</line>
-          <properties />
           <option name="timeStamp" value="206" />
         </line-breakpoint>
       </breakpoints>
@@ -740,7 +710,7 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/protocol/stopCampaign.json">
+    <entry file="file://$PROJECT_DIR$/protocol/holdCampaign.json">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="630">
           <caret line="35" column="1" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="35" selection-end-column="1" />
@@ -760,9 +730,7 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="360">
           <caret line="20" column="1" lean-forward="true" selection-start-line="20" selection-start-column="1" selection-end-line="20" selection-end-column="1" />
-          <folding>
-            <marker date="1506521180220" expanded="true" signature="305:843" ph="{&quot;command_name&quot;: &quot;abort_campaign&quot;...}" />
-          </folding>
+          <folding />
         </state>
       </provider>
     </entry>
@@ -822,7 +790,7 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/protocol/stopCampaign.json">
+    <entry file="file://$PROJECT_DIR$/protocol/holdCampaign.json">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="630">
           <caret line="35" column="1" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="35" selection-end-column="1" />
@@ -842,9 +810,7 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="360">
           <caret line="20" column="1" lean-forward="true" selection-start-line="20" selection-start-column="1" selection-end-line="20" selection-end-column="1" />
-          <folding>
-            <marker date="1506521180220" expanded="true" signature="305:843" ph="{&quot;command_name&quot;: &quot;abort_campaign&quot;...}" />
-          </folding>
+          <folding />
         </state>
       </provider>
     </entry>
@@ -1065,14 +1031,6 @@
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/Protocol/create_campaign.json" />
-    <entry file="file://$PROJECT_DIR$/protocol/campaignSchema.json">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="0">
-          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/protocol/rescheduleCampaign.json">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="576">
@@ -1084,7 +1042,7 @@
     <entry file="file://$PROJECT_DIR$/protocol/createCampaign.json">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="414">
-          <caret line="23" column="44" lean-forward="true" selection-start-line="0" selection-start-column="0" selection-end-line="142" selection-end-column="4" />
+          <caret line="23" column="44" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="142" selection-end-column="4" />
           <folding />
         </state>
       </provider>
@@ -1093,24 +1051,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="360">
           <caret line="20" column="1" lean-forward="false" selection-start-line="20" selection-start-column="1" selection-end-line="20" selection-end-column="1" />
-          <folding>
-            <marker date="1506521180220" expanded="true" signature="305:843" ph="{&quot;command_name&quot;: &quot;abort_campaign&quot;...}" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/protocol/stopCampaign.json">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="630">
-          <caret line="35" column="1" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="35" selection-end-column="1" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/protocol/deleteCampaign.json">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="648">
-          <caret line="36" column="21" lean-forward="true" selection-start-line="36" selection-start-column="21" selection-end-line="36" selection-end-column="21" />
           <folding />
         </state>
       </provider>
@@ -1123,18 +1063,42 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/routes/functions-routes.js">
+    <entry file="file://$PROJECT_DIR$/functions/functions-api.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="232">
-          <caret line="14" column="8" lean-forward="false" selection-start-line="14" selection-start-column="8" selection-end-line="14" selection-end-column="8" />
+        <state relative-caret-position="159">
+          <caret line="319" column="28" lean-forward="false" selection-start-line="319" selection-start-column="28" selection-end-line="319" selection-end-column="28" />
           <folding />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/functions/functions-api.js">
+    <entry file="file://$PROJECT_DIR$/routes/functions-routes.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="204">
-          <caret line="745" column="31" lean-forward="false" selection-start-line="745" selection-start-column="31" selection-end-line="745" selection-end-column="31" />
+        <state relative-caret-position="169">
+          <caret line="13" column="31" lean-forward="true" selection-start-line="13" selection-start-column="31" selection-end-line="13" selection-end-column="31" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/protocol/deleteCampaign.json">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="349">
+          <caret line="29" column="26" lean-forward="true" selection-start-line="29" selection-start-column="26" selection-end-line="29" selection-end-column="26" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/protocol/holdCampaign.json">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="356">
+          <caret line="22" column="0" lean-forward="true" selection-start-line="0" selection-start-column="0" selection-end-line="35" selection-end-column="1" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/protocol/campaignSchema.json">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="270">
+          <caret line="15" column="32" lean-forward="true" selection-start-line="15" selection-start-column="32" selection-end-line="15" selection-end-column="32" />
           <folding />
         </state>
       </provider>
