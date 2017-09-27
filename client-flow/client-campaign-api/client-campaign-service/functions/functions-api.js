@@ -10,6 +10,9 @@ var url = 'mongodb://104.154.65.252:27017/mbassdb';
 var tenantCampaignsDataCollectionNameBase = 'CampaignsData_';
 var processTimeDelta = 30000000000 // 1/2 Minute ago.
 
+
+const campaignControlTopicName = "campaign-control";
+const campaignQueueTopicName = "campaign-queue";
 // Imports the Google Cloud client library
 const PubSub = require('@google-cloud/pubsub');
 
@@ -137,7 +140,6 @@ exports.createCampaign = function (req, res){
             var response = createResponse(createCampaignData, pn_campaign_queue_id, false, errMsg);
             res.status(400);
             res.json(response);
-            return;
         }
 
         var validationResult = validateCreateCampaignData(createCampaignData);
@@ -149,7 +151,6 @@ exports.createCampaign = function (req, res){
             var response = createResponse(createReq, pn_campaign_queue_id, false, errMsg);
             res.status(400);
             res.json(response);
-            return;
         } 
         
         MongoClient.connect(url)
@@ -193,7 +194,6 @@ exports.createCampaign = function (req, res){
                 var response = createResponse(createCampaignData, undefined, false, errMsg);
                 res.status(400);
                 res.json(response);
-                return; 
             })                                          
 
         })
@@ -240,7 +240,6 @@ exports.deleteCampaign = function (req, res){
             var response = createResponse(deleteCampaignData, undefined, false, errMsg);
             res.status(400);
             res.json(response);
-            return;
         }
 
         var validationResult = validateDeleteCampaignData(deleteCampaignData);
@@ -252,7 +251,6 @@ exports.deleteCampaign = function (req, res){
             var response = createResponse(createReq, pn_campaign_queue_id, false, errMsg);
             res.status(400);
             res.json(response);
-            return;
         } 
         
         MongoClient.connect(url)
@@ -263,35 +261,30 @@ exports.deleteCampaign = function (req, res){
             var tenantCampaignCollectionName = tenantCampaignsDataCollectionNameBase + tenantId;
             var tenantCampaignsDataCollection = db.collection(tenantCampaignCollectionName);
             var docId = getDocId(deleteCampaignData);
-            tenantCampaignsDataCollection.findOneAndDelete({_id: docId})
+            tenantCampaignsDataCollection.findOne({_id: docId})
             .then(function(exisitingDoc){
-                if(exisitingDoc.value == null){
+                if(exisitingDoc == null){
                     cleanup(db);
                     res.status(400);
                     var errMsg = "deleteCampaign:campaign not exist, please check campaign details";                                 
                     var response = createResponse(deleteCampaignData, undefined, false, errMsg);                    
                     res.json(response);
-                }else{
-                   // exisitingDoc.value
-                // References an existing topic, e.g. "my-topic"
-                    var topicName = exisitingDoc.value.data_queue_name;
-                    const topic = pubsubClient.topic(topicName);
-                    // Deletes the topic
-                     topic.delete()
-                    .then(() => {
-                        cleanup(db);
-                        var Msg = "deleteCampaign:campaign succeeded, deleteing queue as well queue="+topicName ;                                
-                        console.log(Msg);
-                        var response = createResponse(deleteCampaignData, topicName, true, errMsg);                    
-                        res.json(response);
-                    })
-                    .catch(() => {               
-                        cleanup(db);
-                        var errMsg = "deleteCampaign:campaign queue deletion failed, queue="+topicName ;
-                        console.error(errMsg);                               
-                        var response = createResponse(deleteCampaignData, topicName, false, errMsg);                    
-                        res.json(response);
-                    })
+                }else {
+
+                    handleDeleteCampaign(db, tenantCampaignsDataCollection, exisitingDoc, docId)
+                        .then(function(status){
+                            cleanup(db);
+                            var response = createResponse(deleteCampaignData, undefined, true, errMsg);
+                            res.json(response);
+                        })
+                        .catch(function(error){
+                            cleanup(db);
+                            var errMsg = "deleteCampaign:handleDeleteCampaign Failed,  " + error;
+                            console.error(errMsg);
+                            var response = createResponse(deleteCampaignData, undefined, false, errMsg);
+                            res.status(400);
+                            res.json(response);
+                        })
                 }
                
             })
@@ -302,7 +295,6 @@ exports.deleteCampaign = function (req, res){
                 var response = createResponse(deleteCampaignData, undefined, false, errMsg);
                 res.status(400);
                 res.json(response);
-                return; 
             })                                          
 
         })
@@ -348,7 +340,6 @@ exports.stopCampaign = function (req, res){
         var response = createResponse(stopCampaignData, undefined, false, errMsg);
         res.status(400);
         res.json(response);
-        return;
     }
 
     var validationResult = validateStopCampaignData(stopCampaignData);
@@ -360,7 +351,6 @@ exports.stopCampaign = function (req, res){
         var response = createResponse(createReq, pn_campaign_queue_id, false, errMsg);
         res.status(400);
         res.json(response);
-        return;
     }
 
     MongoClient.connect(url)
@@ -419,7 +409,6 @@ exports.stopCampaign = function (req, res){
                     var response = createResponse(stopCampaignData, undefined, false, errMsg);
                     res.status(400);
                     res.json(response);
-                    return;
                 })
 
         })
@@ -464,7 +453,6 @@ exports.rescheduleCampaign = function (req, res){
         var response = createResponse(rescheduleCampaignData, undefined, false, errMsg);
         res.status(400);
         res.json(response);
-        return;
     }
 
     var validationResult = validateRescheduleCampaignData(rescheduleCampaignData);
@@ -476,7 +464,6 @@ exports.rescheduleCampaign = function (req, res){
         var response = createResponse(createReq, pn_campaign_queue_id, false, errMsg);
         res.status(400);
         res.json(response);
-        return;
     }
 
     MongoClient.connect(url)
@@ -536,7 +523,6 @@ exports.rescheduleCampaign = function (req, res){
                     var response = createResponse(rescheduleCampaignData, undefined, false, errMsg);
                     res.status(400);
                     res.json(response);
-                    return;
                 })
 
         })
@@ -609,7 +595,6 @@ exports.updateCampaign = function (req, res){
             var response = createResponse(updateCampaignData, undefined, false, errMsg);
             res.status(400);
             res.json(response);
-            return;
         }
     
         var validationResult = validateUpdateCampaignData(updateCampaignData);
@@ -621,7 +606,6 @@ exports.updateCampaign = function (req, res){
             var response = createResponse(createReq, pn_campaign_queue_id, false, errMsg);
             res.status(400);
             res.json(response);
-            return;
         }
     
         MongoClient.connect(url)
@@ -679,7 +663,6 @@ exports.updateCampaign = function (req, res){
                         var response = createResponse(updateCampaignData, undefined, false, errMsg);
                         res.status(400);
                         res.json(response);
-                        return;
                     })
     
             })
@@ -737,7 +720,6 @@ exports.abortCampaign = function (req, res){
         var response = createResponse(createReq, pn_campaign_queue_id, false, errMsg);
         res.status(400);
         res.json(response);
-        return;
     }
 
     MongoClient.connect(url)
@@ -764,7 +746,6 @@ exports.abortCampaign = function (req, res){
                                 console.log("abortCampaign: campaign was aborted succesfully, queue was deleted: " + exisitingDoc.data_queue_name);
                                 var response = createResponse(abortCampaignData, undefined, true, errMsg);
                                 res.json(response);
-                                return;
                             })
                             .catch(function(error){
                                 cleanup(db);
@@ -773,7 +754,6 @@ exports.abortCampaign = function (req, res){
                                 var response = createResponse(abortCampaignData, undefined, false, errMsg);
                                 res.status(400);
                                 res.json(response);
-                                return;
                             })
                     }
                 })
@@ -784,7 +764,6 @@ exports.abortCampaign = function (req, res){
                     var response = createResponse(abortCampaignData, undefined, false, errMsg);
                     res.status(400);
                     res.json(response);
-                    return;
                 })
 
         })
@@ -1784,8 +1763,43 @@ var handleCreateCampaign = function(db, tenantCampaignsDataCollection, createReq
             });
         })                    
 }
-   
-    
+
+
+//-----------------------------------------------------------------------------
+// functions: handleDeleteCampaign
+// args: db, tenantCampaignsDataCollection, createReq, docId
+// return: boolean/ error
+// description: create and Insert campaign document.
+//---------------------------------------------------------------------------
+var handleDeleteCampaign = function(db, tenantCampaignsDataCollection, exisitingDoc, docId ){
+
+    return new Promise( function (resolve, reject) {
+
+        exisitingDoc.campaign_status = "deleted";
+        tenantCampaignsDataCollection.update({_id: docId}, exisitingDoc)
+            .then(function(result) {
+
+                var topicName = exisitingDoc.data_queue_name;
+                const topic = pubsubClient.topic(topicName);
+                // Deletes the topic
+                topic.delete()
+                    .then(function () {
+                        var Msg = "handleDeleteCampaign: campaign succeeded, deleteing queue as well queue=" + topicName;
+                        console.log(Msg);
+                        resolve(true);
+                    })
+                    .catch(function (error) {
+                        var errMsg = "handleDeleteCampaign: campaign queue deletion failed, queue=" + topicName + ", error=" + error;
+                        reject(error);
+                    })
+            })
+            .catch(function(error){
+                var errMsg = "handleDeleteCampaign: campaign deletion update failed, "+ " error=" + error;
+                reject(error);
+            })
+    })
+}
+
 
 //-----------------------------------------------------------------------------
 // functions: handleUpdateCampaign
@@ -1825,6 +1839,10 @@ var handleUpdateCampaign = function(db, tenantCampaignsDataCollection, createReq
 //---------------------------------------------------------------------------
 var handleAbortCampaign = function(db, tenantCampaignsDataCollection, createReq, docId, exisitingDoc) {
     return new Promise(function (resolve, reject) {
+        var campaignStartedProcessing = false;
+        if(exisitingDoc.campaign_status == "started"){
+            campaignStartedProcessing = true;
+        }
         exisitingDoc.campaign_status = "aborted";
         tenantCampaignsDataCollection.update({_id: docId}, exisitingDoc)
             .then(function (result) {
@@ -1835,10 +1853,28 @@ var handleAbortCampaign = function(db, tenantCampaignsDataCollection, createReq,
                 // Deletes the topic
                 topic.delete()
                     .then(function () {
-                        resolve(true);
+                        if(campaignStartedProcessing == true)
+                        {
+
+                            var dataMessage = {
+                                command: "abort_campaign",
+                                campaign_id: exisitingDoc._id
+                            };
+                           publishMessageToControlTopic(dataMessage)
+                               .then(function(status){
+                                   resolve(true);
+                               })
+                               .catch(function(status){
+                                   reject(status.error);
+                               })
+                        }else{
+                            resolve(true);
+                        }
+
                     })
                     .catch(function (error) {
-                        reject(error);
+                        var errorMsg = "failed Deleting Topic, " + error;
+                        reject(errorMsg);
                     })
             })
             .catch(function (error) {
@@ -1847,6 +1883,41 @@ var handleAbortCampaign = function(db, tenantCampaignsDataCollection, createReq,
 
     })
 }
+
+
+//-----------------------------------------------------------------------------
+// functions: publishMessageToControlTopic
+// args: dataMessage
+// return: {boolean, error}
+// description: publish messages to the campaign control queue
+// Notifies all processing instances that the campaign should be aborted.
+//---------------------------------------------------------------------------
+var publishMessageToControlTopic = function(dataMessage){
+    return new Promise(function (resolve, reject) {
+        var messageStatus = {status: true, error: undefined};
+        // we should inform all processing instances to abort.
+        const campaignControlTopic = pubsubClient.topic(campaignControlTopicName);
+        // Create a publisher for the topic (which can include additional batching configuration)
+        const campaignControlPublisher = campaignControlTopic.publisher();
+
+        var data = JSON.stringify(dataMessage);
+
+        const dataBuffer = Buffer.from(data);
+        campaignControlPublisher.publish(dataBuffer)
+            .then(function (results) {
+                const messageId = results[0];
+                console.log("Message ${messageId} published.");
+                resolve(messageStatus);
+            })
+            .catch(function (error) {
+                messageStatus.status = false;
+                messageStatus.error = error;
+                console.error("Failed Publishing Abort Message to Campiagn Control Topic" + data + ", " + error);
+                reject(messageStatus);
+            });
+    })
+}
+
 
 //-----------------------------------------------------------------------------
 // functions: Promise Template

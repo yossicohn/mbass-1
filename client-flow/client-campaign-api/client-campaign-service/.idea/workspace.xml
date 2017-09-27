@@ -31,8 +31,8 @@
       <file leaf-file-name="functions-api.js" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/functions/functions-api.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="-186">
-              <caret line="843" column="66" lean-forward="false" selection-start-line="843" selection-start-column="66" selection-end-line="843" selection-end-column="66" />
+            <state relative-caret-position="204">
+              <caret line="745" column="31" lean-forward="false" selection-start-line="745" selection-start-column="31" selection-end-line="745" selection-end-column="31" />
               <folding />
             </state>
           </provider>
@@ -94,7 +94,7 @@
             <state relative-caret-position="360">
               <caret line="20" column="1" lean-forward="false" selection-start-line="20" selection-start-column="1" selection-end-line="20" selection-end-column="1" />
               <folding>
-                <marker date="1506517888688" expanded="true" signature="305:843" ph="{&quot;command_name&quot;: &quot;abort_campaign&quot;...}" />
+                <marker date="1506521180220" expanded="true" signature="305:843" ph="{&quot;command_name&quot;: &quot;abort_campaign&quot;...}" />
               </folding>
             </state>
           </provider>
@@ -124,13 +124,6 @@
   </component>
   <component name="FindInProjectRecents">
     <findStrings>
-      <find>checkIfVisitorDocumentExist</find>
-      <find>createVisitorRegisterData</find>
-      <find>createVisitorRegisterResponse</find>
-      <find>validateVisitorRegistrationData</find>
-      <find>validateCustomerRegistrationData</find>
-      <find>handleCustomerUnRegistration</find>
-      <find>removeDeviceAndUpdateExistingDocument</find>
       <find>findAndDeletExistDocument</find>
       <find>createCustomerOptInOutResponse</find>
       <find>insertnew</find>
@@ -152,8 +145,15 @@
       <find>handleUpdateCampaign</find>
       <find>pubsubClient</find>
       <find>handleabo</find>
-      <find>handleAbortCampaign</find>
       <find>topic.de</find>
+      <find>deleteCampa</find>
+      <find>handleab</find>
+      <find>deleteCam</find>
+      <find>res.json</find>
+      <find>createCa</find>
+      <find>abort</find>
+      <find>publishMessageToControlTopic</find>
+      <find>handleAbortCampaign</find>
     </findStrings>
     <replaceStrings>
       <replace>stopCampaignData</replace>
@@ -318,15 +318,15 @@
       <workItem from="1506389242258" duration="5718000" />
       <workItem from="1506508490923" duration="2825000" />
       <workItem from="1506512175711" duration="3452000" />
-      <workItem from="1506517524017" duration="1416000" />
+      <workItem from="1506517524017" duration="8580000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="53201000" />
+    <option name="totallyTimeSpent" value="60365000" />
   </component>
   <component name="ToolWindowManager">
-    <frame x="64" y="-11" width="1857" height="987" extended-state="6" />
+    <frame x="64" y="-11" width="1297" height="675" extended-state="6" />
     <editor active="true" />
     <layout>
       <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.114285715" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
@@ -338,7 +338,7 @@
       <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Favorites" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="2" side_tool="true" content_ui="tabs" />
-      <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.42857143" sideWeight="0.8" order="3" side_tool="false" content_ui="tabs" />
+      <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.31616342" sideWeight="0.8" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="Cvs" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="4" side_tool="false" content_ui="tabs" />
       <window_info id="Message" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
       <window_info id="Commander" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.4" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
@@ -378,236 +378,356 @@
       <breakpoints>
         <line-breakpoint enabled="true" type="javascript">
           <url>file://$PROJECT_DIR$/functions/functions-api.js</url>
-          <line>342</line>
+          <line>334</line>
           <option name="timeStamp" value="116" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="javascript">
           <url>file://$PROJECT_DIR$/functions/functions-api.js</url>
-          <line>396</line>
+          <line>386</line>
           <option name="timeStamp" value="120" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="javascript">
           <url>file://$PROJECT_DIR$/functions/functions-api.js</url>
-          <line>401</line>
+          <line>391</line>
           <option name="timeStamp" value="121" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="javascript">
           <url>file://$PROJECT_DIR$/functions/functions-api.js</url>
-          <line>405</line>
+          <line>395</line>
           <option name="timeStamp" value="122" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="javascript">
           <url>file://$PROJECT_DIR$/functions/functions-api.js</url>
-          <line>416</line>
+          <line>406</line>
           <option name="timeStamp" value="123" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="javascript">
           <url>file://$PROJECT_DIR$/functions/functions-api.js</url>
-          <line>399</line>
+          <line>389</line>
           <option name="timeStamp" value="125" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="javascript">
           <url>file://$PROJECT_DIR$/functions/functions-api.js</url>
-          <line>458</line>
+          <line>447</line>
           <option name="timeStamp" value="129" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="javascript">
           <url>file://$PROJECT_DIR$/functions/functions-api.js</url>
-          <line>487</line>
+          <line>474</line>
           <option name="timeStamp" value="130" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="javascript">
           <url>file://$PROJECT_DIR$/functions/functions-api.js</url>
-          <line>492</line>
+          <line>479</line>
           <option name="timeStamp" value="131" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="javascript">
           <url>file://$PROJECT_DIR$/functions/functions-api.js</url>
-          <line>491</line>
+          <line>478</line>
           <option name="timeStamp" value="132" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="javascript">
           <url>file://$PROJECT_DIR$/functions/functions-api.js</url>
-          <line>512</line>
+          <line>499</line>
           <option name="timeStamp" value="133" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="javascript">
           <url>file://$PROJECT_DIR$/functions/functions-api.js</url>
-          <line>507</line>
+          <line>494</line>
           <option name="timeStamp" value="134" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="javascript">
           <url>file://$PROJECT_DIR$/functions/functions-api.js</url>
-          <line>518</line>
+          <line>505</line>
           <option name="timeStamp" value="135" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="javascript">
           <url>file://$PROJECT_DIR$/functions/functions-api.js</url>
-          <line>345</line>
+          <line>337</line>
           <option name="timeStamp" value="136" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="javascript">
           <url>file://$PROJECT_DIR$/functions/functions-api.js</url>
-          <line>469</line>
+          <line>457</line>
           <option name="timeStamp" value="137" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="javascript">
           <url>file://$PROJECT_DIR$/functions/functions-api.js</url>
-          <line>1797</line>
+          <line>1811</line>
           <option name="timeStamp" value="139" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="javascript">
           <url>file://$PROJECT_DIR$/functions/functions-api.js</url>
-          <line>597</line>
+          <line>583</line>
           <option name="timeStamp" value="140" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="javascript">
           <url>file://$PROJECT_DIR$/functions/functions-api.js</url>
-          <line>635</line>
+          <line>619</line>
           <option name="timeStamp" value="141" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="javascript">
           <url>file://$PROJECT_DIR$/functions/functions-api.js</url>
-          <line>659</line>
+          <line>643</line>
           <option name="timeStamp" value="142" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="javascript">
           <url>file://$PROJECT_DIR$/functions/functions-api.js</url>
-          <line>637</line>
+          <line>621</line>
           <option name="timeStamp" value="143" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="javascript">
           <url>file://$PROJECT_DIR$/functions/functions-api.js</url>
-          <line>657</line>
+          <line>641</line>
           <option name="timeStamp" value="144" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="javascript">
           <url>file://$PROJECT_DIR$/functions/functions-api.js</url>
-          <line>644</line>
+          <line>628</line>
           <option name="timeStamp" value="145" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="javascript">
           <url>file://$PROJECT_DIR$/functions/functions-api.js</url>
-          <line>1800</line>
+          <line>1814</line>
           <option name="timeStamp" value="146" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="javascript">
           <url>file://$PROJECT_DIR$/functions/functions-api.js</url>
-          <line>1805</line>
+          <line>1819</line>
           <option name="timeStamp" value="147" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="javascript">
           <url>file://$PROJECT_DIR$/functions/functions-api.js</url>
-          <line>666</line>
+          <line>650</line>
           <option name="timeStamp" value="148" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="javascript">
           <url>file://$PROJECT_DIR$/functions/functions-api.js</url>
-          <line>1802</line>
+          <line>1816</line>
           <option name="timeStamp" value="149" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="javascript">
           <url>file://$PROJECT_DIR$/functions/functions-api.js</url>
-          <line>1798</line>
+          <line>1812</line>
           <option name="timeStamp" value="150" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="javascript">
           <url>file://$PROJECT_DIR$/functions/functions-api.js</url>
-          <line>855</line>
+          <line>834</line>
           <option name="timeStamp" value="155" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="javascript">
           <url>file://$PROJECT_DIR$/functions/functions-api.js</url>
-          <line>1040</line>
+          <line>1019</line>
           <option name="timeStamp" value="156" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="javascript">
           <url>file://$PROJECT_DIR$/functions/functions-api.js</url>
-          <line>1808</line>
+          <line>1822</line>
           <option name="timeStamp" value="157" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="javascript">
           <url>file://$PROJECT_DIR$/functions/functions-api.js</url>
-          <line>1812</line>
+          <line>1826</line>
           <option name="timeStamp" value="158" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="javascript">
           <url>file://$PROJECT_DIR$/functions/functions-api.js</url>
-          <line>760</line>
+          <line>742</line>
           <properties />
           <option name="timeStamp" value="163" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="javascript">
           <url>file://$PROJECT_DIR$/functions/functions-api.js</url>
-          <line>1827</line>
+          <line>1845</line>
           <properties />
           <option name="timeStamp" value="165" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="javascript">
           <url>file://$PROJECT_DIR$/functions/functions-api.js</url>
-          <line>763</line>
+          <line>745</line>
           <properties />
           <option name="timeStamp" value="166" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="javascript">
           <url>file://$PROJECT_DIR$/functions/functions-api.js</url>
-          <line>1832</line>
-          <properties />
-          <option name="timeStamp" value="168" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="javascript">
-          <url>file://$PROJECT_DIR$/functions/functions-api.js</url>
-          <line>1844</line>
+          <line>1880</line>
           <properties />
           <option name="timeStamp" value="170" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="javascript">
           <url>file://$PROJECT_DIR$/functions/functions-api.js</url>
-          <line>1837</line>
+          <line>1872</line>
           <properties />
           <option name="timeStamp" value="171" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="javascript">
           <url>file://$PROJECT_DIR$/functions/functions-api.js</url>
-          <line>1840</line>
+          <line>1876</line>
           <properties />
           <option name="timeStamp" value="173" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="javascript">
           <url>file://$PROJECT_DIR$/functions/functions-api.js</url>
-          <line>770</line>
+          <line>751</line>
           <properties />
           <option name="timeStamp" value="174" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="javascript">
           <url>file://$PROJECT_DIR$/functions/functions-api.js</url>
-          <line>781</line>
+          <line>761</line>
           <properties />
           <option name="timeStamp" value="175" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="javascript">
           <url>file://$PROJECT_DIR$/functions/functions-api.js</url>
-          <line>793</line>
+          <line>772</line>
           <properties />
           <option name="timeStamp" value="176" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="javascript">
           <url>file://$PROJECT_DIR$/functions/functions-api.js</url>
-          <line>1833</line>
+          <line>1851</line>
           <properties />
           <option name="timeStamp" value="177" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="javascript">
           <url>file://$PROJECT_DIR$/functions/functions-api.js</url>
-          <line>1835</line>
+          <line>1853</line>
           <properties />
           <option name="timeStamp" value="178" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="javascript">
+          <url>file://$PROJECT_DIR$/functions/functions-api.js</url>
+          <line>263</line>
+          <properties />
+          <option name="timeStamp" value="182" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="javascript">
+          <url>file://$PROJECT_DIR$/functions/functions-api.js</url>
+          <line>273</line>
+          <properties />
+          <option name="timeStamp" value="183" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="javascript">
+          <url>file://$PROJECT_DIR$/functions/functions-api.js</url>
+          <line>266</line>
+          <properties />
+          <option name="timeStamp" value="184" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="javascript">
+          <url>file://$PROJECT_DIR$/functions/functions-api.js</url>
+          <line>302</line>
+          <properties />
+          <option name="timeStamp" value="185" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="javascript">
+          <url>file://$PROJECT_DIR$/functions/functions-api.js</url>
+          <line>292</line>
+          <properties />
+          <option name="timeStamp" value="186" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="javascript">
+          <url>file://$PROJECT_DIR$/functions/functions-api.js</url>
+          <line>265</line>
+          <properties />
+          <option name="timeStamp" value="187" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="javascript">
+          <url>file://$PROJECT_DIR$/functions/functions-api.js</url>
+          <line>1781</line>
+          <properties />
+          <option name="timeStamp" value="188" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="javascript">
+          <url>file://$PROJECT_DIR$/functions/functions-api.js</url>
+          <line>1778</line>
+          <properties />
+          <option name="timeStamp" value="189" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="javascript">
+          <url>file://$PROJECT_DIR$/functions/functions-api.js</url>
+          <line>1896</line>
+          <properties />
+          <option name="timeStamp" value="190" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="javascript">
+          <url>file://$PROJECT_DIR$/functions/functions-api.js</url>
+          <line>1907</line>
+          <properties />
+          <option name="timeStamp" value="195" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="javascript">
+          <url>file://$PROJECT_DIR$/functions/functions-api.js</url>
+          <line>1912</line>
+          <properties />
+          <option name="timeStamp" value="196" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="javascript">
+          <url>file://$PROJECT_DIR$/functions/functions-api.js</url>
+          <line>1850</line>
+          <properties />
+          <option name="timeStamp" value="197" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="javascript">
+          <url>file://$PROJECT_DIR$/functions/functions-api.js</url>
+          <line>1916</line>
+          <properties />
+          <option name="timeStamp" value="198" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="javascript">
+          <url>file://$PROJECT_DIR$/functions/functions-api.js</url>
+          <line>1909</line>
+          <properties />
+          <option name="timeStamp" value="199" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="javascript">
+          <url>file://$PROJECT_DIR$/functions/functions-api.js</url>
+          <line>1915</line>
+          <properties />
+          <option name="timeStamp" value="200" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="javascript">
+          <url>file://$PROJECT_DIR$/functions/functions-api.js</url>
+          <line>1864</line>
+          <properties />
+          <option name="timeStamp" value="201" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="javascript">
+          <url>file://$PROJECT_DIR$/functions/functions-api.js</url>
+          <line>1862</line>
+          <properties />
+          <option name="timeStamp" value="202" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="javascript">
+          <url>file://$PROJECT_DIR$/functions/functions-api.js</url>
+          <line>1867</line>
+          <properties />
+          <option name="timeStamp" value="203" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="javascript">
+          <url>file://$PROJECT_DIR$/functions/functions-api.js</url>
+          <line>1870</line>
+          <properties />
+          <option name="timeStamp" value="204" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="javascript">
+          <url>file://$PROJECT_DIR$/functions/functions-api.js</url>
+          <line>1875</line>
+          <properties />
+          <option name="timeStamp" value="205" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="javascript">
+          <url>file://$PROJECT_DIR$/functions/functions-api.js</url>
+          <line>1855</line>
+          <properties />
+          <option name="timeStamp" value="206" />
         </line-breakpoint>
       </breakpoints>
       <breakpoints-dialog>
         <breakpoints-dialog />
       </breakpoints-dialog>
-      <option name="time" value="179" />
+      <option name="time" value="207" />
     </breakpoint-manager>
     <watches-manager />
   </component>
@@ -641,7 +761,7 @@
         <state relative-caret-position="360">
           <caret line="20" column="1" lean-forward="true" selection-start-line="20" selection-start-column="1" selection-end-line="20" selection-end-column="1" />
           <folding>
-            <marker date="1506517888688" expanded="true" signature="305:843" ph="{&quot;command_name&quot;: &quot;abort_campaign&quot;...}" />
+            <marker date="1506521180220" expanded="true" signature="305:843" ph="{&quot;command_name&quot;: &quot;abort_campaign&quot;...}" />
           </folding>
         </state>
       </provider>
@@ -723,7 +843,7 @@
         <state relative-caret-position="360">
           <caret line="20" column="1" lean-forward="true" selection-start-line="20" selection-start-column="1" selection-end-line="20" selection-end-column="1" />
           <folding>
-            <marker date="1506517888688" expanded="true" signature="305:843" ph="{&quot;command_name&quot;: &quot;abort_campaign&quot;...}" />
+            <marker date="1506521180220" expanded="true" signature="305:843" ph="{&quot;command_name&quot;: &quot;abort_campaign&quot;...}" />
           </folding>
         </state>
       </provider>
@@ -974,7 +1094,7 @@
         <state relative-caret-position="360">
           <caret line="20" column="1" lean-forward="false" selection-start-line="20" selection-start-column="1" selection-end-line="20" selection-end-column="1" />
           <folding>
-            <marker date="1506517888688" expanded="true" signature="305:843" ph="{&quot;command_name&quot;: &quot;abort_campaign&quot;...}" />
+            <marker date="1506521180220" expanded="true" signature="305:843" ph="{&quot;command_name&quot;: &quot;abort_campaign&quot;...}" />
           </folding>
         </state>
       </provider>
@@ -1013,8 +1133,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/functions/functions-api.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-186">
-          <caret line="843" column="66" lean-forward="false" selection-start-line="843" selection-start-column="66" selection-end-line="843" selection-end-column="66" />
+        <state relative-caret-position="204">
+          <caret line="745" column="31" lean-forward="false" selection-start-line="745" selection-start-column="31" selection-end-line="745" selection-end-column="31" />
           <folding />
         </state>
       </provider>
