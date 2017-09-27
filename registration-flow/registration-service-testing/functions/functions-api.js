@@ -20,7 +20,7 @@ var visitorsRegistrationCollection = 'VisitorsTokens';
 
         var currUUID = uuidV4(); // -> '110ec58a-a0f2-4ac4-8393-c866d813b8d1'
         var tokenDocument = {
-            "_id": "tid:1_pcid:" + currUUID,
+            "_id": "tid-1-pcid-" + currUUID,
             "tenant_id": 1,
             "public_customer_id ":  currUUID,
             "opt_in": "true",
@@ -136,7 +136,7 @@ exports.optInOutVisitor = function (req, res){
             status = true;           
             var tenantId = opt_request.tenant_id;
             var visitorsRegistrationCollection = db.collection(registrationCollectionName);
-            var docId = "tid:" + opt_request.tenant_id + "_vid:" + opt_request.visitor_id;
+            var docId = getVisitorDocId(opt_request);
             visitorsRegistrationCollection.findOne({_id: docId})
             .then(function(exisitingDoc){
                 handleOptInOutUpdate(db, visitorsRegistrationCollection, docId, exisitingDoc, opt_mode, opt_request)
@@ -185,7 +185,7 @@ exports.optInOutVisitor = function (req, res){
 // {
 //     "opt_in": {
 //         "tenant_id": 85,
-//         "public_customer_id": "32862a06-cdfd-4f75-ace4-a721aea02c98",,        
+//         "public_customer_id": "32862a06-cdfd-4f75-ace4-a721aea02c98",        
 //         "ios_token\": {
 //             "device_id": "5b14fa8b-abdd-4347-aca9-ea3e03be657e"                        
 //         }
@@ -242,7 +242,7 @@ exports.optInOutVisitor = function (req, res){
             status = true;           
             var tenantId = opt_request.tenant_id;
             var customerRegistrationCollection = db.collection(registrationCollectionName);
-            var docId = "tid:" + opt_request.tenant_id + "_pcid:" + opt_request.public_customer_id;
+            var docId = getCustomerDocId(opt_request);
             customerRegistrationCollection.findOne({_id: docId})
             .then(function(exisitingDoc){
                 handleOptInOutUpdate(db, customerRegistrationCollection, docId, exisitingDoc, opt_mode, opt_request)
@@ -287,7 +287,7 @@ exports.optInOutVisitor = function (req, res){
 // description:mock for the register
 // format example:
 // {
-//     "_id": "tid:1_pcid:" + currUUID,
+//     "_id": "tid-1-pcid-" + currUUID,
 //     "tenant_id": 1,
 //     "public_customer_id ":  currUUID,
 //     "opt_in": "true",
@@ -718,7 +718,12 @@ exports.unregisterVisitor = function (req, res) {
         var status = false;
         var visitorCollection = visitorsRegistrationCollection + '_' + tenantId;
         var collection = db.collection(visitorCollection);
-        var docId = "tid:" + tenantId + "_vid:" + orig_visitor_id;
+       
+        var data = {
+            tenant_id: tenantId,
+            visitor_id: orig_visitor_id
+        };
+        var docId = getVisitorDocId(data);
 
         if(collection != undefined){
 
@@ -1069,9 +1074,12 @@ var validateVisitorUnRegistrationData = function (unregistration_data){
 //---------------------------------------------------------------------------
 var checkIfVisitorDocumentExist = function(db, registrationCollection, tenantId, orig_visitor_id ){
 
-    var id = "tid:"+ tenantId + "_vid:" + orig_visitor_id;
-
-    registrationCollection.findOne({_id: id}).then( function (foundDocument) {
+    var data = {
+        tenant_id: tenantId,
+        visitor_id: orig_visitor_id
+    };
+    var docId = getVisitorDocId(data);
+    registrationCollection.findOne({_id: docId}).then( function (foundDocument) {
 
     }).catch( function(error){
         console.error("checkIfVisitorDocumentExist:  Failed");
@@ -1090,7 +1098,8 @@ var checkIfVisitorDocumentExist = function(db, registrationCollection, tenantId,
 var findAndDeletExistDocument = function(db, registrationCollection, tenantId, orig_visitor_id ){
 
     return new Promise( function (resolve, reject) {
-        var id = "tid:" + tenantId + "_vid:" + orig_visitor_id;
+        var id = "tid-" + tenantId + "-vid-" + orig_visitor_id;
+
         registrationCollection.findOneAndDelete({"_id": id}).then(function (foundDocument) {
             resolve(true);
         }).catch(function (error) {
@@ -1104,19 +1113,19 @@ var findAndDeletExistDocument = function(db, registrationCollection, tenantId, o
 
 //-----------------------------------------------------------------------------
 // functions: checkIfCustomerDocumentExists
-// args: db, customerRegistrationCollection, tenantId, public_customer_id
+// args: db, customerRegistrationCollection, tenantId, public_customer_id, docId
 // description: find customer document.
 //---------------------------------------------------------------------------
-var checkIfCustomerDocumentExists = function(db, customerRegistrationCollection, tenantId, public_customer_id ){
+var checkIfCustomerDocumentExists = function(db, customerRegistrationCollection, tenantId, public_customer_id, docId ){
     
         return new Promise( function (resolve, reject) {
-            var id = "tid:" + tenantId + "_pcid:" + public_customer_id;
-            customerRegistrationCollection.findOne({"_id": id})
+           
+            customerRegistrationCollection.findOne({"_id": docId})
             .then(function (foundDocument) {
                 resolve(foundDocument);
             })
             .catch(function (error) {
-                console.error("checkIfCustomerDocumentExists:  Failed Deletion - " + {_id: id});
+                console.error("checkIfCustomerDocumentExists:  Failed Deletion - " + {_id: docId});
                 reject(false);
             });
         });
@@ -1239,8 +1248,10 @@ var removeDeviceAndUpdateExistingDocument = function(db, registrationCollection,
 var handleCustomerRegistration = function(db, customerRegistrationCollection, registration_data ){
     
         return new Promise( function (resolve, reject) {
-            var docId = "tid:" + registration_data.tenant_id + "_pcid:" + registration_data.public_customer_id;
-            checkIfCustomerDocumentExists(db, customerRegistrationCollection, registration_data.tenant_id, registration_data.public_customer_id )
+            
+            var docId = getCustomerDocId(registration_data);
+            
+            checkIfCustomerDocumentExists(db, customerRegistrationCollection, registration_data.tenant_id, registration_data.public_customer_id, docId )
             .then(function(foundCustomerDocument){
 
                 if(foundCustomerDocument != undefined){ //customer Exist! shoud update
@@ -1281,8 +1292,8 @@ var handleCustomerRegistration = function(db, customerRegistrationCollection, re
 var handleCustomerUnRegistration = function(db, customerRegistrationCollection, registration_data ){
     
         return new Promise( function (resolve, reject) {
-            var docId = "tid:" + registration_data.tenant_id + "_pcid:" + registration_data.public_customer_id;
-            checkIfCustomerDocumentExists(db, customerRegistrationCollection, registration_data.tenant_id, registration_data.public_customer_id )
+            var docId = getCustomerDocId(registration_data);
+            checkIfCustomerDocumentExists(db, customerRegistrationCollection, registration_data.tenant_id, registration_data.public_customer_id, docId )
             .then(function(foundCustomerDocument){
 
                 if(foundCustomerDocument != undefined){ //customer Exist! shoud update
@@ -1526,7 +1537,7 @@ var  createVisitorRegisterData = function (registration_data){
 
     var visitor_id = registration_data.visitor_id;
     var tenantId = registration_data.tenant_id;
-    var id = "tid:"+ tenantId + "_vid:" + visitor_id;
+    var id = getVisitorDocId(registration_data);
     data._id = id;
     data.tenant_id  = tenantId;
     data.visitor_id = visitor_id;
@@ -1546,7 +1557,7 @@ var  createVisitorRegisterData = function (registration_data){
 // args: registration_data
 // description: create Registration Data for the Customer Collection.
 // {
-//     "_id": "tid:85_pcid:eb3b6e8b-97b3-47fe-9d05-3b134e7e040f",
+//     "_id": "tid-85-pcid-eb3b6e8b-97b3-47fe-9d05-3b134e7e040f",
 //     "tenant_id": 85,
 //     "public_customer_id": "eb3b6e8b-97b3-47fe-9d05-3b134e7e040f",
 //     "opt_in": "true",
@@ -1578,7 +1589,7 @@ var  createCustomerRegisterData = function (registration_data){
     
         data.public_customer_id = registration_data.public_customer_id;
         data.tenant_id = registration_data.tenant_id;
-        var id = "tid:"+ data.tenant_id + "_pcid:" + data.public_customer_id;
+        var id = getCustomerDocId(registration_data);
         data._id = id;              
 
         if(registration_data.android_token != undefined){
@@ -1871,6 +1882,29 @@ var  createVisitorOptInOutResponse = function (opt_data, opt_mode, opt_status, e
     return response_status;
     }
 
+
+
+//-----------------------------------------------------------------------------
+// functions: cleanup
+// args: db
+// description: Clean up.
+//---------------------------------------------------------------------------
+var getVisitorDocId = function (request){
+    var docId = "tid-" + request.tenant_id + "-vid-" + request.visitor_id;
+    return docId;
+}
+
+//-----------------------------------------------------------------------------
+// functions: cleanup
+// args: db
+// description: Clean up.
+//---------------------------------------------------------------------------
+var getCustomerDocId = function (request){
+    var docId = "tid-" + request.tenant_id + "-pcid-" + request.public_customer_id;
+    return docId;
+}
+    
+    
 //-----------------------------------------------------------------------------
 // functions: cleanup
 // args: db
