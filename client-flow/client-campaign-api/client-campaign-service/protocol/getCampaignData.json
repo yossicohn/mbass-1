@@ -1,0 +1,35 @@
+// ----------------- Request get Campaign Data -----------------
+{
+    "command_name": "get_campaign_data",
+    "tenant_id": "int",
+    "campaign_id": "int",
+    "action_serial": "int",
+    "template_id": "int"
+  }
+
+
+  // ----------------- Response get Campaign Data -----------------
+  {
+    "command_name": "get_campaign_data",
+    "tenant_id": "int",
+    "campaign_id": "int",
+    "action_serial": "int",
+    "template_id": "int",
+    "response_status": "succeeded/failed",
+    "error": "campaign already running, please abort/campaign not exist"
+  }
+
+
+
+curl --header "Content-Type: application/json" \
+http://localhost:3001/get_campaign_data \
+-d "{
+    \"request\":{
+    \"command_name\": \"get_campaign_data\",
+    \"tenant_id\":85,
+    \"campaign_id\": 85,
+    \"action_serial\": 85,
+    \"template_id\": 85
+  }
+}
+"

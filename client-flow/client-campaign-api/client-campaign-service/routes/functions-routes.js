@@ -4,7 +4,11 @@ module.exports = function(app) {
 
     var functions_api = require('../functions/functions-api');
 
+
     //  Routes
+    app.route('/get_campaign_data')
+        .post(functions_api.getCampaignData);
+
     app.route('/create_campaign')
         .post(functions_api.createCampaign);
 

@@ -79,6 +79,95 @@ const pubsubClient = PubSub({
 }
 
 
+
+//-----------------------------------------------------------------------------
+// functions: getCampaignData
+// args: campaign meta data
+// description:mock for the register
+// format example:
+// {
+//     "command_name": "get_campaign_data",
+//     "tenant_id": "int",
+//     "campaign_id": "int",
+//     "action_serial": "int",
+//     "template_id": "int"
+//   }
+//---------------------------------------------------------------------------
+exports.getCampaignData = function (req, res){
+    
+        var err = undefined;
+        var status = undefined;
+    
+        var createReq = req.body;
+        var getCampaignData = createReq.request;
+        var pn_campaign_queue_id = undefined;
+        if(createReq == undefined)
+        {
+    
+            var errMsg = "getCampaignData:createReq is missing data, Failed !!!";
+            console.error(errMsg);
+            var response = createResponse(getCampaignData, undefined, false, errMsg);
+            res.status(400);
+            res.json(response);
+        }
+    
+        var validationResult = validateGetCampaignData(getCampaignData);
+    
+        if(validationResult.status == false){
+    
+            var errMsg = "getCampaignData:validateGetCampaignData Failed " +validationResult.error;
+            console.error(errMsg);
+            var response = createResponse(createReq, undefined, false, errMsg);
+            res.status(400);
+            res.json(response);
+        }
+    
+        MongoClient.connect(url)
+            .then(function(db){
+                console.log("getCampaignData: Connected correctly to server");
+                status = true;
+                var tenantId = getCampaignData.tenant_id;
+                var tenantCampaignCollectionName = tenantCampaignsDataCollectionNameBase + tenantId;
+                var tenantCampaignsDataCollection = db.collection(tenantCampaignCollectionName);
+                var docId = getDocId(getCampaignData);
+                tenantCampaignsDataCollection.findOne({_id: docId})
+                    .then(function(exisitingDoc){
+                        if(exisitingDoc == null){
+                            cleanup(db);
+                            res.status(400);
+                            var errMsg = "getCampaignData:campaign not exist, please check campaign details";
+                            var response = createResponse(getCampaignData, undefined, false, errMsg);
+                            res.json(response);
+                        }else{     
+                            cleanup(db);
+                            exisitingDoc.command_name = "get_campaign_data";
+                            var response = createResponse(exisitingDoc, undefined, true, errMsg);
+                            res.json(response);                 
+                        }                        
+                    })
+                    .catch(function(error){
+                        cleanup(db);
+                        var errMsg = "getCampaignData:" + tenantCampaignCollectionName +".findOne Failed " + error;
+                        console.error(errMsg);
+                        var response = createResponse(getCampaignData, undefined, false, errMsg);
+                        res.status(400);
+                        res.json(response);
+                    })
+    
+            })
+            .catch(function(error){
+    
+                var errMsg = "getCampaignData: Connected DB Server Failed  tenantId = " + createReq.tenant_id + " visitor_id =  " + createReq.visitor_id + " " + error;
+                console.error(errMsg);
+                var response = createResponse(createReq, undefined, false, errMsg);
+                res.status(400);
+                res.json(response);
+            })
+    
+    }
+
+
+
 //-----------------------------------------------------------------------------
 // functions: createCampaign
 // args: campaign meta data
@@ -834,6 +923,9 @@ var createResponse = function(createReq, pn_campaign_id, status, error){
         case 'update_campaign': 
         response =  getUpdateCampaignResponse(response, createReq,  status, error);
         break;
+        case 'get_campaign_data': 
+        response =  getCampaignDataResponse(response, createReq,  status, error);
+        break;
       }
     
       return response;
@@ -1030,7 +1122,28 @@ var getUpdateCampaignResponse = function (response, createReq, status, error){
 }
 
 
+// ----------------------------------------------------------------
+// function: getCampaignCampaignResponse
+// args: createReq, pn_campaign_id, status, error
+// return: response object. 
+// // ----------------------------------------------------------------
+
+// ---------------------------------------------------------------- 
+var getCampaignDataResponse = function (response, doc, status, error){
+    
+    response["command_name"] = "get_campaign_data";
   
+    if(status == true){
+        response["response_status"]= "succeeded";
+        response["campaign_data"] = doc;
+    }else{
+        response["error"] = error;
+        response["response_status"]= "failed";
+    }
+    
+    return response;
+    
+}
 
 // ----------------------------------------------------------------
 // function: validateCreateCampaignData
@@ -1632,6 +1745,85 @@ var validateAbortCampaignData = function(createReq){
     return isValid;
 
 }
+
+
+// ----------------------------------------------------------------
+// function: validateGetCampaignData
+// args: delete campaign request
+// return: response object.
+// ----------------------------------------------------------------
+// {
+//     "command_name": "get_campaign_data",
+//     "tenant_id": "int",
+//     "campaign_id": "int",
+//     "action_serial": "int",
+//     "template_id": "int"
+//  }
+// ----------------------------------------------------------------
+var validateGetCampaignData = function(createReq){
+    
+    var isValid = {
+        status: true,
+        error: undefined
+    };
+
+    var status = true;
+    var error = "";
+
+    if(createReq.command_name != "get_campaign_data")
+    {
+        error = "command_name should be get_campaign_data\n";
+        status = false;
+    }
+
+    if(typeof createReq.campaign_id != "number")
+    {
+        error += "campaign_id should be type number\n";
+        status = false;
+
+    }else if(createReq.campaign_id <= 0){
+        error += "campaign_id should be positive number\n";
+        status = false;
+    }
+
+    if(typeof createReq.tenant_id != "number")
+    {
+        error += "tenant_id should be type number\n";
+        status = false;
+    }else if(createReq.tenant_id <= 0){
+        error += "tenant_id should be positive number\n";
+        status = false;
+    }
+
+    if(typeof createReq.action_serial != "number")
+    {
+        error += "action_serial should be type number\n";
+        status = false;
+    }else if(createReq.action_serial <= 0){
+        error += "action_serial should be positive number\n";
+        status = false;
+    }
+
+    if(typeof createReq.template_id != "number")
+    {
+        error += "template_id should be type number\n";
+        status = false;
+    }else if(createReq.template_id <= 0){
+        error += "template_id should be positive number\n";
+        status = false;
+    }
+
+
+    if(status == false){
+        isValid.status = false;
+        isValid.error = error;
+    }
+
+    return isValid;
+
+}
+    
+
 
 // ----------------------------------------------------------------
 // function: getDocId
