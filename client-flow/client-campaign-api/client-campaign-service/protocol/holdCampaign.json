@@ -26,7 +26,7 @@ curl --header "Content-Type: application/json" \
 http://localhost:3001/hold_campaign \
 -d "{
     \"request\":{
-    \"command_name\": \hold_campaign\",
+    \"command_name\": \"hold_campaign\",
     \"tenant_id\":85,
     \"campaign_id\": 85,
     \"action_serial\": 85,

@@ -141,6 +141,8 @@ exports.getCampaignData = function (req, res){
                         }else{     
                             cleanup(db);
                             exisitingDoc.command_name = "get_campaign_data";
+                            delete exisitingDoc["schedule"];// we don't need this data sent
+                            delete exisitingDoc["_id"]; // we don't need this data sent
                             var response = createResponse(exisitingDoc, undefined, true, errMsg);
                             res.json(response);                 
                         }                        
@@ -1132,7 +1134,7 @@ var getUpdateCampaignResponse = function (response, createReq, status, error){
 var getCampaignDataResponse = function (response, doc, status, error){
     
     response["command_name"] = "get_campaign_data";
-  
+
     if(status == true){
         response["response_status"]= "succeeded";
         response["campaign_data"] = doc;
