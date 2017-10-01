@@ -1271,6 +1271,15 @@ var getCampaignDataResponse = function (response, doc, status, error){
         status = false;
     }
 
+     if(typeof createReq.audience != "number")
+     {
+         error += "audience should be type number\n";
+         status = false;
+     }else if(createReq.audience <= 0 || createReq.audience > 2){
+         error += "audience should be in the range 1 - 2 \n";
+         status = false;
+     }
+
     if(status == false){
         isValid.status = false;
         isValid.error = error;
@@ -1852,6 +1861,7 @@ var getDocId = function(createReq){
 // description: create Registration Data for the visitors Collection.
 // {
 //     "_id" : "tid:<int>_cid:<int>_acsl:<int>_tplid:<int>",
+//     "timestamp" : "unix epic timestamp",
 //     "campaign_status": "scheduled/started/halted/completed/aborted/failed",
 //     "campaign_type" : "push_notification",
 //     "campaign_mode" : "schedule/realtime ",
@@ -1864,6 +1874,7 @@ var getDocId = function(createReq){
 //     "tgt_group_size" : "int",
 //     "schedule" : "unix epic timestamp",
 //     "time_to_live" : "X seconds",
+//     "audience": 1/2, //customers/Visitors
 //     "template_type" : "simple|rich",
 //     "template_data" : {
 //         "title" : "CustomView Text Title",
@@ -1904,6 +1915,7 @@ var  createCampaignDocData = function (createReq, docId){
         "tgt_group_size" : createReq.tgt_group_size,
         "schedule" : createReq.schedule,
         "time_to_live" : createReq.time_to_live,
+        "audience": createReq.audience,
         "template_type" : createReq.template_type,
         "data_queue_name": queueName,
         "template_data" : createReq.template_data,

@@ -15,6 +15,7 @@
     "tgt_group_size": "int",
     "schedule": "unix epic timestamp",
     "time_to_live": "X seconds",
+    "audience": 1,// 1 for customers, 2 for visitors
     "template_type": "simple|rich",
     "template_data": {
       "title": "CustomView Text Title",
@@ -63,6 +64,7 @@
     "tgt_group_size": 1000,
     "schedule": 1505641473,
     "time_to_live": 5184000,
+    "audience": 1,
     "template_type": "normal",
     "template_data": {
       "title": "CustomView Text Title",

@@ -12,6 +12,7 @@
     "tgt_group_size": "int",
     "schedule": "unix epic timestamp",
     "time_to_live": "X seconds",
+    "audience": 1, //customers/Visitors
     "template_type" : "simple|rich",
     "template_data": {
       "title": "CustomView Text Title",
@@ -47,6 +48,7 @@
     "personalized" : "bool",
     "template_type": "simple|rich",
     "schedule": "unix epic timestamp",
+    "audience": 1,
     "response_status": "scheduled/failed",
     "pn_campaign_id": "created db id",
     "error": "campaign already exist"
@@ -70,6 +72,7 @@
         \"tgt_group_size\": 85,
         \"schedule\": 1506368521979,
         \"time_to_live\": 300000,
+        \"audience\": 1,
         \"template_type\" : \"simple\",
         \"template_data\": {
         \"title\": \"CustomView Text Title\",
@@ -118,6 +121,7 @@
             \"tgt_group_size\": 85,
             \"schedule\": 1506368521979,
             \"time_to_live\": 300000,
+            \"audience\": 1,
             \"template_type\" : \"simple\",
             \"template_data\": {
             \"title\": \"CustomView Text Title\",
@@ -141,3 +145,7 @@
         }
     }
   }"
+
+
+
+
