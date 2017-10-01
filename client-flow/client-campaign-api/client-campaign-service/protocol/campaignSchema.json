@@ -2,6 +2,7 @@
  
 {
     "_id": "tid:<int>_cid:<int>_acsl:<int>_tplid:<int>",
+    "timestamp" : "unix epic timestamp",
     "campaign_status": "scheduled/started/halted/completed/aborted/failed",
     "campaign_type": "push_notification",
     "campaign_mode": "schedule/realtime ",
@@ -50,6 +51,7 @@
 
 {
     "_id": "tid:85_cid:1004_acsl:13_tplid:123",
+    "timestamp" : 1505641473,
     "campaign_status": "scheduled",
     "campaign_type": "push_notification",
     "campaign_mode": "schedule",

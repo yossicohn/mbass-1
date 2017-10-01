@@ -1890,6 +1890,7 @@ var  createCampaignDocData = function (createReq, docId){
     var data =
      {
         "_id" : docId,
+        "timestamp":  new Date().getTime(),
         "campaign_status": "scheduled",
         "campaign_type" : createReq.campaign_type,
         "campaign_mode" : createReq.campaign_mode,
