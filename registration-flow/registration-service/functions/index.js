@@ -976,6 +976,7 @@ var handleCustomerRegistration = function(db, customerRegistrationCollection, re
                     reject(statusError);
                 });
             }else{//customer Not Exist! shoud Insert new Document
+                updateDocumentOptInStatus(registration_data);
                 insertNewCustomerDocument(db, customerRegistrationCollection, registration_data )
                 .then(function(status){
                     resolve(true);
