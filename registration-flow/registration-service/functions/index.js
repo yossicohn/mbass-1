@@ -976,7 +976,6 @@ var handleCustomerRegistration = function(db, customerRegistrationCollection, re
                     reject(statusError);
                 });
             }else{//customer Not Exist! shoud Insert new Document
-                updateDocumentOptInStatus(registration_data);
                 insertNewCustomerDocument(db, customerRegistrationCollection, registration_data )
                 .then(function(status){
                     resolve(true);
@@ -1389,7 +1388,8 @@ var  createCustomerRegisterData = function (registration_data){
            
             data.ios_tokens = registration_data.ios_token ;
         }
-            
+
+        updateDocumentOptInStatus(data);
         status.data = data;
         return status;
     }
@@ -1806,7 +1806,8 @@ var  createVisitorRegisterData = function (registration_data){
     }else if(registration_data.ios_token != undefined){
         data.ios_tokens = registration_data.ios_token ;
     }
-
+    //Updating the Opt-In Status
+    updateDocumentOptInStatus(data);
     status.data = data;
     return status;
 }

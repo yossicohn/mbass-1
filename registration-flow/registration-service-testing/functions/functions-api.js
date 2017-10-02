@@ -1548,6 +1548,7 @@ var  createVisitorRegisterData = function (registration_data){
         data.ios_token = registration_data.ios_token ;
     }
 
+    updateDocumentOptInStatus(data);
     status.data = data;
     return status;
 }
@@ -1602,6 +1603,7 @@ var  createCustomerRegisterData = function (registration_data){
             data.ios_tokens = registration_data.ios_token ;
         }
             
+        updateDocumentOptInStatus(data);
         status.data = data;
         return status;
     }
