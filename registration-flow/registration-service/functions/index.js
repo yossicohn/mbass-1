@@ -264,7 +264,7 @@ exports.optInOutVisitor = functions.https.onRequest((req, res) => {
             var response = createVisitorOptInOutResponse(opt_request, opt_mode, false, errMsg);
             res.status(400);
             res.json(response);
-            return;
+
         }
 
         var registrationCollectionName = visitorsRegistrationCollection  + '_' + opt_request.tenant_id;
@@ -290,7 +290,7 @@ exports.optInOutVisitor = functions.https.onRequest((req, res) => {
                     var response = createVisitorOptInOutResponse(opt_request, opt_mode, false, errMsg);
                     res.status(400);
                     res.json(response);
-                    return;
+
                 })
             })
             .catch(function(error){
@@ -300,7 +300,7 @@ exports.optInOutVisitor = functions.https.onRequest((req, res) => {
                 var response = createVisitorOptInOutResponse(opt_request, opt_mode, false, errMsg);
                 res.status(400);
                 res.json(response);
-                return; 
+
             })                                          
 
         })
@@ -311,7 +311,7 @@ exports.optInOutVisitor = functions.https.onRequest((req, res) => {
             var response = createVisitorOptInOutResponse(opt_request, opt_mode, false, errMsg);
             res.status(400);
             res.json(response);
-        })         
+        });
    
 })
     
@@ -397,7 +397,6 @@ exports.optInOutCustomer = functions.https.onRequest((req, res) => {
                 var response = createCustomerOptInOutResponse(opt_request, opt_mode, false, errMsg);
                 res.status(400);
                 res.json(response);
-                return;
             })
         })
         .catch(function(error){
@@ -407,7 +406,6 @@ exports.optInOutCustomer = functions.https.onRequest((req, res) => {
             var response = createCustomerOptInOutResponse(opt_request, opt_mode, false, errMsg);
             res.status(400);
             res.json(response);
-            return; 
         })                                          
 
     })
@@ -418,7 +416,7 @@ exports.optInOutCustomer = functions.https.onRequest((req, res) => {
             var response = createCustomerOptInOutResponse(opt_request, opt_mode, false, errMsg);
             res.status(400);
             res.json(response);
-    })
+    });
 })
 
 

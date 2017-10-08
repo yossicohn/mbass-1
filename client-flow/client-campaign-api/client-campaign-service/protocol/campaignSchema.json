@@ -1,5 +1,5 @@
 // --------------------- PN Campaign Collection Schema ---------------------------------
- 
+ //"scheduled = 1/started= 2/halted= 3/completed = 4/aborted=5/failed=6",
 {
     "_id": "tid:<int>_cid:<int>_acsl:<int>_tplid:<int>",
     "timestamp" : "unix epic timestamp",

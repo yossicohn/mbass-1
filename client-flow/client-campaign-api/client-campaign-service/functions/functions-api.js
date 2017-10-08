@@ -24,7 +24,7 @@ const pubsubClient = PubSub({
   projectId: projectId
 });
 
-
+var scheduled = 1, started= 2, halted= 3, completed = 4, aborted=5, failed=6;
 /**
  * Report an error to StackDriver Error Reporting. Writes the minimum data
  * required for the error to be picked up by StackDriver Error Reporting.
@@ -462,10 +462,10 @@ exports.holdCampaign = function (req, res){
                         res.json(response);
                     }else{
                         var errMsg = undefined;
-                        if(exisitingDoc.campaign_status != "scheduled" && exisitingDoc.campaign_status != "halted"){
+                        if(exisitingDoc.campaign_status != scheduled && exisitingDoc.campaign_status != halted){
                             var errMsg = "holdCampaign:campaign status id not scheduled, campaign status=" + exisitingDoc.value.campaign_status;
                             errMsg += " Note that only scheduled campaign can be halted"
-                        }else if( exisitingDoc.campaign_status == "halted"){
+                        }else if( exisitingDoc.campaign_status == halted){
                             var errMsg = "holdCampaign:campaign status already halted";
                         }
                         if(errMsg != undefined){
@@ -475,7 +475,7 @@ exports.holdCampaign = function (req, res){
                             res.json(response);
                         }else{
                             var document = exisitingDoc;
-                            document.campaign_status = "halted";
+                            document.campaign_status = halted;
                             tenantCampaignsDataCollection.update({_id: docId}, document)
                             .then(function(result){
                                 cleanup(db);                               
@@ -575,7 +575,7 @@ exports.rescheduleCampaign = function (req, res){
                         res.json(response);
                     }else{
                         var errMsg = undefined;
-                        if(exisitingDoc.campaign_status != "scheduled" && exisitingDoc.campaign_status != "halted") {
+                        if(exisitingDoc.campaign_status != scheduled && exisitingDoc.campaign_status != halted) {
                             var errMsg = "rescheduleCampaign:campaign status id not scheduled, campaign status=" + exisitingDoc.value.campaign_status;
                             errMsg += " Note that only scheduled or halted campaigns can be rescheduled"
                         }
@@ -587,7 +587,7 @@ exports.rescheduleCampaign = function (req, res){
                             res.json(response);
                         }else{
                             var document = exisitingDoc;
-                            document.campaign_status = "scheduled";
+                            document.campaign_status = scheduled;
                             document.schedule = rescheduleCampaignData.schedule;
                             document.time_to_live = rescheduleCampaignData.time_to_live;
                             tenantCampaignsDataCollection.update({_id: docId}, document)
@@ -718,7 +718,7 @@ exports.updateCampaign = function (req, res){
                             res.json(response);
                         }else{
                             var errMsg = undefined;
-                            if(exisitingDoc.campaign_status != "scheduled" && exisitingDoc.campaign_status != "halted") {
+                            if(exisitingDoc.campaign_status != scheduled && exisitingDoc.campaign_status != halted) {
                                 var errMsg = "updateCampaign:campaign status id not scheduled, campaign status=" + exisitingDoc.value.campaign_status;
                                 errMsg += " Note that only scheduled or halted campaigns can be updated"
                             }
@@ -1904,7 +1904,7 @@ var  createCampaignDocData = function (createReq, docId){
      {
         "_id" : docId,
         "timestamp":  new Date().getTime(),
-        "campaign_status": "scheduled",
+        "campaign_status": scheduled,
         "campaign_type" : createReq.campaign_type,
         "campaign_mode" : createReq.campaign_mode,
         "target_types" : createReq.target_types,
@@ -2047,10 +2047,10 @@ var handleUpdateCampaign = function(db, tenantCampaignsDataCollection, createReq
 var handleAbortCampaign = function(db, tenantCampaignsDataCollection, createReq, docId, exisitingDoc) {
     return new Promise(function (resolve, reject) {
         var campaignStartedProcessing = false;
-        if(exisitingDoc.campaign_status == "started"){
+        if(exisitingDoc.campaign_status == started){
             campaignStartedProcessing = true;
         }
-        exisitingDoc.campaign_status = "aborted";
+        exisitingDoc.campaign_status = aborted;
         tenantCampaignsDataCollection.update({_id: docId}, exisitingDoc)
             .then(function (result) {
                 // Should notify instances that the campaign should be aborted.

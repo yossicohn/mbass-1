@@ -147,6 +147,7 @@
   }"
 
 
+// ------------------------------------------------------------------
 
   {
     "request": {
@@ -158,7 +159,7 @@
       "campaign_id": 85,
       "action_serial": 85,
       "template_id": 85,
-      "personalized": "bool",
+      "personalized": false,
       "tgt_group_size": 85,
       "schedule": 1506368521979,
       "time_to_live": 300000,
