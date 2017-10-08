@@ -475,6 +475,7 @@ exports.holdCampaign = function (req, res){
                             res.json(response);
                         }else{
                             var document = exisitingDoc;
+                            document.timestamp = new Date().getTime();
                             document.campaign_status = halted;
                             tenantCampaignsDataCollection.update({_id: docId}, document)
                             .then(function(result){
@@ -1298,6 +1299,7 @@ var getCampaignDataResponse = function (response, doc, status, error){
 // return: response object. 
 // ----------------------------------------------------------------
 // {
+//     "timestamp" : "unix epic timestamp",
 //     "command_name": "update_campaign",
 //     "campaign_type": "push_notification",
 //     "campaign_mode": "schedule/realtime ",
@@ -1982,6 +1984,7 @@ var handleDeleteCampaign = function(db, tenantCampaignsDataCollection, exisiting
 
     return new Promise( function (resolve, reject) {
 
+        exisitingDoc.timestamp = new Date().getTime();
         exisitingDoc.campaign_status = deleted;
         tenantCampaignsDataCollection.update({_id: docId}, exisitingDoc)
             .then(function(result) {
@@ -2050,6 +2053,7 @@ var handleAbortCampaign = function(db, tenantCampaignsDataCollection, createReq,
         if(exisitingDoc.campaign_status == started){
             campaignStartedProcessing = true;
         }
+        exisitingDoc.timestamp = new Date().getTime();
         exisitingDoc.campaign_status = aborted;
         tenantCampaignsDataCollection.update({_id: docId}, exisitingDoc)
             .then(function (result) {
