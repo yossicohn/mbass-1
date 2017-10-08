@@ -24,7 +24,7 @@ const pubsubClient = PubSub({
   projectId: projectId
 });
 
-var scheduled = 1, started= 2, halted= 3, completed = 4, aborted=5, failed=6;
+var scheduled = 1, started= 2, halted= 3, completed = 4, aborted=5, deleted = 6, failed=6;
 /**
  * Report an error to StackDriver Error Reporting. Writes the minimum data
  * required for the error to be picked up by StackDriver Error Reporting.
@@ -1982,7 +1982,7 @@ var handleDeleteCampaign = function(db, tenantCampaignsDataCollection, exisiting
 
     return new Promise( function (resolve, reject) {
 
-        exisitingDoc.campaign_status = "deleted";
+        exisitingDoc.campaign_status = deleted;
         tenantCampaignsDataCollection.update({_id: docId}, exisitingDoc)
             .then(function(result) {
 
