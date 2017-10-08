@@ -24,7 +24,7 @@ const pubsubClient = PubSub({
   projectId: projectId
 });
 
-var scheduled = 1, started= 2, halted= 3, completed = 4, aborted=5, deleted = 6, failed=6;
+var scheduled = 1, started= 2, halted= 3, completed = 4, aborted=5, deleted = 6, failed=7;
 /**
  * Report an error to StackDriver Error Reporting. Writes the minimum data
  * required for the error to be picked up by StackDriver Error Reporting.
