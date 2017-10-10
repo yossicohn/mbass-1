@@ -900,6 +900,7 @@ var createResponse = function(createReq, pn_campaign_id, status, error){
         "campaign_id": createReq.campaign_id,
         "action_serial": createReq.action_serial,
         "template_id": createReq.template_id,
+        "engagement_id": createReq.engagement_id,
         "schedule": createReq.schedule,
         "response_status": "scheduled",
         
