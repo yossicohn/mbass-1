@@ -18,7 +18,10 @@
     "title": "CustomView Text Title",
     "content": "1 The quick brown fox jumps over the lazy dog"
   },
-  "apps" :["app_ns_1",  "app_ns_2", "app_ns_4"],
+  "apps" :{
+    "android": ["app_ns_1",  "app_ns_2", "app_ns_4"],
+    "ios": ["app_ns_1",  "app_ns_2", "app_ns_4"]
+  },
   "dynamic_links": {
     "ios": {
       "app_ns_1": "www.dynamiclinkns1.com",
@@ -78,7 +81,10 @@ jsondata=" \"request\":{
 \"title\": \"CustomView Text Title\",
 \"content\": \"1 The quick brown fox jumps over the lazy dog\"
 },
-\"apps\" :[\"app_ns_1\",  \"app_ns_2\", \"app_ns_4\"],
+\"apps\" :{
+\"android\": [\"app_ns_1\",  \"app_ns_2\", \"app_ns_4\"],
+\"ios\": [\"app_ns_1\",  \"app_ns_2\", \"app_ns_4\"]
+},
 \"dynamic_links\": {
 \"ios\": {
 \"app_ns_1\": \"www.dynamiclinkns1.com\",
@@ -127,7 +133,10 @@ http://localhost:3001/update_campaign \
 \"title\": \"CustomView Text Title\",
 \"content\": \"1 The quick brown fox jumps over the lazy dog\"
 },
-\"apps\" :[\"app_ns_1\",  \"app_ns_2\", \"app_ns_4\"],
+\"apps\" :{
+  \"android\": [\"app_ns_1\",  \"app_ns_2\", \"app_ns_4\"],
+  \"ios\": [\"app_ns_1\",  \"app_ns_2\", \"app_ns_4\"]
+},
 \"dynamic_links\": {
 \"ios\": {
 \"app_ns_1\": \"www.dynamiclinkns1.com\",

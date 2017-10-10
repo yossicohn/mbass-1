@@ -18,7 +18,11 @@
       "title": "CustomView Text Title",
       "content": "1 The quick brown fox jumps over the lazy dog"
     },
-    "apps" :["app_ns_1",  "app_ns_2", "app_ns_4"],
+    "apps" :{
+      "android": ["app_ns_1",  "app_ns_2", "app_ns_4"],
+      "ios": ["app_ns_1",  "app_ns_2", "app_ns_4"]
+    },
+
     "dynamic_links": {
       "ios": {
         "app_ns_1": "www.dynamiclinkns1.com",
@@ -78,7 +82,10 @@
         \"title\": \"CustomView Text Title\",
         \"content\": \"1 The quick brown fox jumps over the lazy dog\"
         },
-        \"apps\" :[\"app_ns_1\",  \"app_ns_2\", \"app_ns_4\"],
+        \"apps\" :{
+          \"android\": [\"app_ns_1\",  \"app_ns_2\", \"app_ns_4\"],
+          \"ios\": [\"app_ns_1\",  \"app_ns_2\", \"app_ns_4\"]
+        },
         \"dynamic_links\": {
         \"ios\": {
             \"app_ns_1\": \"www.dynamiclinkns1.com\",
@@ -103,49 +110,64 @@
   
   
   }"
-  
-  
-  curl --header "Content-Type: application/json" \
-  http://localhost:3001/create_campaign \
-  -d "{
-        \"request\":{
-            \"command_name\": \"create_campaign\",
-            \"campaign_type\": \"push_notification\",
-            \"campaign_mode\": \"schedule/realtime \",
-            \"target_types\": \"all|ios|and|webpush\",
-            \"tenant_id\": 85,
-            \"campaign_id\": 85,
-            \"action_serial\": 85,
-            \"template_id\": 85,
-            \"engagement_id\": 1234,
-            \"personalized\" :true,
-            \"tgt_group_size\": 85,
-            \"schedule\": 1506368521979,
-            \"time_to_live\": 300000,
-            \"audience\": 1,
-            \"template_type\" : \"simple\",
-            \"template_data\": {
-            \"title\": \"CustomView Text Title\",
-            \"content\": \"1 The quick brown fox jumps over the lazy dog\"
-            },
-            \"apps\" :[\"app_ns_1\",  \"app_ns_2\", \"app_ns_4\"],
-            \"dynamic_links\": {
-            \"ios\": {
-                \"app_ns_1\": \"www.dynamiclinkns1.com\",
-                \"app_ns_2\": \"www.dynamiclinkns2.com\"
-            },
-            \"android\": {
-                \"app_ns_3\": \"www.dynamiclinkns1.com\",
-                \"app_ns_4\": \"www.dynamiclinkns2.com\"
-            }
-        },
-        \"campaign_process\" :{
-            \"support_throtteling\": false,     
-            \"max_push_bulk_size\": 1000,
-            \"sleep_time_between_bulks\": 300
-        }
-    }
-  }"
+
+
+
+curl --header "Content-Type: application/json" \
+http://localhost:3001/create_campaign \
+-d "{
+\"request\": {
+\"command_name\": \"create_campaign\",
+\"campaign_type\": \"push_notification\",
+\"campaign_mode\": \"schedule/realtime \",
+\"target_types\": \"all|ios|and|webpush\",
+\"tenant_id\": 85,
+\"campaign_id\": 85,
+\"action_serial\": 85,
+\"template_id\": 85,
+\"engagement_id\": 1234,
+\"personalized\": true,
+\"tgt_group_size\": 85,
+\"schedule\": 1506368521979,
+\"time_to_live\": 300000,
+\"audience\": 1,
+\"template_type\": \"simple\",
+\"template_data\": {
+\"title\": \"CustomView Text Title\",
+\"content\": \"1 The quick brown fox jumps over the lazy dog\"
+},
+\"apps\": {
+\"android\": [
+\"app_ns_1\",
+\"app_ns_2\",
+\"app_ns_4\"
+],
+\"ios\": [
+\"app_ns_1\",
+\"app_ns_2\",
+\"app_ns_4\"
+]
+},
+\"dynamic_links\": {
+\"ios\": {
+\"app_ns_1\": \"www.dynamiclinkns1.com\",
+\"app_ns_2\": \"www.dynamiclinkns2.com\"
+},
+\"android\": {
+\"app_ns_3\": \"www.dynamiclinkns1.com\",
+\"app_ns_4\": \"www.dynamiclinkns2.com\"
+}
+},
+\"campaign_process\": {
+\"support_throtteling\": false,
+\"max_push_bulk_size\": 1000,
+\"sleep_time_between_bulks\": 300
+}
+}
+}"
+
+
+
 
 
 // ------------------------------------------------------------------
@@ -171,11 +193,10 @@
         "title": "CustomView Text Title",
         "content": "1 The quick brown fox jumps over the lazy dog"
       },
-      "apps": [
-        "app_ns_1",
-        "app_ns_2",
-        "app_ns_4"
-      ],
+    "apps" :{
+          "android": ["app_ns_1",  "app_ns_2", "app_ns_4"],
+          "ios": ["app_ns_1",  "app_ns_2", "app_ns_4"]
+      },
       "dynamic_links": {
         "ios": {
           "app_ns_1": "www.dynamiclinkns1.com",

@@ -1213,9 +1213,16 @@ var getCampaignDataResponse = function (response, doc, status, error){
         status = false;
     }else{
         var foundApp = false;
-        createReq.apps.forEach(function(element) {
-            foundApp = true;
-        });
+        if(createReq.apps.android != undefined){
+            createReq.apps.android.forEach(function(element) {
+                foundApp = true;
+            });
+        }
+        if(foundApp == false && createReq.apps.ios != undefined){
+            createReq.apps.ios.forEach(function(element) {
+                foundApp = true;
+            });
+        }
         if(foundApp == false){
             error = "crearte campaign should have targeted apps.\n";
             status = false;

@@ -22,7 +22,10 @@
       "title": "CustomView Text Title",
       "content": "1 The quick brown fox jumps over the lazy dog"
     },
-    "apps": [ "app_ns_1", "app_ns_2", "app_ns_4" ],
+    "apps" :{
+      "android": ["app_ns_1",  "app_ns_2", "app_ns_4"],
+      "ios": ["app_ns_1",  "app_ns_2", "app_ns_4"]
+    },
     "dynamic_links": {
       "ios": {
         "app_ns_1": "www.dynamiclinkns1.com",
@@ -73,7 +76,10 @@
       "content": "1 The quick brown fox jumps over the lazy dog",
       "type": "simple/customView"
     },
-    "apps" :["app_ns_1",  "app_ns_2", "app_ns_4"],
+    "apps" :{
+      "android": ["app_ns_1",  "app_ns_2", "app_ns_4"],
+      "ios": ["app_ns_1",  "app_ns_2", "app_ns_4"]
+    },
     "dynamic_links": {
       "ios": {
         "app_ns_1": "www.dynamiclinkns1.com",
