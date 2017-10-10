@@ -5,7 +5,8 @@
   "tenant_id": "int",
   "campaign_id": "int",
   "action_serial": "int",
-  "template_id": "int"
+  "template_id": "int",
+  "engagement_id": "int"
 }
 
 // --------------------- Response abort_campaign: ---------------------------------
@@ -16,6 +17,7 @@
   "campaign_id": "int",
   "action_serial": "int",
   "template_id": "int",
+  "engagement_id": "int"
   "response_status": "aborted/failed",
   "error": "failed to abort campaign"
 }
@@ -30,6 +32,7 @@ http://localhost:3001/abort_campaign \
   \"tenant_id\": 85,
   \"campaign_id\": 85,
   \"action_serial\": 85,
-  \"template_id\": 85
+  \"template_id\": 85,
+  \"engagement_id\": 1234,
 }
 }"

@@ -4,7 +4,8 @@
     "tenant_id": "int",
     "campaign_id": "int",
     "action_serial": "int",
-    "template_id": "int"
+    "template_id": "int",
+    "engagement_id": "int"
   }
 
 
@@ -15,6 +16,7 @@
     "campaign_id": "int",
     "action_serial": "int",
     "template_id": "int",
+    "engagement_id": "int",
     "response_status": "succeeded/failed",
     "error": "campaign already running, please abort/campaign not exist"
   }
@@ -25,6 +27,7 @@
   "campaign_id": 85,
   "action_serial": 85,
   "template_id": 85,
+  "engagement_id": 85,
   "response_status": "succeeded",
   "campaign_data": {
     "timestamp": 1506839884497,
@@ -88,7 +91,8 @@ http://localhost:3001/get_campaign_data \
     \"tenant_id\":85,
     \"campaign_id\": 85,
     \"action_serial\": 85,
-    \"template_id\": 85
+    \"template_id\": 85,
+    \"engagement_id\": 1234,
   }
 }
 "

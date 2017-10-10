@@ -17,6 +17,7 @@
   "campaign_id": "int",
   "action_serial": "int",
   "template_id": "int",
+  "engagement_id": "int",
   "response_status": "scheduled/failed",
   "error": "campaign already exist"
 }
@@ -33,6 +34,7 @@ http://localhost:3001/reschedule_campaign \
   \"campaign_id\": 85,
   \"action_serial\": 85,
   \"template_id\": 85,
+  \"engagement_id\": 1234,
   \"schedule\": 1506439496,
   \"time_to_live\": 350
   }

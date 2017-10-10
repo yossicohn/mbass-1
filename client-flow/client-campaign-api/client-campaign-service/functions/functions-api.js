@@ -1162,6 +1162,7 @@ var getCampaignDataResponse = function (response, doc, status, error){
 //     "campaign_id": "int",
 //     "action_serial": "int",
 //     "template_id": "int",
+//     "engagement_id": "int",
 //     "personalized" : "bool",
 //     "tgt_group_size": "int",
 //     "schedule": "unix epic timestamp",
@@ -1258,6 +1259,16 @@ var getCampaignDataResponse = function (response, doc, status, error){
         status = false;
     }
 
+     if(typeof createReq.engagement_id != "number")
+     {
+         error += "engagement_id should be type number\n";
+         status = false;
+     }else if(createReq.template_id <= 0){
+         error += "engagement_id should be positive number\n";
+         status = false;
+     }
+
+
     var currTime = new Date().getTime();
     if(typeof createReq.schedule != "number")
     {
@@ -1308,6 +1319,7 @@ var getCampaignDataResponse = function (response, doc, status, error){
 //     "campaign_id": "int",
 //     "action_serial": "int",
 //     "template_id": "int",
+//     "engagement_id": "int",
 //     "personalized" : "bool",
 //     "tgt_group_size": "int",
 //     "schedule": "unix epic timestamp",
@@ -1404,7 +1416,17 @@ var getCampaignDataResponse = function (response, doc, status, error){
         status = false;
     }
 
-    var currTime = new Date().getTime();
+     if(typeof createReq.engagement_id != "number")
+     {
+         error += "engagement_id should be type number\n";
+         status = false;
+     }else if(createReq.template_id <= 0){
+         error += "engagement_id should be positive number\n";
+         status = false;
+     }
+
+
+     var currTime = new Date().getTime();
     if(typeof createReq.schedule != "number")
     {
         error += "template_id should be type number\n";
@@ -1440,7 +1462,8 @@ var getCampaignDataResponse = function (response, doc, status, error){
 //     "tenant_id": "int",
 //     "campaign_id": "int",
 //     "action_serial": "int",
-//     "template_id": "int"
+//     "template_id": "int",
+//     "engagement_id": "int",
 //  }
  // ---------------------------------------------------------------- 
  var validateDeleteCampaignData = function(createReq){
@@ -1496,8 +1519,17 @@ var getCampaignDataResponse = function (response, doc, status, error){
         status = false;
     }
 
+     if(typeof createReq.engagement_id != "number")
+     {
+         error += "engagement_id should be type number\n";
+         status = false;
+     }else if(createReq.template_id <= 0){
+         error += "engagement_id should be positive number\n";
+         status = false;
+     }
 
-    if(status == false){
+
+     if(status == false){
         isValid.status = false;
         isValid.error = error;
     }
@@ -1517,7 +1549,8 @@ var getCampaignDataResponse = function (response, doc, status, error){
 //     "tenant_id": "int",
 //     "campaign_id": "int",
 //     "action_serial": "int",
-//     "template_id": "int"
+//     "template_id": "int",
+//     "engagement_id": "int"
 //  }
 // ----------------------------------------------------------------
 var validateHoldCampaignData = function(createReq){
@@ -1574,6 +1607,16 @@ var validateHoldCampaignData = function(createReq){
     }
 
 
+    if(typeof createReq.engagement_id != "number")
+    {
+        error += "engagement_id should be type number\n";
+        status = false;
+    }else if(createReq.template_id <= 0){
+        error += "engagement_id should be positive number\n";
+        status = false;
+    }
+
+
     if(status == false){
         isValid.status = false;
         isValid.error = error;
@@ -1595,6 +1638,7 @@ var validateHoldCampaignData = function(createReq){
 //     "campaign_id": "int",
 //     "action_serial": "int",
 //     "template_id": "int",
+//     "engagement_id": "int",
 //     "schedule": "unix epic timestamp",
 //     "time_to_live": "X seconds"
 //  }
@@ -1652,6 +1696,16 @@ var validateRescheduleCampaignData = function(createReq){
         status = false;
     }
 
+    if(typeof createReq.engagement_id != "number")
+    {
+        error += "engagement_id should be type number\n";
+        status = false;
+    }else if(createReq.template_id <= 0){
+        error += "engagement_id should be positive number\n";
+        status = false;
+    }
+
+
     if(typeof createReq.time_to_live != "number")
     {
         error += "time_to_live should be type number\n";
@@ -1693,7 +1747,8 @@ var validateRescheduleCampaignData = function(createReq){
 //     "tenant_id": "int",
 //     "campaign_id": "int",
 //     "action_serial": "int",
-//     "template_id": "int"
+//     "template_id": "int",
+//     "engagement_id": "int",
 //  }
 // ----------------------------------------------------------------
 var validateAbortCampaignData = function(createReq){
@@ -1746,6 +1801,15 @@ var validateAbortCampaignData = function(createReq){
         status = false;
     }else if(createReq.template_id <= 0){
         error += "template_id should be positive number\n";
+        status = false;
+    }
+
+    if(typeof createReq.engagement_id != "number")
+    {
+        error += "engagement_id should be type number\n";
+        status = false;
+    }else if(createReq.template_id <= 0){
+        error += "engagement_id should be positive number\n";
         status = false;
     }
 
@@ -1825,6 +1889,14 @@ var validateGetCampaignData = function(createReq){
         error += "template_id should be positive number\n";
         status = false;
     }
+    if(typeof createReq.engagement_id != "number")
+    {
+        error += "engagement_id should be type number\n";
+        status = false;
+    }else if(createReq.template_id <= 0){
+        error += "engagement_id should be positive number\n";
+        status = false;
+    }
 
 
     if(status == false){
@@ -1843,15 +1915,16 @@ var validateGetCampaignData = function(createReq){
 // args: request
 // return: response object. 
 // ----------------------------------------------------------------
-//    "_id" : "tid:<int>_cid:<int>_acsl:<int>_tplid:<int>",
+//    "_id" : "tid-<int>_cid-<int>_acsl-<int>_tplid-<int>-eng-<int>",
 // example : 
-// "_id": "tid:85_cid:1004_acsl:13_tplid:123"
+// "_id": "tid-85_cid-1004_acsl-13_tplid-123-eng-1234"
 // ---------------------------------------------------------------- 
 var getDocId = function(createReq){
     var docId = "tid-" + createReq.tenant_id +
      "-cid-" + createReq.campaign_id +
      "-acsl-" + createReq.action_serial +
-      "-tplid-" + createReq.template_id;
+      "-tplid-" + createReq.template_id +
+     "-eng-" + createReq.engagement_id;
       return docId;
 }
     
@@ -1874,6 +1947,7 @@ var getDocId = function(createReq){
 //     "campaign_id" : "int",
 //     "action_serial" : "int",
 //     "template_id" : "int",
+//     "engagement_id": "int",
 //     "personalized" : "bool",
 //     "tgt_group_size" : "int",
 //     "schedule" : "unix epic timestamp",
@@ -1914,6 +1988,7 @@ var  createCampaignDocData = function (createReq, docId){
         "campaign_id" : createReq.campaign_id,
         "action_serial" : createReq.action_serial,
         "template_id" : createReq.template_id,
+        "engagement_id": createReq.engagement_id,
         "personalized" : createReq.personalized,
         "apps": createReq.apps,
         "tgt_group_size" : createReq.tgt_group_size,

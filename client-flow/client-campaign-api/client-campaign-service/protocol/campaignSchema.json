@@ -11,6 +11,7 @@
     "campaign_id": "int",
     "action_serial": "int",
     "template_id": "int",
+    "engagement_id": "int",
     "personalized": "bool",
     "tgt_group_size": "int",
     "schedule": "unix epic timestamp",
@@ -61,6 +62,7 @@
     "campaign_id": 1004,
     "action_serial": 13,
     "template_id": 123,
+    "engagement_id":1234
     "tgt_group_size": 1000,
     "schedule": 1505641473,
     "time_to_live": 5184000,

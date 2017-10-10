@@ -11,6 +11,13 @@
 const Logging = require('@google-cloud/logging');
 var functions = require('firebase-functions');
 
+var admin = require("firebase-admin");
+admin.initializeApp(functions.config().firebase);
+// admin.initializeApp({
+//     credential: admin.credential.applicationDefault()
+//
+//   });
+
 // Instantiates a client
 const logging = Logging();
 
@@ -18,7 +25,11 @@ const logging = Logging();
 var MongoClient = require('mongodb').MongoClient
   , assert = require('assert');
 const uuidV4 = require('uuid/v4');
+
 var url = 'mongodb://104.154.65.252:27017/mbassdb';
+//var url = 'mongodb://35.202.14.0:27017/mbassdb';
+
+
 var registrationCollection = 'CustomersTokens';
 
 var customersRegistrationCollection = 'CustomersTokens';
@@ -31,7 +42,8 @@ var visitorsRegistrationCollection = 'VisitorsTokens';
  * required for the error to be picked up by StackDriver Error Reporting.
  *
  * @param {Error} err The Error object to report.
- * @param {Function} callback Callback function.
+ * @param {Function} callbacexit
+ * k Callback function.
  */
  var reportError = function (err, callback) {
   // This is the name of the StackDriver log stream that will receive the log
