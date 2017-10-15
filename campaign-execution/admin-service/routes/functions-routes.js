@@ -6,12 +6,12 @@ module.exports = function(app) {
 
 
     //  Routes
-    app.route('/executeTest')
-        .post(functions_api.executeTest);
+    // app.route('/executeTest')
+    //     .post(functions_api.executeTest);
 
     //  Routes
-    app.route('/executePersonalizedCampaign')
-        .post(functions_api.executePersonalized);
+    // app.route('/executePersonalizedCampaign')
+    //     .post(functions_api.executePersonalized);
 
     //  Routes
     app.route('/executeCampaign')
