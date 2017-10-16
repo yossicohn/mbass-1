@@ -32,10 +32,10 @@ var admin = require("firebase-admin");
 
 var serviceAccount = require("../mobilesdk-master-dev-firebase-adminsdk-etwd8-bb7913dce1.json");
 
-admin.initializeApp({
-    credential: admin.credential.cert(serviceAccount)
+// admin.initializeApp({
+//     credential: admin.credential.cert(serviceAccount)
 
-});
+// });
 
 
 /**
@@ -202,19 +202,19 @@ exports.executeCampaign = function (req, res) {
             var topicName = campaignDoc.data_queue_name;
             var subscriptionName = "sub_" + topicName;
             createCampaignSubscriber(topicName, subscriptionName)
-            .then(()=>{
-                handleCampaignExecution(campaignDoc)
                 .then(() => {
-                    console.log("executeCampaign: Succeeded subscriptionName = " + subscriptionName );
+                    handleCampaignExecution(campaignDoc)
+                        .then(() => {
+                            console.log("executeCampaign: Succeeded subscriptionName = " + subscriptionName);
+                        })
+                        .catch((error) => {
+                            console.log("executeCampaign: Failed " + error);
+                        })
                 })
                 .catch((error) => {
                     console.log("executeCampaign: Failed " + error);
-                })
-            })
-            .catch((error) =>{
-                console.log("executeCampaign: Failed " + error);
-            });
-           
+                });
+
         })
         .catch(function (error) {
             console.log('getScheduledCampaign Failed');
@@ -312,16 +312,25 @@ var getScheduledCampaign = function (createReq, deltaFromNow) {
 // ----------------------------------------------------------------
 var handleCampaignExecution = function (exisitingDoc) {
 
-    new Promise(function (resolve, reject) {
+    return new Promise(function (resolve, reject) {
 
         var topicName = exisitingDoc.data_queue_name;
         var subscription = "sub_" + topicName;
         getTargetedUserBulkArray(projectId, subscription, 10)
             .then(function (responses) {
-                responses.forEach(function (response) {
-                    console.log(response);
+                responses.receivedMessages.forEach(function (response) {
+                    console.log(response.message.attributes.description);
+                    console.log(response.message.messageId);
+                    console.log(response.message.data.byteLength);
+                    var message = Buffer.from(response.message.data, 'base64').toString();
+                    var targetedUserData = JSON.parse(message);
+                    console.log("message: " + message);
                 })
+                resolve();
             })
+            .catch((reject) => {
+                reject(error);
+            });
 
 
         // var topicName = exisitingDoc.data_queue_name;
@@ -491,15 +500,17 @@ var getTargetedUserBulkArray = function (projectId, subscription, maxMessages) {
         //var maxMessages = 0;
         var request = {
             subscription: formattedSubscription,
-            maxMessages: maxMessages
+            maxMessages: maxMessages,
+            returnImmediately: true
         };
-        client.pull(request).then(function (responses) {
-            var response = responses[0];
-            // doThingsWith(response)
-            resolve(response);
-        }).catch(function (err) {
-            console.error(err);
-        });
+        client.pull(request)
+            .then(function (responses) {
+                var response = responses[0];
+                resolve(response);
+            })
+            .catch(function (err) {
+                console.error(err);
+            });
     });
 }
 
@@ -508,10 +519,21 @@ var getTargetedUserBulkArray = function (projectId, subscription, maxMessages) {
 // function: createCampaignSubscriber
 // args:topicName, subscriptionName
 // return: respons Array.
+// We first check if subscription exist if not we failed and then we create it.
 // ----------------------------------------------------------------
 var createCampaignSubscriber = function (topicName, subscriptionName) {
     return new Promise(function (resolve, reject) {
-        pubsubClient.createSubscription(topicName, subscriptionName)
+
+        var client = pubsubV1.subscriberClient();
+        var formattedSubscription = client.subscriptionPath(projectId, subscriptionName);
+        client.getSubscription({subscription: formattedSubscription})
+        .then(function(data) {
+            var subscription = data[0];
+            resolve(subscription);
+        })
+        .catch(function(err) {
+            // Not Exist hence we need to create
+            pubsubClient.createSubscription(topicName, subscriptionName)
             .then(function (data) {
                 var subscription = data[0];
                 var apiResponse = data[1];
@@ -521,5 +543,8 @@ var createCampaignSubscriber = function (topicName, subscriptionName) {
                 console.log("createCampaignSubscriber Failed " + error)
                 reject(error);
             });
+        });
+``
+       
     });
 }
