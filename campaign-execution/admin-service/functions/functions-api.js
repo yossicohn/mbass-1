@@ -628,7 +628,7 @@ var getUsersTokens = function (campaignDoc, users_ids) {
 // Process:
 // we need to go to the appropriate users Database (Visitors/Customers).
 // And find by the ID's the different Users Document.
-// Go uver the Document and in the Targeted apps (in the devices) get the appropriate tokens.
+// Go over the Document and in the Targeted apps (in the devices) get the appropriate tokens.
 // ----------------------------------------------------------------
 var getCustomersCampaignTokens = function (campaignDoc, users_ids) {
     return new Promise(function (resolve, reject) {
@@ -641,10 +641,16 @@ var getCustomersCampaignTokens = function (campaignDoc, users_ids) {
                 var usersCollection = dataBaseClient.collection(usersCollectionName);
                 getUsersBatchDocument(documentsIds, usersCollection)
                     .then((result) => {
-                            console.log(result.status);
+                        console.log(result.status);
+                        if (result.status == 1 && result.data.length > 0) {
+
+                            getTokensFromCustomerDoc(campaignDoc, result.data)
+                            resolve(result.data.length);
+                        }
                     })
                     .catch((error) => {
                         console.log(result.status);
+                        reject(error);
                     })
 
             } catch (error) {
@@ -686,7 +692,7 @@ var getUsersBatchDocument = function (documentsIds, usersCollection) {
         var usersDocuments = undefined;
         var cursor = usersCollection.find({
             _id: {
-                $in: ["tid-85-pcid-yossi", "tid-85-pcid-yossi1", "tid-85-pcid-yossi2"] //documentsIds
+                $in: documentsIds //["tid-85-pcid-yossi", "tid-85-pcid-yossi1", "tid-85-pcid-yossi2"] 
             }
         });
         cursor.toArray(function (err, docs) {
@@ -695,30 +701,46 @@ var getUsersBatchDocument = function (documentsIds, usersCollection) {
             docs.forEach(function (doc) {
                 console.log("_id = " + doc._id);
             });
-            var result =  {
+            var result = {
                 data: usersDocuments,
                 status: 1
             }
             resolve(result);
-        })
-
-        // .toArray(function (error, docs) {
-        //     if (error == undefined) {
-        //         usersDocuments = docs;
-        //         docs.forEach(function (doc) {
-        //             console.log(doc);
-        //         })
-        //         resolve({
-        //             data: usersDocuments,
-        //             status: 1
-        //         });
-        // } else {
-        //     reject(error); //status finished
-        // }
-
+        });
     });
 
+}
 
-    //    });
+
+
+var getTokensFromCustomerDoc = function (campaignDoc, customersDocs) {
+
+    var androidApps = undefined;
+    var iosApps = undefined;
+    if (campaignDoc.apps != undefined) {
+        if (campaignDoc.apps.android != undefined) {
+            androidApps = campaignDoc.apps.android;
+        }
+        if (campaignDoc.apps.ios != undefined) {
+            iosApps = campaignDoc.apps.ios;
+        }
+    }
+   
+    customersDocs.forEach((doc) =>{
+        if(androidApps != undefined){
+            var devicesIds = Object.keys(doc.android_tokens);
+            devicesIds.forEach((key) => {
+                var appsKeys =  Object.keys(doc.android_tokens[key].apps);
+            })
+        }
+
+        if(iosApps != undefined){
+            var devicesIds = Object.keys(doc.android_tokens);
+            devicesIds.forEach((key) => {
+                var appsKeys =  Object.keys(doc.android_tokens[key].apps);
+            })
+        }
+    })
+
 
 }
