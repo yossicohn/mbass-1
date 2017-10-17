@@ -36,3 +36,30 @@ http://localhost:3001/abort_campaign \
   \"engagement_id\": 1234,
 }
 }"
+
+// --------------------------------- curl -------------------------------------
+curl --header "Content-Type: application/json" \
+http://146.148.71.145:3001/abort_campaign \
+-d "{
+\"request\":{
+  \"command_name\": \"abort_campaign\",
+  \"tenant_id\": 85,
+  \"campaign_id\": 85,
+  \"action_serial\": 85,
+  \"template_id\": 85,
+  \"engagement_id\": 1234
+}
+}"
+
+
+
+{
+  "request":{
+    "command_name": "abort_campaign",
+    "tenant_id": 85,
+    "campaign_id": 85,
+    "action_serial": 85,
+    "template_id": 85,
+    "engagement_id": 1234
+  }
+}
