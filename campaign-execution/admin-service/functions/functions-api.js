@@ -8,8 +8,11 @@ var MongoClient = require('mongodb').MongoClient,
 const uuidV4 = require('uuid/v4');
 var url = 'mongodb://104.154.65.252:27017/mbassdb';
 var tenantCampaignsDataCollectionNameBase = 'CampaignsData_';
+var tenantCustomersTokens = 'CustomersTokens_';
+var tenantVisitorsTokens = 'VisitorsTokens_';
+var tenantCampaignsDataCollectionNameBase = 'CampaignsData_';
 var processTimeDelta = 30000000000 // 1/2 Minute ago.
-
+var dataBaseClient = undefined;
 
 const campaignControlTopicName = "campaign-control";
 const campaignQueueTopicName = "campaign-queue";
@@ -105,6 +108,7 @@ var PNPayloadTemplate = {
 var cleanup = function (db) {
     if (db != undefined) {
         db.close();
+        dataBaseClient = undefined;
     }
 }
 
@@ -198,11 +202,11 @@ exports.executeCampaign = function (req, res) {
             console.log('getScheduledCampaign' + campaignDoc._id);
 
             //Campaign was found, now we can get build the Payload.
-            var campaignPayload = buildNonPerolalizedCampaignPayload(campaignDoc);
+
             var topicName = campaignDoc.data_queue_name;
             var subscriptionName = "sub_" + topicName;
             createCampaignSubscriber(topicName, subscriptionName)
-                .then(() => {
+                .then(() => { // new we can get the data of the Users and extract it.
                     handleCampaignExecution(campaignDoc)
                         .then(() => {
                             console.log("executeCampaign: Succeeded subscriptionName = " + subscriptionName);
@@ -273,6 +277,7 @@ var getScheduledCampaign = function (createReq, deltaFromNow) {
 
         MongoClient.connect(url)
             .then(function (db) {
+                dataBaseClient = db;
                 console.log("getScheduledCampaign: Connected correctly to server");
                 var status = true;
                 var tenantId = createReq.tenant_id;
@@ -307,28 +312,55 @@ var getScheduledCampaign = function (createReq, deltaFromNow) {
 // ----------------------------------------------------------------
 // ----------------------------------------------------------------
 // function: handleCampaignExecution
-// args: exisitingDoc
+// args: campaignDoc
 // return: response dataPayload.
 // ----------------------------------------------------------------
-var handleCampaignExecution = function (exisitingDoc) {
+var handleCampaignExecution = function (campaignDoc) {
 
     return new Promise(function (resolve, reject) {
 
-        var topicName = exisitingDoc.data_queue_name;
+        var topicName = campaignDoc.data_queue_name;
         var subscription = "sub_" + topicName;
         getTargetedUserBulkArray(projectId, subscription, 10)
             .then(function (responses) {
-                responses.receivedMessages.forEach(function (response) {
-                    console.log(response.message.attributes.description);
-                    console.log(response.message.messageId);
-                    console.log(response.message.data.byteLength);
-                    var message = Buffer.from(response.message.data, 'base64').toString();
-                    var targetedUserData = JSON.parse(message);
-                    console.log("message: " + message);
-                })
-                resolve();
+                if (responses.receivedMessages.length > 0) {
+                    var registartion_ids = [];
+                    var users_ids = [];
+                    var campaignPayload = buildNonPerolalizedCampaignPayload(campaignDoc);
+                    responses.receivedMessages.forEach(function (response) {
+                        console.log("attributes.description = " + response.message.attributes.description);
+                        console.log("messageId = " + response.message.messageId);
+                        console.log("byteLength = " + response.message.data.byteLength);
+                        var message = Buffer.from(response.message.data, 'base64').toString();
+                        var targetedUserDataArray = JSON.parse(message);
+                        targetedUserDataArray.forEach(function (targetedUser) {
+                            users_ids.push(targetedUser.Id);
+                        });
+
+                        console.log("message: targetedUserDataArray Length = " + targetedUserDataArray.length);
+                        getUsersTokens(campaignDoc, users_ids)
+                            .then((tokens) => {
+                                sendPromissedPN(registartion_ids, campaignPayload)
+                                    .then((response) => {
+                                        resolve(response);
+                                    })
+                                    .catch((errorResponse) => {
+                                        console.log("sendPromissedPN: Failed errorResponse = " + errorResponse);
+                                        reject(errorResponse);
+                                    })
+                            })
+                            .catch((error) => {
+
+                            })
+
+
+                    })
+                }
+
+                resolve(responses.receivedMessages.length);
             })
-            .catch((reject) => {
+            .catch((error) => {
+                console.log("handleCampaignExecution: failed:-" + error);
                 reject(error);
             });
 
@@ -480,9 +512,11 @@ var sendPromissedPN = function (registrationTokens, payload) {
                 // See the MessagingDevicesResponse reference documentation for
                 // the contents of response.
                 console.log("sendPromissedPN: Successfully sent message:", response);
+                resolve(response);
             })
-            .catch(function (error) {
+            .catch(function (errorResponse) {
                 console.log("sendPromissedPN: Error sending message:", error);
+                reject(errorResponse);
             });
     });
 }
@@ -498,12 +532,17 @@ var getTargetedUserBulkArray = function (projectId, subscription, maxMessages) {
         var client = pubsubV1.subscriberClient();
         var formattedSubscription = client.subscriptionPath(projectId, subscription);
         //var maxMessages = 0;
+
+        var options = {
+            timeout: 10000
+        };
         var request = {
             subscription: formattedSubscription,
             maxMessages: maxMessages,
-            returnImmediately: true
+            returnImmediately: false,
+
         };
-        client.pull(request)
+        client.pull(request, options)
             .then(function (responses) {
                 var response = responses[0];
                 resolve(response);
@@ -526,25 +565,160 @@ var createCampaignSubscriber = function (topicName, subscriptionName) {
 
         var client = pubsubV1.subscriberClient();
         var formattedSubscription = client.subscriptionPath(projectId, subscriptionName);
-        client.getSubscription({subscription: formattedSubscription})
-        .then(function(data) {
-            var subscription = data[0];
-            resolve(subscription);
-        })
-        .catch(function(err) {
-            // Not Exist hence we need to create
-            pubsubClient.createSubscription(topicName, subscriptionName)
+        client.getSubscription({
+                subscription: formattedSubscription
+            })
             .then(function (data) {
                 var subscription = data[0];
-                var apiResponse = data[1];
                 resolve(subscription);
             })
-            .catch((error) => {
-                console.log("createCampaignSubscriber Failed " + error)
-                reject(error);
+            .catch(function (err) {
+                // Not Exist hence we need to create
+                pubsubClient.createSubscription(topicName, subscriptionName)
+                    .then(function (data) {
+                        var subscription = data[0];
+                        var apiResponse = data[1];
+                        resolve(subscription);
+                    })
+                    .catch((error) => {
+                        console.log("createCampaignSubscriber Failed " + error)
+                        reject(error);
+                    });
             });
-        });
-``
-       
+        ``
+
     });
+}
+
+
+// ----------------------------------------------------------------
+// function: getUsersTokens
+// args:campaignDoc, users_ids
+// return: respons registration_ids for the PN.
+// We first check if subscription exist if not we failed and then we create it.
+// Process:
+// we need to go to the appropriate users Database (Visitors/Customers).
+// And find by the ID's the different Users Document.
+// Go uver the Document and in the Targeted apps (in the devices) get the appropriate tokens.
+// ----------------------------------------------------------------
+var getUsersTokens = function (campaignDoc, users_ids) {
+    return new Promise(function (resolve, reject) {
+
+        if (users_ids.length == 0) {
+            console.log("getUsersTokens: supplied users_ids is empty");
+            reject(false);
+        } else {
+            if (campaignDoc.audience == 1) { // Cutomers
+
+                getCustomersCampaignTokens(campaignDoc, users_ids);
+            } else if (campaignDoc.audience == 2) { // Visitors
+
+            }
+
+        }
+    });
+}
+
+
+// ----------------------------------------------------------------
+// function: getCustomersCampaignTokens
+// args:campaignDoc, users_ids
+// return: respons registration_ids for the Customers PN Campaign.
+// We first check if subscription exist if not we failed and then we create it.
+// Process:
+// we need to go to the appropriate users Database (Visitors/Customers).
+// And find by the ID's the different Users Document.
+// Go uver the Document and in the Targeted apps (in the devices) get the appropriate tokens.
+// ----------------------------------------------------------------
+var getCustomersCampaignTokens = function (campaignDoc, users_ids) {
+    return new Promise(function (resolve, reject) {
+        var usersCollectionName = undefined;
+        usersCollectionName = tenantCustomersTokens + campaignDoc.tenant_id;
+        var prefixDocId = "tid-" + campaignDoc.tenant_id + "-pcid-";
+        var documentsIds = getDocumentsIdsByUsersIds(prefixDocId, users_ids, campaignDoc.audience);
+        if (dataBaseClient != undefined) {
+            try {
+                var usersCollection = dataBaseClient.collection(usersCollectionName);
+                getUsersBatchDocument(documentsIds, usersCollection)
+                    .then((result) => {
+                            console.log(result.status);
+                    })
+                    .catch((error) => {
+                        console.log(result.status);
+                    })
+
+            } catch (error) {
+                console.log(error);
+                reject(error);
+            }
+
+        } else {
+            var error = "dataBaseClient is not defined";
+            console.log(error);
+            reject(error);
+        }
+    });
+}
+
+
+// ----------------------------------------------------------------
+// function: getDocumentsIdsByUsersIds
+// args:prefixDocId, users_ids, userType
+// return: the Documents Id's by the UsersIds and Type (Visitor/Customers)
+// ----------------------------------------------------------------
+var getDocumentsIdsByUsersIds = function (prefixDocId, users_ids, userType) {
+
+    var docsIds = [];
+    users_ids.forEach(function (userId) {
+        docsIds.push(prefixDocId + userId);
+    });
+    return docsIds;
+}
+
+
+// ----------------------------------------------------------------
+// function: getUsersBatchDocument
+// args:documentsIds, usersCollection
+// return: the Documents  by the documentsIds
+// ----------------------------------------------------------------
+var getUsersBatchDocument = function (documentsIds, usersCollection) {
+    return new Promise(function (resolve, reject) {
+        var usersDocuments = undefined;
+        var cursor = usersCollection.find({
+            _id: {
+                $in: ["tid-85-pcid-yossi", "tid-85-pcid-yossi1", "tid-85-pcid-yossi2"] //documentsIds
+            }
+        });
+        cursor.toArray(function (err, docs) {
+            console.log(docs.length)
+            usersDocuments = docs;
+            docs.forEach(function (doc) {
+                console.log("_id = " + doc._id);
+            });
+            var result =  {
+                data: usersDocuments,
+                status: 1
+            }
+            resolve(result);
+        })
+
+        // .toArray(function (error, docs) {
+        //     if (error == undefined) {
+        //         usersDocuments = docs;
+        //         docs.forEach(function (doc) {
+        //             console.log(doc);
+        //         })
+        //         resolve({
+        //             data: usersDocuments,
+        //             status: 1
+        //         });
+        // } else {
+        //     reject(error); //status finished
+        // }
+
+    });
+
+
+    //    });
+
 }
