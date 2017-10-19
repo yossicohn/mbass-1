@@ -8,6 +8,7 @@
     "campaign_id": "int",
     "action_serial": "int",
     "template_id": "int",
+    "engagement_id": "int",
     "personalized" : "bool",
     "tgt_group_size": "int",
     "schedule": "unix epic timestamp",
