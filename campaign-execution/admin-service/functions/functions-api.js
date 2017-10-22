@@ -43,9 +43,11 @@ var admin = require("firebase-admin");
 var serviceAccountSDKoController = require("../mobilesdk-master-dev-firebase-adminsdk-etwd8-bb7913dce1.json");
 var serviceAccountAppController = require("../appcontrollerproject-developer-firebase-adminsdk-xv10y-853771a0b1.json");
 admin.initializeApp({
-    credential: admin.credential.cert(serviceAccountAppController)
+    credential: admin.credential.cert(serviceAccountSDKoController),
+    databaseURL: "https://mobilesdk-master-dev.firebaseio.com",
 
 });
+var rtDB = admin.database();
 
 
 /**
@@ -206,27 +208,41 @@ exports.executeCampaign = function (req, res) {
     //First we take  the Campaign from the DB.
     getScheduledCampaign(createReq, 10000)
         .then(function (campaignDoc) {
-            console.log('getScheduledCampaign' + campaignDoc._id);
-
             //Campaign was found, now we can get build the Payload.
+            console.log('getScheduledCampaign Succeeded' + campaignDoc._id);
+            getFirebaseClientAdmin(campaignDoc)
+                .then((clientAdmin) => {
 
-            var topicName = campaignDoc.data_queue_name;
-            var subscriptionName = "sub_" + topicName;
-            createCampaignSubscriber(topicName, subscriptionName)
-                .then(() => { // new we can get the data of the Users and extract it.
-                    handleCampaignExecution(campaignDoc)
-                        .then((resultedExecution) => {
-                            console.log("executeCampaign: Succeeded subscriptionName = " + subscriptionName);
-                            var updateMetrics = {
-                                failureCount: resultedExecution.doc.campaign_stats.successfull_push,
-                                successCount: resultedExecution.doc.campaign_stats.failed_push,
-                                bulkSize: resultedExecution.doc.campaign_stats.push_bulk_size
-                            }
-                            var response = createResponse(resultedExecution.doc, updateMetrics, true, undefined);
-                            res.json(response);
+                    var topicName = campaignDoc.data_queue_name;
+                    var subscriptionName = "sub_" + topicName;
+                    createCampaignSubscriber(topicName, subscriptionName)
+                        .then(() => { // new we can get the data of the Users and extract it.
+                            handleCampaignExecution(campaignDoc, clientAdmin)
+                                .then((resultedExecution) => {
+                                    console.log("executeCampaign: Succeeded subscriptionName = " + subscriptionName);
+                                    var updateMetrics = {
+                                        failureCount: resultedExecution.doc.campaign_stats.successfull_push,
+                                        successCount: resultedExecution.doc.campaign_stats.failed_push,
+                                        bulkSize: resultedExecution.doc.campaign_stats.push_bulk_size
+                                    }
+                                    var response = createResponse(resultedExecution.doc, updateMetrics, true, undefined);
+                                    res.json(response);
+                                })
+                                .catch((error) => {
+                                    console.log("executeCampaign: Failed " + error);
+                                    var updateMetrics = {
+                                        failureCount: -1,
+                                        successCount: -1,
+                                        bulkSize: -1
+                                    }
+                                    var response = createResponse(createReq, updateMetrics, "failed", error);
+                                    res.status(400);
+                                    res.json(response);
+                                })
                         })
                         .catch((error) => {
-                            console.log("executeCampaign: Failed " + error);
+                            console.log("executeCampaign: createCampaignSubscriber Failed " + error);
+
                             var updateMetrics = {
                                 failureCount: -1,
                                 successCount: -1,
@@ -235,21 +251,23 @@ exports.executeCampaign = function (req, res) {
                             var response = createResponse(createReq, updateMetrics, "failed", error);
                             res.status(400);
                             res.json(response);
-                        })
+
+                        });
                 })
                 .catch((error) => {
-                    console.log("executeCampaign: createCampaignSubscriber Failed " + error);
-
+                    console.log('getScheduledCampaign - getFirebaseClientAdmin Failed');
                     var updateMetrics = {
                         failureCount: -1,
                         successCount: -1,
                         bulkSize: -1
                     }
+
                     var response = createResponse(createReq, updateMetrics, "failed", error);
                     res.status(400);
                     res.json(response);
 
                 });
+
 
         })
         .catch(function (error) {
@@ -319,10 +337,10 @@ var getScheduledCampaign = function (createReq, deltaFromNow) {
 // ----------------------------------------------------------------
 // ----------------------------------------------------------------
 // function: handleCampaignExecution
-// args: campaignDoc
+// args: campaignDoc, clientAdmin
 // return: response dataPayload.
 // ----------------------------------------------------------------
-var handleCampaignExecution = function (campaignDoc) {
+var handleCampaignExecution = function (campaignDoc,clientAdmin) {
 
     return new Promise(function (resolve, reject) {
 
@@ -347,7 +365,7 @@ var handleCampaignExecution = function (campaignDoc) {
                         console.log("message: targetedUserDataArray Length = " + targetedUserDataArray.length);
                         getUsersTokens(campaignDoc, users_ids)
                             .then((registartion_ids) => {
-                                sendPromissedPN(registartion_ids, campaignPayload)
+                                sendPromissedPN(registartion_ids, campaignPayload, clientAdmin)
                                     .then((fcmResults) => {
                                         handlePNCampaignResults(fcmResults, campaignDoc)
                                             .then((updatedDoc) => {
@@ -369,7 +387,7 @@ var handleCampaignExecution = function (campaignDoc) {
                                     })
                             })
                             .catch((error) => {
-
+                                reject(errorResponse);
                             })
 
 
@@ -388,49 +406,6 @@ var handleCampaignExecution = function (campaignDoc) {
                 console.log("handleCampaignExecution: failed:-" + error);
                 reject(error);
             });
-
-
-        // var topicName = exisitingDoc.data_queue_name;
-        // var subscriptionName = "subs-" + topicName;
-        //
-        // pubsubClient.createSubscription(topicName, name)
-        //     .then(function (data) {
-        //         var subscription = data[0];
-        //         var apiResponse = data[1];
-        //         // Create an event handler to handle messages
-        //         let messageCount = 0;
-        //         const messageHandler = (message) => {
-        //             console.log(`Received message ${message.id}:`);
-        //             console.log(`\tData: ${message.data}`);
-        //             console.log(`\tAttributes: ${message.attributes}`);
-        //             messageCount += 1;
-        //
-        //             // "Ack" (acknowledge receipt of) the message
-        //             message.ack();
-        //         };
-        //
-        //         // Listen for new messages until timeout is hit
-        //         subscription.on(`message`, messageHandler);
-        //     setTimeout(() => {
-        //         subscription.removeListener('message', messageHandler);
-        //     console.log(`${messageCount} message(s) received.`);
-        // }, 1 * 1000);
-
-        // var bulkArray = getTargetedUserBulkArray(subscription)
-        //     .then(function(error){
-        //         var nonPersonalizedPayload = initNonPersonalizedrDataPayload(exisitingDoc);
-        //
-        //     })
-        //     .catch(function(error){
-        //
-        //
-        //     })
-        // })
-        // .catch(function (error) {
-        //
-        //
-        // })
-
 
     })
 
@@ -541,9 +516,10 @@ var getDocId = function (createReq) {
 // args: registrationTokens, payload
 // Return: response/error
 //-----------------------------------------------------------------------------
-var sendPromissedPN = function (registrationTokens, payload) {
+var sendPromissedPN = function (registrationTokens, payload, clientAdmin) {
     return new Promise(function (resolve, reject) {
-        admin.messaging().sendToDevice(registrationTokens, payload)
+
+        clientAdmin.messaging().sendToDevice(registrationTokens, payload)
             .then(function (fcmResults) {
                 // See the MessagingDevicesResponse reference documentation for
                 // the contents of response.
@@ -554,6 +530,7 @@ var sendPromissedPN = function (registrationTokens, payload) {
                 console.log("sendPromissedPN: Error sending message:", errorResponse);
                 reject(errorResponse);
             });
+
     });
 }
 
@@ -847,138 +824,170 @@ var updateTokensArrayWithDevicesTokens = function (targetedAppsObj, devices, reg
 // ----------------------------------------------------------------
 var handlePNCampaignResults = function (fcmResults, campaignDoc) {
 
-        return new Promise(function (resolve, reject) {
-                console.log(fcmResults);
-                console.log("fcmResults.failureCount = " + fcmResults.failureCount);
-                console.log("fcmResults.successCount = " + fcmResults.successCount);
-                var bulkSize = parseInt(fcmResults.successCount) + parseInt(fcmResults.failureCount);
-                console.log("BulkSize = " + bulkSize);
+    return new Promise(function (resolve, reject) {
+        console.log(fcmResults);
+        console.log("fcmResults.failureCount = " + fcmResults.failureCount);
+        console.log("fcmResults.successCount = " + fcmResults.successCount);
+        var bulkSize = parseInt(fcmResults.successCount) + parseInt(fcmResults.failureCount);
+        console.log("BulkSize = " + bulkSize);
 
-                    var updateMetrics = {
-                        failureCount: fcmResults.failureCount,
-                        successCount: fcmResults.successCount,
-                        bulkSize: bulkSize
-                    }
-                    UpdateCampaignExecutionMetrics(campaignDoc, updateMetrics)
-                    .then((doc) => {
-                        resolve(doc);
+        var updateMetrics = {
+            failureCount: fcmResults.failureCount,
+            successCount: fcmResults.successCount,
+            bulkSize: bulkSize
+        }
+        UpdateCampaignExecutionMetrics(campaignDoc, updateMetrics)
+            .then((doc) => {
+                resolve(doc);
+            })
+            .catch((error) => {
+
+                reject(error);
+            })
+    });
+}
+
+
+
+// ----------------------------------------------------------------
+// function: UpdateCampaignExecutionMetrics
+// args:fcmResults, campaignDoc
+// return: fcmResults
+// description:
+// This function should go over the results and update the
+// Campaign Doc Statistics.
+// We should update: successfull_push, failed_push, push_bulk_size, sleep_time_between_bulks
+//
+// Campaign Document Statistics Section:
+// "campaign_stats" : {
+//     "successfull_push" : -1,
+//     "failed_push" : -1,
+//     "successfull_push_retries" : -1,
+//     "failed_push_retries" : -1,
+//     "push_bulk_size" : -1,
+//     "sleep_time_between_bulks" : -1
+// }
+// ----------------------------------------------------------------
+var UpdateCampaignExecutionMetrics = function (campaignDoc, updateMetrics) {
+
+    return new Promise(function (resolve, reject) {
+        if (dataBaseClient != undefined) {
+            try {
+                var status = true;
+                var tenantId = campaignDoc.tenant_id;
+                var tenantCampaignCollectionName = tenantCampaignsDataCollectionNameBase + tenantId;
+                var tenantCampaignsDataCollection = dataBaseClient.collection(tenantCampaignCollectionName);
+                var docId = campaignDoc._id;
+                tenantCampaignsDataCollection.updateOne
+                tenantCampaignsDataCollection.findOneAndUpdate({
+                        _id: docId
+                    }, {
+                        $inc: {
+                            "campaign_stats.successfull_push": updateMetrics.successCount,
+                            "campaign_stats.failed_push": updateMetrics.failureCount,
+                        },
+                        $max: {
+                            "campaign_stats.push_bulk_size": updateMetrics.bulkSize
+                        }
+                    }, {
+                        returnNewDocument: true
                     })
-                    .catch((error) => {
-
+                    .then(function (exisitingDoc) {
+                        if (exisitingDoc == null) {
+                            cleanup(db);
+                            reject("Campaign Don't Exisit");
+                        } else {
+                            resolve(exisitingDoc);
+                        }
+                    })
+                    .catch(function (errorerror) {
+                        cleanup(db);
                         reject(error);
                     })
-                });
+
+
+            } catch (error) {
+                reject("UpdateCampaignExecutionMetrics: Failed error = " + error);
+            }
+        } else {
+            reject("UpdateCampaignExecutionMetrics: dataBaseClient is undefined")
         }
 
 
-
-        // ----------------------------------------------------------------
-        // function: UpdateCampaignExecutionMetrics
-        // args:fcmResults, campaignDoc
-        // return: fcmResults
-        // description:
-        // This function should go over the results and update the
-        // Campaign Doc Statistics.
-        // We should update: successfull_push, failed_push, push_bulk_size, sleep_time_between_bulks
-        //
-        // Campaign Document Statistics Section:
-        // "campaign_stats" : {
-        //     "successfull_push" : -1,
-        //     "failed_push" : -1,
-        //     "successfull_push_retries" : -1,
-        //     "failed_push_retries" : -1,
-        //     "push_bulk_size" : -1,
-        //     "sleep_time_between_bulks" : -1
-        // }
-        // ----------------------------------------------------------------
-        var UpdateCampaignExecutionMetrics = function (campaignDoc, updateMetrics) {
-
-            return new Promise(function (resolve, reject) {
-                if (dataBaseClient != undefined) {
-                    try {
-                        var status = true;
-                        var tenantId = campaignDoc.tenant_id;
-                        var tenantCampaignCollectionName = tenantCampaignsDataCollectionNameBase + tenantId;
-                        var tenantCampaignsDataCollection = dataBaseClient.collection(tenantCampaignCollectionName);
-                        var docId = campaignDoc._id;
-                        tenantCampaignsDataCollection.updateOne
-                        tenantCampaignsDataCollection.findOneAndUpdate({
-                                _id: docId
-                            }, {
-                                $inc: {
-                                    "campaign_stats.successfull_push": updateMetrics.successCount,
-                                    "campaign_stats.failed_push": updateMetrics.failureCount,
-                                },
-                                $max: {
-                                    "campaign_stats.push_bulk_size": updateMetrics.bulkSize
-                                }
-                            }, {
-                                returnNewDocument: true
-                            })
-                            .then(function (exisitingDoc) {
-                                if (exisitingDoc == null) {
-                                    cleanup(db);
-                                    reject("Campaign Don't Exisit");
-                                } else {
-                                    resolve(exisitingDoc);
-                                }
-                            })
-                            .catch(function (errorerror) {
-                                cleanup(db);
-                                reject(error);
-                            })
+    });
+}
 
 
-                    } catch (error) {
-                        reject("UpdateCampaignExecutionMetrics: Failed error = " + error);
-                    }
-                } else {
-                    reject("UpdateCampaignExecutionMetrics: dataBaseClient is undefined")
-                }
+// ----------------------------------------------------------------
+// function: getFirebaseClientAdmin
+// args: campaignDoc
+// return: clientAdmin. 
+// ----------------------------------------------------------------
+var getFirebaseClientAdmin = function (campaignDoc) {
+    return new Promise(function (resolve, reject) {
+        var rtRefName = "tenant-" + campaignDoc.tenant_id;
+        var ref = rtDB.ref(rtRefName);
+        var clientAdmin = undefined;
+        // Attach an asynchronous callback to read the data at our posts reference
+        ref.on("value", function (snapshot) {
+            var cred = snapshot.val();
+            clientAdmin = admin.initializeApp({
+                credential: admin.credential.cert(cred),
+
+            }, rtRefName);
+            if (clientAdmin != undefined) {
+                resolve(clientAdmin)
+            } else {
+                reject("cannot create client admin for " + rtRefName);
+            }
 
 
-            });
-        }
+        }, function (errorObject) {
+            console.log("The from RealTime DB failed: rtRefName= " + rtRefName + "error obj:  " + errorObject.code);
+            reject(errorObject);
+        });
+
+    });
+
+}
+// ----------------------------------------------------------------
+// function: createResponse
+// args: campaignDoc, updateMetrics, status, error
+// return: response object. 
+// ----------------------------------------------------------------
+// {
+//    "id": "tid-85-cid-85-acsl-85-tplid-88-eng-1234",
+//     "tenant_id": "int",
+//     "campaign_id": "int",
+//     "action_serial": "int",
+//     "template_id": "int",
+//     "template_type": "normal|personalized",
+//     "schedule": "unix epic timestamp",
+//     "response_status": "scheduled/failed",
+//     "bulk_size" : "int",
+//     "succeeded": "int",
+//     "failed": "int",
+//     "error": "campaign already exist"
+//   }
+// ---------------------------------------------------------------- 
+var createResponse = function (campaignDoc, updateMetrics, status, error) {
+
+    var response = {
+        "id": campaignDoc._id,
+        "tenant_id": campaignDoc.tenant_id,
+        "campaign_id": campaignDoc.campaign_id,
+        "action_serial": campaignDoc.action_serial,
+        "template_id": campaignDoc.template_id,
+        "engagement_id": campaignDoc.engagement_id,
+        "schedule": campaignDoc.schedule,
+        "response_status": status,
+        "bulk_size": updateMetrics.bulkSize,
+        "succeeded": updateMetrics.successCount,
+        "failed": updateMetrics.failureCount,
+        "error": error
+    };
 
 
-        // ----------------------------------------------------------------
-        // function: createResponse
-        // args: campaignDoc, updateMetrics, status, error
-        // return: response object. 
-        // ----------------------------------------------------------------
-        // {
-        //    "id": "tid-85-cid-85-acsl-85-tplid-88-eng-1234",
-        //     "tenant_id": "int",
-        //     "campaign_id": "int",
-        //     "action_serial": "int",
-        //     "template_id": "int",
-        //     "template_type": "normal|personalized",
-        //     "schedule": "unix epic timestamp",
-        //     "response_status": "scheduled/failed",
-        //     "bulk_size" : "int",
-        //     "succeeded": "int",
-        //     "failed": "int",
-        //     "error": "campaign already exist"
-        //   }
-        // ---------------------------------------------------------------- 
-        var createResponse = function (campaignDoc, updateMetrics, status, error) {
+    return response;
 
-            var response = {
-                "id": campaignDoc._id,
-                "tenant_id": campaignDoc.tenant_id,
-                "campaign_id": campaignDoc.campaign_id,
-                "action_serial": campaignDoc.action_serial,
-                "template_id": campaignDoc.template_id,
-                "engagement_id": campaignDoc.engagement_id,
-                "schedule": campaignDoc.schedule,
-                "response_status": status,
-                "bulk_size": updateMetrics.bulkSize,
-                "succeeded": updateMetrics.successCount,
-                "failed": updateMetrics.failureCount,
-                "error": error
-            };
-
-
-            return response;
-
-        }
+}
