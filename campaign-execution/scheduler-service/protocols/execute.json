@@ -1,0 +1,58 @@
+{
+    "command_name": "execute",
+    "tenant_id": "int",
+    "campaign_id": "int",
+    "action_serial": "int",
+    "template_id": "int"
+}
+
+
+// -----------------------------------------------------
+
+{
+    "command_name": "execute",
+    "tenant_id": "85,
+    "campaign_id": 85,
+    "action_serial": 85,
+    "template_id": 85
+}
+
+
+
+
+curl --header "Content-Type: application/json" \
+http://localhost:3001/execute \
+-d "{
+    \"command_name\": \"execute\",
+    \"tenant_id\": 85,
+    \"campaign_id\": 85,
+    \"action_serial\": 85,
+    \"template_id\": 85,
+    \"engagement_id\": 85
+}
+"
+
+curl --header "Content-Type: application/json" \
+http://localhost:3001/executeCampaign \
+-d "{
+    \"command_name\": \"execute\",
+    \"tenant_id\": 85,
+    \"campaign_id\": 85,
+    \"action_serial\": 85,
+    \"template_id\": 88,
+    \"engagement_id\": 1234
+}
+"
+
+
+curl --header "Content-Type: application/json" \
+http://localhost:3001/executeCampaign \
+-d "{
+    \"command_name\": \"execute\",
+    \"tenant_id\": 85,
+    \"campaign_id\": 85,
+    \"action_serial\": 85,
+    \"template_id\": 88,
+    \"engagement_id\": 12346666
+}
+"
