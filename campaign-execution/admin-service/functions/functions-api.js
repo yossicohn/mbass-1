@@ -6,12 +6,19 @@ var readJson = require('read-package-json');
 var MongoClient = require('mongodb').MongoClient,
     assert = require('assert');
 const uuidV4 = require('uuid/v4');
-var url = 'mongodb://104.154.65.252:27017/mbassdb';
+var url = 'mongodb://104.198.223.2:27017/mbassdb';
+//var url = 'mongodb://optadmin:451i_6n5y7V5zV@104.198.223.2/mbassdb?replicaSet=rs0&slaveOk=true';
+//var url = 'mongodb://104.198.223.2:27017,35.202.175.206:27017,146.148.105.234:27017/mbassdb?replicaSet=mbass&slaveOk=true&connectTimeoutMS=2000&socketTimeoutMS=0';
+
+//var url = 'mongodb://optadmin:451i_6n5y7V5zV@104.198.223.2:27017/?replicaSet=mbass&slaveOk=true&connectTimeoutMS=2000&socketTimeoutMS=0';
+////var url = 'mongodb://104.154.65.252:27017/mbassdb';
+//var url = 'mongodb://optadmin:451i_6n5y7V5zV@104.154.65.252:27017,104.154.65.252:27017,104.154.65.252:27017';
+
 var tenantCampaignsDataCollectionNameBase = 'CampaignsData_';
 var tenantCustomersTokens = 'CustomersTokens_';
 var tenantVisitorsTokens = 'VisitorsTokens_';
 var tenantCampaignsDataCollectionNameBase = 'CampaignsData_';
-var processTimeDelta = 30000000000 // 1/2 Minute ago.
+
 var dataBaseClient = undefined;
 
 const campaignControlTopicName = "campaign-control";
@@ -208,59 +215,58 @@ exports.executeCampaign = function (req, res) {
             createCampaignSubscriber(topicName, subscriptionName)
                 .then(() => { // new we can get the data of the Users and extract it.
                     handleCampaignExecution(campaignDoc)
-                        .then(() => {
+                        .then((resultedExecution) => {
                             console.log("executeCampaign: Succeeded subscriptionName = " + subscriptionName);
+                            var updateMetrics = {
+                                failureCount: resultedExecution.doc.campaign_stats.successfull_push,
+                                successCount: resultedExecution.doc.campaign_stats.failed_push,
+                                bulkSize: resultedExecution.doc.campaign_stats.push_bulk_size
+                            }
+                            var response = createResponse(resultedExecution.doc, updateMetrics, true, undefined);
+                            res.json(response);
                         })
                         .catch((error) => {
                             console.log("executeCampaign: Failed " + error);
+                            var updateMetrics = {
+                                failureCount: -1,
+                                successCount: -1,
+                                bulkSize: -1
+                            }
+                            var response = createResponse(createReq, updateMetrics, "failed", error);
+                            res.status(400);
+                            res.json(response);
                         })
                 })
                 .catch((error) => {
-                    console.log("executeCampaign: Failed " + error);
+                    console.log("executeCampaign: createCampaignSubscriber Failed " + error);
+
+                    var updateMetrics = {
+                        failureCount: -1,
+                        successCount: -1,
+                        bulkSize: -1
+                    }
+                    var response = createResponse(createReq, updateMetrics, "failed", error);
+                    res.status(400);
+                    res.json(response);
+
                 });
 
         })
         .catch(function (error) {
             console.log('getScheduledCampaign Failed');
+            var updateMetrics = {
+                failureCount: -1,
+                successCount: -1,
+                bulkSize: -1
+            }
+            var response = createResponse(createReq, updateMetrics, "failed", error);
+            res.status(400);
+            res.json(response);
+
         })
 
 }
 
-
-// ----------------------------------------------------------------------------
-// ----------------------------------------------------------------
-// function: createResponse
-// args: createReq, pn_campaign_id, status, error
-// return: response object. 
-// ----------------------------------------------------------------
-// {
-//     "command_name": "create_campaign",
-//     "tenant_id": "int",
-//     "campaign_id": "int",
-//     "action_serial": "int",
-//     "template_id": "int",
-//     "template_type": "normal|personalized",
-//     "schedule": "unix epic timestamp",
-//     "response_status": "scheduled/failed",
-//     "pn_campaign_id": "created db id",
-//     "error": "campaign already exist"
-//   }
-// ---------------------------------------------------------------- 
-var createResponse = function (createReq, status, error) {
-
-    var response = {
-        "command_name": "execute",
-        "tenant_id": createReq.tenant_id,
-        "campaign_id": createReq.campaign_id,
-        "action_serial": createReq.action_serial,
-        "template_id": createReq.template_id,
-        "response_status": "executing",
-
-        "error": error
-    };
-
-    return response;
-}
 
 
 // ----------------------------------------------------------------------------
@@ -295,14 +301,15 @@ var getScheduledCampaign = function (createReq, deltaFromNow) {
                             resolve(exisitingDoc);
                         }
                     })
-                    .catch(function (errorerror) {
+                    .catch(function (error) {
+                        console.log("getScheduledCampaign: findOne Failed error= " + error)
                         cleanup(db);
                         reject(error);
                     })
             })
             .catch(function (error) {
-
-                eject(error);
+                console.log("connection Failed error= " + error)
+                reject(error);
             })
     });
 
@@ -343,8 +350,12 @@ var handleCampaignExecution = function (campaignDoc) {
                                 sendPromissedPN(registartion_ids, campaignPayload)
                                     .then((fcmResults) => {
                                         handlePNCampaignResults(fcmResults, campaignDoc)
-                                            .then((status) => {
-                                                resolve(status);
+                                            .then((updatedDoc) => {
+                                                var resultedExecution = {
+                                                    doc: updatedDoc.value,
+                                                    numOfUsersMessages: responses.receivedMessages.length
+                                                };
+                                                resolve(resultedExecution);
                                             })
                                             .catch((error) => {
                                                 console.log("handlePNCampaignResults: Failed errorResponse = " + error);
@@ -363,9 +374,15 @@ var handleCampaignExecution = function (campaignDoc) {
 
 
                     })
+                } else {
+                    var resultedExecution = {
+                        doc: updatedDoc,
+                        numOfUsersMessages: responses.receivedMessages.length
+                    };
+                    resolve(resultedExecution);
                 }
 
-                resolve(responses.receivedMessages.length);
+
             })
             .catch((error) => {
                 console.log("handleCampaignExecution: failed:-" + error);
@@ -830,82 +847,138 @@ var updateTokensArrayWithDevicesTokens = function (targetedAppsObj, devices, reg
 // ----------------------------------------------------------------
 var handlePNCampaignResults = function (fcmResults, campaignDoc) {
 
-    return new Promise(function (resolve, reject) {
-        console.log(fcmResults);
-        console.log("fcmResults.failureCount = " + fcmResults.failureCount);
-        console.log("fcmResults.successCount = " + fcmResults.successCount);
-        console.log("BulkSize = " + fcmResults.successCount + fcmResults.failureCount);
+        return new Promise(function (resolve, reject) {
+                console.log(fcmResults);
+                console.log("fcmResults.failureCount = " + fcmResults.failureCount);
+                console.log("fcmResults.successCount = " + fcmResults.successCount);
+                var bulkSize = parseInt(fcmResults.successCount) + parseInt(fcmResults.failureCount);
+                console.log("BulkSize = " + bulkSize);
 
-        var updateMetrics = {
-            failureCount: fcmResults.failureCount,
-            successCount: fcmResults.successCount,
-            bulkSize: fcmResults.successCount + fcmResults.failureCount
+                    var updateMetrics = {
+                        failureCount: fcmResults.failureCount,
+                        successCount: fcmResults.successCount,
+                        bulkSize: bulkSize
+                    }
+                    UpdateCampaignExecutionMetrics(campaignDoc, updateMetrics)
+                    .then((doc) => {
+                        resolve(doc);
+                    })
+                    .catch((error) => {
+
+                        reject(error);
+                    })
+                });
         }
-        UpdateCampaignExecutionMetrics(campaignDoc, updateMetrics)
-    });
-}
 
 
 
-// ----------------------------------------------------------------
-// function: UpdateCampaignExecutionMetrics
-// args:fcmResults, campaignDoc
-// return: fcmResults
-// description:
-// This function should go over the results and update the
-// Campaign Doc Statistics.
-// We should update: successfull_push, failed_push, push_bulk_size, sleep_time_between_bulks
-//
-// Campaign Document Statistics Section:
-// "campaign_stats" : {
-//     "successfull_push" : -1,
-//     "failed_push" : -1,
-//     "successfull_push_retries" : -1,
-//     "failed_push_retries" : -1,
-//     "push_bulk_size" : -1,
-//     "sleep_time_between_bulks" : -1
-// }
-// ----------------------------------------------------------------
-var UpdateCampaignExecutionMetrics = function (campaignDoc, updateMetrics) {
+        // ----------------------------------------------------------------
+        // function: UpdateCampaignExecutionMetrics
+        // args:fcmResults, campaignDoc
+        // return: fcmResults
+        // description:
+        // This function should go over the results and update the
+        // Campaign Doc Statistics.
+        // We should update: successfull_push, failed_push, push_bulk_size, sleep_time_between_bulks
+        //
+        // Campaign Document Statistics Section:
+        // "campaign_stats" : {
+        //     "successfull_push" : -1,
+        //     "failed_push" : -1,
+        //     "successfull_push_retries" : -1,
+        //     "failed_push_retries" : -1,
+        //     "push_bulk_size" : -1,
+        //     "sleep_time_between_bulks" : -1
+        // }
+        // ----------------------------------------------------------------
+        var UpdateCampaignExecutionMetrics = function (campaignDoc, updateMetrics) {
 
-return new Promise(function (resolve, reject) {
+            return new Promise(function (resolve, reject) {
+                if (dataBaseClient != undefined) {
+                    try {
+                        var status = true;
+                        var tenantId = campaignDoc.tenant_id;
+                        var tenantCampaignCollectionName = tenantCampaignsDataCollectionNameBase + tenantId;
+                        var tenantCampaignsDataCollection = dataBaseClient.collection(tenantCampaignCollectionName);
+                        var docId = campaignDoc._id;
+                        tenantCampaignsDataCollection.updateOne
+                        tenantCampaignsDataCollection.findOneAndUpdate({
+                                _id: docId
+                            }, {
+                                $inc: {
+                                    "campaign_stats.successfull_push": updateMetrics.successCount,
+                                    "campaign_stats.failed_push": updateMetrics.failureCount,
+                                },
+                                $max: {
+                                    "campaign_stats.push_bulk_size": updateMetrics.bulkSize
+                                }
+                            }, {
+                                returnNewDocument: true
+                            })
+                            .then(function (exisitingDoc) {
+                                if (exisitingDoc == null) {
+                                    cleanup(db);
+                                    reject("Campaign Don't Exisit");
+                                } else {
+                                    resolve(exisitingDoc);
+                                }
+                            })
+                            .catch(function (errorerror) {
+                                cleanup(db);
+                                reject(error);
+                            })
 
-    MongoClient.connect(url)
-        .then(function (db) {
-            dataBaseClient = db;
-            console.log("getScheduledCampaign: Connected correctly to server");
-            var status = true;
-            var tenantId = campaignDoc.tenant_id;
-            var tenantCampaignCollectionName = tenantCampaignsDataCollectionNameBase + tenantId;
-            var tenantCampaignsDataCollection = db.collection(tenantCampaignCollectionName);
-            var docId = campaignDoc._id;
-            tenantCampaignsDataCollection.updateOne
-            tenantCampaignsDataCollection.findOneAndUpdate({
-                    _id: docId
-                }, {
-                    $inc: {
-                        "campaign_stats.successfull_push": updateMetrics.successCount,
-                        "campaign_stats.failed_push": updateMetrics.failureCount
+
+                    } catch (error) {
+                        reject("UpdateCampaignExecutionMetrics: Failed error = " + error);
                     }
-                }, {
-                    returnNewDocument: true
-                })
-                .then(function (exisitingDoc) {
-                    if (exisitingDoc == null) {
-                        cleanup(db);
-                        reject("Campaign Don't Exisit");
-                    } else {
-                        resolve(exisitingDoc);
-                    }
-                })
-                .catch(function (errorerror) {
-                    cleanup(db);
-                    reject(error);
-                })
-        })
-        .catch(function (error) {
+                } else {
+                    reject("UpdateCampaignExecutionMetrics: dataBaseClient is undefined")
+                }
 
-            eject(error);
-        })
-});
-}
+
+            });
+        }
+
+
+        // ----------------------------------------------------------------
+        // function: createResponse
+        // args: campaignDoc, updateMetrics, status, error
+        // return: response object. 
+        // ----------------------------------------------------------------
+        // {
+        //    "id": "tid-85-cid-85-acsl-85-tplid-88-eng-1234",
+        //     "tenant_id": "int",
+        //     "campaign_id": "int",
+        //     "action_serial": "int",
+        //     "template_id": "int",
+        //     "template_type": "normal|personalized",
+        //     "schedule": "unix epic timestamp",
+        //     "response_status": "scheduled/failed",
+        //     "bulk_size" : "int",
+        //     "succeeded": "int",
+        //     "failed": "int",
+        //     "error": "campaign already exist"
+        //   }
+        // ---------------------------------------------------------------- 
+        var createResponse = function (campaignDoc, updateMetrics, status, error) {
+
+            var response = {
+                "id": campaignDoc._id,
+                "tenant_id": campaignDoc.tenant_id,
+                "campaign_id": campaignDoc.campaign_id,
+                "action_serial": campaignDoc.action_serial,
+                "template_id": campaignDoc.template_id,
+                "engagement_id": campaignDoc.engagement_id,
+                "schedule": campaignDoc.schedule,
+                "response_status": status,
+                "bulk_size": updateMetrics.bulkSize,
+                "succeeded": updateMetrics.successCount,
+                "failed": updateMetrics.failureCount,
+                "error": error
+            };
+
+
+            return response;
+
+        }
