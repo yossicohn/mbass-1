@@ -3,7 +3,8 @@
     "tenant_id": "int",
     "campaign_id": "int",
     "action_serial": "int",
-    "template_id": "int"
+    "template_id": "int",
+    "dryRun": "boolean"
 }
 
 
@@ -14,7 +15,8 @@
     "tenant_id": "85,
     "campaign_id": 85,
     "action_serial": 85,
-    "template_id": 85
+    "template_id": 85,
+    "dryRun": false
 }
 
 
@@ -28,7 +30,8 @@ http://localhost:3001/execute \
     \"campaign_id\": 85,
     \"action_serial\": 85,
     \"template_id\": 85,
-    \"engagement_id\": 85
+    \"engagement_id\": 85,
+    \"dryRun\": false
 }
 "
 
@@ -40,7 +43,8 @@ http://localhost:3001/executeCampaign \
     \"campaign_id\": 85,
     \"action_serial\": 85,
     \"template_id\": 88,
-    \"engagement_id\": 1234
+    \"engagement_id\": 1234,
+    \"dryRun\": false
 }
 "
 
@@ -53,7 +57,8 @@ http://localhost:3001/executeCampaign \
     \"campaign_id\": 85,
     \"action_serial\": 85,
     \"template_id\": 88,
-    \"engagement_id\": 12346666
+    \"engagement_id\": 12346666,
+    \"dryRun\": false
 }
 "
 
@@ -67,7 +72,9 @@ http://localhost:3001/executeCampaign \
     \"campaign_id\": 86,
     \"action_serial\": 85,
     \"template_id\": 88,
-    \"engagement_id\": 1234
+    \"engagement_id\": 1234,
+    \"dryRun\": true
+    
 }"
 
 curl --header "Content-Type: application/json" \
@@ -78,5 +85,6 @@ http://localhost:3001/executeTest \
     \"campaign_id\": 86,
     \"action_serial\": 85,
     \"template_id\": 88,
-    \"engagement_id\": 1234
+    \"engagement_id\": 1234,
+    \"dryRun\": false
 }"

@@ -166,7 +166,7 @@ exports.executeTest = function (req, res) {
         priority: "high",
         contentAvailable: true,
         timeToLive: 60 * 60 * 24
-      };
+    };
     adminTest.messaging().sendToDevice(registrationToken, payload, options)
         .then(function (response) {
             // See the MessagingDevicesResponse reference documentation for
@@ -213,12 +213,17 @@ exports.executeCampaign = function (req, res) {
             console.log('getScheduledCampaign Succeeded' + campaignDoc._id);
             getFirebaseClientAdmin(campaignDoc)
                 .then((clientAdmin) => {
-
+                    var options = {
+                        priority: "high",
+                        contentAvailable: true,
+                        timeToLive: campaignDoc.time_to_live,
+                        dryRun: createReq.dryRun
+                    };
                     var topicName = campaignDoc.data_queue_name;;
                     var subscriptionName = "sub_" + topicName;
                     createCampaignSubscriber(topicName, subscriptionName)
                         .then(() => { // new we can get the data of the Users and extract it.
-                            handleCampaignExecution(campaignDoc, clientAdmin)
+                            handleCampaignExecution(campaignDoc, clientAdmin, options)
                                 .then((resultedExecution) => {
                                     console.log("executeCampaign: Succeeded subscriptionName = " + subscriptionName);
                                     var updateMetrics = {
@@ -338,14 +343,14 @@ var getScheduledCampaign = function (createReq, deltaFromNow) {
 
 // ----------------------------------------------------------------
 // function: handleCampaignExecution
-// args: campaignDoc, clientAdmin
+// args: campaignDoc, clientAdmin, options
 // return: response dataPayload.
 // ----------------------------------------------------------------
-var handleCampaignExecution = function (campaignDoc, clientAdmin) {
+var handleCampaignExecution = function (campaignDoc, clientAdmin, options) {
 
     return new Promise(function (resolve, reject) {
         if (campaignDoc.personalized == false) {
-            handleNonPersonalizedCampaignExecution(campaignDoc, clientAdmin)
+            handleNonPersonalizedCampaignExecution(campaignDoc, clientAdmin, options)
                 .then((result) => {
                     resolve(result);
                 })
@@ -353,7 +358,7 @@ var handleCampaignExecution = function (campaignDoc, clientAdmin) {
                     reject(error);
                 })
         } else if (campaignDoc.personalized == true) {
-            handlePersonalizedCampaignExecution(campaignDoc, clientAdmin)
+            handlePersonalizedCampaignExecution(campaignDoc, clientAdmin, options)
                 .then((result) => {
                     resolve(result);
                 })
@@ -367,10 +372,10 @@ var handleCampaignExecution = function (campaignDoc, clientAdmin) {
 
 // ----------------------------------------------------------------
 // function: handleNonPersonalizedCampaignExecution
-// args: campaignDoc, clientAdmin
+// args: campaignDoc, clientAdmin, options
 // return: response dataPayload.
 // ----------------------------------------------------------------
-var handleNonPersonalizedCampaignExecution = function (campaignDoc, clientAdmin) {
+var handleNonPersonalizedCampaignExecution = function (campaignDoc, clientAdmin, options) {
 
     return new Promise(function (resolve, reject) {
 
@@ -395,7 +400,7 @@ var handleNonPersonalizedCampaignExecution = function (campaignDoc, clientAdmin)
                         console.log("message: targetedUserDataArray Length = " + targetedUserDataArray.length);
                         getUsersTokens(campaignDoc, users_ids)
                             .then((registartion_ids) => {
-                                sendPromissedPN(registartion_ids, campaignPayload, clientAdmin, campaignDoc.time_to_live)
+                                sendPromissedPN(registartion_ids, campaignPayload, clientAdmin, options)
                                     .then((fcmResults) => {
                                         handlePNCampaignResults(fcmResults, campaignDoc)
                                             .then((updatedDoc) => {
@@ -522,10 +527,10 @@ var handleNonPersonalizedCampaignExecution = function (campaignDoc, clientAdmin)
 // ----------------------------------------------------------------
 // ----------------------------------------------------------------
 // function: handlePersonalizedCampaignExecution
-// args: campaignDoc, clientAdmin
+// args: campaignDoc, clientAdmin,options
 // return: response dataPayload.
 // ----------------------------------------------------------------
-var handlePersonalizedCampaignExecution = function (campaignDoc, clientAdmin) {
+var handlePersonalizedCampaignExecution = function (campaignDoc, clientAdmin, options) {
 
     return new Promise(function (resolve, reject) {
 
@@ -550,9 +555,9 @@ var handlePersonalizedCampaignExecution = function (campaignDoc, clientAdmin) {
                         console.log("handlePersonalizedCampaignExecution: message: targetedUserDataArray Length = " + targetedUserDataArray.length);
                         getUsersTokensForPersonalizedCampaign(campaignDoc, usersPersonaizedPayload)
                             .then((usersPersonaizedPayload) => {
-                                sendPromissedPersonalizedPN(usersPersonaizedPayload, clientAdmin, campaignDoc.time_to_live)
+                                sendPromissedPersonalizedPN(usersPersonaizedPayload, clientAdmin, options)
                                     .then((fcmResults) => {
-                                        handlePNCampaignResults(fcmResults, campaignDoc)
+                                        handlePersonalizedPNCampaignResults(fcmResults, campaignDoc)
                                             .then((updatedDoc) => {
                                                 var resultedExecution = {
                                                     doc: updatedDoc.value,
@@ -772,15 +777,11 @@ var getDocId = function (createReq) {
 // args: registrationTokens, payload
 // Return: response/error
 //-----------------------------------------------------------------------------
-var sendPromissedPN = function (registrationTokens, payload, clientAdmin, time_to_live) {
+var sendPromissedPN = function (registrationTokens, payload, clientAdmin, options) {
     return new Promise(function (resolve, reject) {
 
-        var options = {
-            priority: "high",
-            contentAvailable: true,
-            timeToLive: time_to_live
-          };
-        clientAdmin.messaging().sendToDevice(registrationTokens, payload)
+
+        clientAdmin.messaging().sendToDevice(registrationTokens, payload, options)
             .then(function (fcmResults) {
                 // See the MessagingDevicesResponse reference documentation for
                 // the contents of response.
@@ -797,48 +798,54 @@ var sendPromissedPN = function (registrationTokens, payload, clientAdmin, time_t
 
 // ----------------------------------------------------------------
 // function: sendPromissedPersonalizedPN
+// arguments: usersPersonaizedPayload, clientAdmin, options
 // return: respons Array.
 // ----------------------------------------------------------------
-var sendPromissedPersonalizedPN = function (usersPersonaizedPayload, clientAdmin, time_to_live) {
+var sendPromissedPersonalizedPN = function (usersPersonaizedPayload, clientAdmin, options) {
     return new Promise(function (resolve, reject) {
-        var options = {
-            priority: "high",
-            contentAvailable: true,
-            timeToLive: time_to_live
-          };
         var failedCounter = 0;
         var fcmBulkResults = [];
+        var promises = [];
         var userss_ids = Object.keys(usersPersonaizedPayload);
         userss_ids.forEach((userId) => {
             var userData = usersPersonaizedPayload[userId];
             if (userData.tokens != undefined) {
-                clientAdmin.messaging().sendToDevice(userData.tokens, userData.payload, options)
-                    .then(function (fcmResults) {
-                        fcmBulkResults.push({
-                            fcmResults,
-                            userData
-                        });
-                        // See the MessagingDevicesResponse reference documentation for
-                        // the contents of response.
-                        console.log("sendPromissedPersonalizedPN: Successfully sent message:", fcmResults);
-                        resolve(fcmResults);
-                    })
-                    .catch(function (errorResponse) {
-                        failedCounter++;
-                        console.log("sendPromissedPersonalizedPN: Error sending message:", errorResponse);
-                        console.log("sendPromissedPersonalizedPN: Error failedCounter = ", errorRfailedCounteresponse);
-                        if (failedCounter > 20) {
-
-                            reject(errorResponse);
-                        }
-
-                    });
+                var currPromise = sendMessagePromise(clientAdmin, userData.tokens, userData.payload, options);
+                promises.push(currPromise);
             }
-
         });
+        Promise.all(promises)
+            .then((fcmBulkResults) => {
+                console.log(fcmBulkResults);
+                resolve(fcmBulkResults);
+            })
+            .catch((error) => {
+                console.log(error);
+            })
     });
 }
 
+// ----------------------------------------------------------------
+// function: sendMessagePromise
+// args: clientAdmin,tokens, payload, options
+// return: fcmResult.
+// this promissed is used in the Promis.all array
+// ----------------------------------------------------------------
+var sendMessagePromise = function (clientAdmin, tokens, payload, options) {
+    return new Promise(function (resolve, reject) {
+        var currPromise = clientAdmin.messaging().sendToDevice(tokens, payload, options)
+            .then(function (fcmResults) {
+                // See the MessagingDevicesResponse reference documentation for
+                // the contents of response.
+                console.log("sendPromissedPersonalizedPN: Successfully sent message:", fcmResults);
+                resolve(fcmResults);
+            })
+            .catch(function (error) {
+                console.log("sendPromissedPersonalizedPN: Error sending message:", error);
+                reject(error);
+            });
+    });
+}
 
 // ----------------------------------------------------------------
 // function: getTargetedUserBulkArray
@@ -1286,6 +1293,58 @@ var handlePNCampaignResults = function (fcmResults, campaignDoc) {
 }
 
 
+// ----------------------------------------------------------------
+// function: handlePersonalizedPNCampaignResults
+// args:fcmResults, campaignDoc
+// return: fcmResults
+// description:
+// This function should go over the results and update the
+// Campaign Doc Statistics.
+// We should update: successfull_push, failed_push, push_bulk_size, sleep_time_between_bulks
+//
+// Campaign Document Statistics Section:
+// "campaign_stats" : {
+//     "successfull_push" : -1,
+//     "failed_push" : -1,
+//     "successfull_push_retries" : -1,
+//     "failed_push_retries" : -1,
+//     "push_bulk_size" : -1,
+//     "sleep_time_between_bulks" : -1
+// }
+// ----------------------------------------------------------------
+var handlePersonalizedPNCampaignResults = function (fcmResults, campaignDoc) {
+
+    return new Promise(function (resolve, reject) {
+        var failureCount = 0;
+        var successCount = 0;
+        var totalBulkSize = 0;
+        fcmResults.forEach((fcmResult) => {
+            console.log(fcmResult);
+            console.log("fcmResults.failureCount = " + fcmResult.failureCount);
+            console.log("fcmResults.successCount = " + fcmResult.successCount);
+            var bulkSize = parseInt(fcmResult.successCount) + parseInt(fcmResult.failureCount);
+            console.log("BulkSize = " + bulkSize);
+            successCount += parseInt(fcmResult.successCount);
+            failureCount += parseInt(fcmResult.failureCount);
+            totalBulkSize += bulkSize;
+        });
+        var updateMetrics = {
+            failureCount: failureCount,
+            successCount: successCount,
+            bulkSize: totalBulkSize
+        }
+
+        console.log("updateMetrics:" + JSON.stringify(updateMetrics));
+        UpdateCampaignExecutionMetrics(campaignDoc, updateMetrics)
+            .then((doc) => {
+                resolve(doc);
+            })
+            .catch((error) => {
+
+                reject(error);
+            })
+    });
+}
 
 // ----------------------------------------------------------------
 // function: UpdateCampaignExecutionMetrics
@@ -1332,14 +1391,14 @@ var UpdateCampaignExecutionMetrics = function (campaignDoc, updateMetrics) {
                     })
                     .then(function (exisitingDoc) {
                         if (exisitingDoc == null) {
-                            cleanup(db);
+                            cleanup(dataBaseClient);
                             reject("Campaign Don't Exisit");
                         } else {
                             resolve(exisitingDoc);
                         }
                     })
                     .catch(function (errorerror) {
-                        cleanup(db);
+                        cleanup(dataBaseClient);
                         reject(error);
                     })
 
