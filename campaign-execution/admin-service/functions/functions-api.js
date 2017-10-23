@@ -7,12 +7,8 @@ var MongoClient = require('mongodb').MongoClient,
     assert = require('assert');
 const uuidV4 = require('uuid/v4');
 var url = 'mongodb://104.198.223.2:27017/mbassdb';
-//var url = 'mongodb://optadmin:451i_6n5y7V5zV@104.198.223.2/mbassdb?replicaSet=rs0&slaveOk=true';
-//var url = 'mongodb://104.198.223.2:27017,35.202.175.206:27017,146.148.105.234:27017/mbassdb?replicaSet=mbass&slaveOk=true&connectTimeoutMS=2000&socketTimeoutMS=0';
 
-//var url = 'mongodb://optadmin:451i_6n5y7V5zV@104.198.223.2:27017/?replicaSet=mbass&slaveOk=true&connectTimeoutMS=2000&socketTimeoutMS=0';
-////var url = 'mongodb://104.154.65.252:27017/mbassdb';
-//var url = 'mongodb://optadmin:451i_6n5y7V5zV@104.154.65.252:27017,104.154.65.252:27017,104.154.65.252:27017';
+//var url = 'mongodb://104.198.223.2:27017,35.202.175.206:27017,146.148.105.234:27017/mbassdb?replicaSet=mbass&slaveOk=true&connectTimeoutMS=2000&socketTimeoutMS=0';
 
 var tenantCampaignsDataCollectionNameBase = 'CampaignsData_';
 var tenantCustomersTokens = 'CustomersTokens_';
@@ -39,6 +35,7 @@ var pubsubV1 = require('@google-cloud/pubsub').v1({
 });
 
 var admin = require("firebase-admin");
+var adminClients = {};
 
 var serviceAccountSDKoController = require("../mobilesdk-master-dev-firebase-adminsdk-etwd8-bb7913dce1.json");
 var serviceAccountAppController = require("../appcontrollerproject-developer-firebase-adminsdk-xv10y-853771a0b1.json");
@@ -135,26 +132,42 @@ var cleanup = function (db) {
 //     "template_id": "int"
 //   }
 //---------------------------------------------------------------------------
-exports.execute = function (req, res) {
+exports.executeTest = function (req, res) {
 
     var err = undefined;
     var status = undefined;
     var registrationToken =
-        "fPjdTmIPGwU:APA91bHwAb2KqSlGKi548LVbZDXsjYE0b7Kt-mktgPJ4dcYxA2Qw4ORk30KnB-3zhdY5j5_OQ-ayKxRRZTplZ9wVoOIQtt0ezRH9EQZJTgVmK-I4qETvaY_ebRMDUfTzV9p2zIdMQOd7";
+        "fxLfMsBvDZo:APA91bEj5ywui1jCe3siFYnbkY_ruNJoB37ZhxwEx_qH33AHKf6TbrmNTewZ1KDVMzweQC2JwaDaOS5gvm9cDGbg477vLaTsM_ldKEgGtrQumrJGO4zVofAjlo6mhrVatees4jG9DAwh";
     var payload = {
+        // notification: {
+        //     title: "My title",
+        //     body: "My description", // <= CHANGE
+        //     sound : "default"
+        // },
         data: {
-            "uiTitle": "Unique Title",
-            "uiBody": "Your money in my wallet",
+            "title": "Unique Title",
+            "content": "Your money in my wallet",
             "dynamicLink": "https://bw4se.app.goo.gl/59IiDJZ8YaHheku83",
-            "isOptipushMessage": "true"
+            "is_optipush": "true"
         }
 
     };
     var createReq = req.body;
 
+
+    var adminTest = admin.initializeApp({
+        credential: admin.credential.cert(serviceAccountAppController),
+
+    }, "test");
+
     // Send a message to the device corresponding to the provided
     // registration token.
-    admin.messaging().sendToDevice(registrationToken, payload)
+    var options = {
+        priority: "high",
+        contentAvailable: true,
+        timeToLive: 60 * 60 * 24
+      };
+    adminTest.messaging().sendToDevice(registrationToken, payload, options)
         .then(function (response) {
             // See the MessagingDevicesResponse reference documentation for
             // the contents of response.
@@ -175,7 +188,7 @@ exports.execute = function (req, res) {
 
 
 //-----------------------------------------------------------------------------
-// functions: getCampaignData
+// functions: executeCampaign
 // args: campaign meta data
 // description:mock for the register
 // format example:
@@ -186,18 +199,6 @@ exports.execute = function (req, res) {
 //     "action_serial": "int",
 //     "template_id": "int"
 //   }
-
-// var registrationToken =
-// "fPjdTmIPGwU:APA91bHwAb2KqSlGKi548LVbZDXsjYE0b7Kt-mktgPJ4dcYxA2Qw4ORk30KnB-3zhdY5j5_OQ-ayKxRRZTplZ9wVoOIQtt0ezRH9EQZJTgVmK-I4qETvaY_ebRMDUfTzV9p2zIdMQOd7";
-// var payload = {
-// data: {
-//     "uiTitle": "Unique Title",
-//     "uiBody": "Your money in my wallet",
-//     "dynamicLink": "https://bw4se.app.goo.gl/59IiDJZ8YaHheku83",
-//     "isOptipushMessage": "true"
-// }
-
-// };
 // //---------------------------------------------------------------------------
 exports.executeCampaign = function (req, res) {
 
@@ -213,7 +214,7 @@ exports.executeCampaign = function (req, res) {
             getFirebaseClientAdmin(campaignDoc)
                 .then((clientAdmin) => {
 
-                    var topicName = campaignDoc.data_queue_name;
+                    var topicName = campaignDoc.data_queue_name;;
                     var subscriptionName = "sub_" + topicName;
                     createCampaignSubscriber(topicName, subscriptionName)
                         .then(() => { // new we can get the data of the Users and extract it.
@@ -287,6 +288,7 @@ exports.executeCampaign = function (req, res) {
 
 
 
+
 // ----------------------------------------------------------------------------
 // ----------------------------------------------------------------
 // function: getScheduledCampaign
@@ -335,12 +337,40 @@ var getScheduledCampaign = function (createReq, deltaFromNow) {
 
 
 // ----------------------------------------------------------------
-// ----------------------------------------------------------------
 // function: handleCampaignExecution
 // args: campaignDoc, clientAdmin
 // return: response dataPayload.
 // ----------------------------------------------------------------
-var handleCampaignExecution = function (campaignDoc,clientAdmin) {
+var handleCampaignExecution = function (campaignDoc, clientAdmin) {
+
+    return new Promise(function (resolve, reject) {
+        if (campaignDoc.personalized == false) {
+            handleNonPersonalizedCampaignExecution(campaignDoc, clientAdmin)
+                .then((result) => {
+                    resolve(result);
+                })
+                .catch((error) => {
+                    reject(error);
+                })
+        } else if (campaignDoc.personalized == true) {
+            handlePersonalizedCampaignExecution(campaignDoc, clientAdmin)
+                .then((result) => {
+                    resolve(result);
+                })
+                .catch((error) => {
+                    reject(error);
+                })
+        }
+
+    })
+}
+
+// ----------------------------------------------------------------
+// function: handleNonPersonalizedCampaignExecution
+// args: campaignDoc, clientAdmin
+// return: response dataPayload.
+// ----------------------------------------------------------------
+var handleNonPersonalizedCampaignExecution = function (campaignDoc, clientAdmin) {
 
     return new Promise(function (resolve, reject) {
 
@@ -365,7 +395,7 @@ var handleCampaignExecution = function (campaignDoc,clientAdmin) {
                         console.log("message: targetedUserDataArray Length = " + targetedUserDataArray.length);
                         getUsersTokens(campaignDoc, users_ids)
                             .then((registartion_ids) => {
-                                sendPromissedPN(registartion_ids, campaignPayload, clientAdmin)
+                                sendPromissedPN(registartion_ids, campaignPayload, clientAdmin, campaignDoc.time_to_live)
                                     .then((fcmResults) => {
                                         handlePNCampaignResults(fcmResults, campaignDoc)
                                             .then((updatedDoc) => {
@@ -412,6 +442,155 @@ var handleCampaignExecution = function (campaignDoc,clientAdmin) {
 }
 
 
+// ----------------------------------------------------------------
+// function: handlePersonalizedCampaignExecution
+// args: campaignDoc, clientAdmin
+// return: response dataPayload.
+// ----------------------------------------------------------------
+var handleNonPersonalizedCampaignExecution = function (campaignDoc, clientAdmin) {
+
+    return new Promise(function (resolve, reject) {
+
+        var topicName = campaignDoc.data_queue_name;
+        var subscription = "sub_" + topicName;
+        getTargetedUserBulkArray(projectId, subscription, 10)
+            .then(function (responses) {
+                if (responses.receivedMessages.length > 0) {
+                    var registartion_ids = [];
+                    var users_ids = [];
+                    var campaignPayload = buildNonPerolalizedCampaignPayload(campaignDoc);
+                    responses.receivedMessages.forEach(function (response) {
+                        console.log("attributes.description = " + response.message.attributes.description);
+                        console.log("messageId = " + response.message.messageId);
+                        console.log("byteLength = " + response.message.data.byteLength);
+                        var message = Buffer.from(response.message.data, 'base64').toString();
+                        var targetedUserDataArray = JSON.parse(message);
+                        targetedUserDataArray.forEach(function (targetedUser) {
+                            users_ids.push(targetedUser.Id);
+                        });
+
+                        console.log("message: targetedUserDataArray Length = " + targetedUserDataArray.length);
+                        getUsersTokens(campaignDoc, users_ids)
+                            .then((registartion_ids) => {
+                                sendPromissedPN(registartion_ids, campaignPayload, clientAdmin)
+                                    .then((fcmResults) => {
+                                        handlePNCampaignResults(fcmResults, campaignDoc)
+                                            .then((updatedDoc) => {
+                                                var resultedExecution = {
+                                                    doc: updatedDoc.value,
+                                                    numOfUsersMessages: responses.receivedMessages.length
+                                                };
+                                                resolve(resultedExecution);
+                                            })
+                                            .catch((error) => {
+                                                console.log("handlePNCampaignResults: Failed errorResponse = " + error);
+                                                reject(error);
+                                            })
+
+                                    })
+                                    .catch((error) => {
+                                        console.log("sendPromissedPN: Failed errorResponse = " + error);
+                                        reject(errorResponse);
+                                    })
+                            })
+                            .catch((error) => {
+                                reject(error);
+                            })
+
+
+                    })
+                } else {
+                    var resultedExecution = {
+                        doc: updatedDoc,
+                        numOfUsersMessages: responses.receivedMessages.length
+                    };
+                    resolve(resultedExecution);
+                }
+
+
+            })
+            .catch((error) => {
+                console.log("handleCampaignExecution: failed:-" + error);
+                reject(error);
+            });
+
+    })
+
+}
+
+
+// ----------------------------------------------------------------
+// ----------------------------------------------------------------
+// function: handlePersonalizedCampaignExecution
+// args: campaignDoc, clientAdmin
+// return: response dataPayload.
+// ----------------------------------------------------------------
+var handlePersonalizedCampaignExecution = function (campaignDoc, clientAdmin) {
+
+    return new Promise(function (resolve, reject) {
+
+        var topicName = campaignDoc.data_queue_name;
+        var subscription = "sub_" + topicName;
+        getTargetedUserBulkArray(projectId, subscription, 10)
+            .then(function (responses) {
+                if (responses.receivedMessages.length > 0) {
+                    var registartion_ids = [];
+                    var usersPersonaizedPayload = {};
+                    responses.receivedMessages.forEach(function (response) {
+                        console.log("attributes.description = " + response.message.attributes.description);
+                        console.log("messageId = " + response.message.messageId);
+                        console.log("byteLength = " + response.message.data.byteLength);
+                        var message = Buffer.from(response.message.data, 'base64').toString();
+                        var targetedUserDataArray = JSON.parse(message);
+                        targetedUserDataArray.forEach(function (targetedUser) {
+                            var campaignPayload = buildPersonalizedCampaignPayload(campaignDoc);
+                            var data = createPersonalizedPayload(campaignPayload, targetedUser);
+                            usersPersonaizedPayload[targetedUser.Id] = data;
+                        });
+                        console.log("handlePersonalizedCampaignExecution: message: targetedUserDataArray Length = " + targetedUserDataArray.length);
+                        getUsersTokensForPersonalizedCampaign(campaignDoc, usersPersonaizedPayload)
+                            .then((usersPersonaizedPayload) => {
+                                sendPromissedPersonalizedPN(usersPersonaizedPayload, clientAdmin, campaignDoc.time_to_live)
+                                    .then((fcmResults) => {
+                                        handlePNCampaignResults(fcmResults, campaignDoc)
+                                            .then((updatedDoc) => {
+                                                var resultedExecution = {
+                                                    doc: updatedDoc.value,
+                                                    numOfUsersMessages: responses.receivedMessages.length
+                                                };
+                                                resolve(resultedExecution);
+                                            })
+                                            .catch((error) => {
+                                                console.log("handlePersonalizedCampaignExecution: Failed errorResponse = " + error);
+                                                reject(error);
+                                            })
+                                    })
+                                    .catch((error) => {
+                                        console.log("handlePersonalizedCampaignExecution:: Failed errorResponse = " + error);
+                                        reject(error);
+                                    })
+                            })
+                            .catch((error) => {
+                                console.log("handlePersonalizedCampaignExecution:: Failed errorResponse = " + errorResponse);
+                                reject(error);
+                            })
+                    })
+                } else {
+                    var resultedExecution = {
+                        doc: updatedDoc,
+                        numOfUsersMessages: responses.receivedMessages.length
+                    };
+                    resolve(resultedExecution);
+                }
+
+
+            })
+            .catch((error) => {
+                console.log("handleCampaignExecution: failed:-" + error);
+                reject(error);
+            });
+    })
+}
 
 // ----------------------------------------------------------------
 // function: buildNonPerolalizedCampaignPayload
@@ -431,7 +610,84 @@ var buildNonPerolalizedCampaignPayload = function (campaignDoc) {
     return campaignPayload;
 }
 
-// ----------------------------------------------------------------------------
+
+// ----------------------------------------------------------------
+// function: buildPersonalizedCampaignPayload
+// args: exisitingCampaignDoc
+// return: response dataPayload.
+// ----------------------------------------------------------------
+var buildPersonalizedCampaignPayload = function (campaignDoc) {
+    var campaignPayload = undefined;
+    try {
+
+        campaignPayload = initPersonalizedrDataPayload(campaignDoc);
+    } catch (error) {
+        console.log("initPersonalizedrDataPayload Failed" + error);
+    }
+
+
+    return campaignPayload;
+}
+
+// ----------------------------------------------------------------
+// function: initPersonalizedrDataPayload
+// args: exisitingCampaignDoc
+// return: response dataPayload.
+// ----------------------------------------------------------------
+// ----------------------------------------------------------------
+//
+//         "data": {
+//             "title": "Notification Title", // personalized
+//             "content": "Notification Body",// personalized
+//             "dynamic_links": {
+//                 "android": {
+//                     "apns1": "dynamic.link.url",
+//                     "apns2": "dynamic.link.url",
+//                     "apns3": "dynamic.link.url"
+//                 },
+//                 "ios": {
+//                     "apns1": "dynamic.link.url",
+//                     "apns2": "dynamic.link.url",
+//                     "apns3": "dynamic.link.url"
+//                 }
+//             },
+//             "campaign_id": undefined,
+//             "action_serial": undefined,
+//             "template_id": undefined,
+//             "engagement_id": undefined,
+//             "is_optipush": true,
+//              "campaign_type" : 1/2 // Customer/Visitor
+//         },
+//         "priority": "high",
+//         "content_available": true,
+//         "registration_ids": [/*...*/]
+// ------------------------------------------------------------------
+var initPersonalizedrDataPayload = function (exisitingCampaignDoc) {
+
+    var dataPayload = {};
+    dataPayload.data = {};
+    dataPayload.data.campaign_id = exisitingCampaignDoc.campaign_id.toString();
+    dataPayload.data.action_serial = exisitingCampaignDoc.action_serial.toString();
+    dataPayload.data.template_id = exisitingCampaignDoc.template_id.toString();
+    dataPayload.data.engagement_id = exisitingCampaignDoc.engagement_id.toString();
+    dataPayload.data.is_optipush = "true";
+
+    // Template Content
+    dataPayload.data.title = exisitingCampaignDoc.template_data.title.toString();
+    dataPayload.data.content = exisitingCampaignDoc.template_data.content.toString();
+    dataPayload.data.dynamic_links = exisitingCampaignDoc.dynamic_links.toString();
+
+    if (exisitingCampaignDoc.audience == 1) { // 1 = Customers, 2 = Visitors
+
+        dataPayload.data.campaign_type = "1"; // Customers
+    } else {
+        dataPayload.data.campaign_type = "2"; // Visitors
+
+    }
+    return dataPayload;
+}
+
+
 // ----------------------------------------------------------------
 // function: initNonPersonalizedrDataPayload
 // args: exisitingCampaignDoc
@@ -516,9 +772,14 @@ var getDocId = function (createReq) {
 // args: registrationTokens, payload
 // Return: response/error
 //-----------------------------------------------------------------------------
-var sendPromissedPN = function (registrationTokens, payload, clientAdmin) {
+var sendPromissedPN = function (registrationTokens, payload, clientAdmin, time_to_live) {
     return new Promise(function (resolve, reject) {
 
+        var options = {
+            priority: "high",
+            contentAvailable: true,
+            timeToLive: time_to_live
+          };
         clientAdmin.messaging().sendToDevice(registrationTokens, payload)
             .then(function (fcmResults) {
                 // See the MessagingDevicesResponse reference documentation for
@@ -531,6 +792,50 @@ var sendPromissedPN = function (registrationTokens, payload, clientAdmin) {
                 reject(errorResponse);
             });
 
+    });
+}
+
+// ----------------------------------------------------------------
+// function: sendPromissedPersonalizedPN
+// return: respons Array.
+// ----------------------------------------------------------------
+var sendPromissedPersonalizedPN = function (usersPersonaizedPayload, clientAdmin, time_to_live) {
+    return new Promise(function (resolve, reject) {
+        var options = {
+            priority: "high",
+            contentAvailable: true,
+            timeToLive: time_to_live
+          };
+        var failedCounter = 0;
+        var fcmBulkResults = [];
+        var userss_ids = Object.keys(usersPersonaizedPayload);
+        userss_ids.forEach((userId) => {
+            var userData = usersPersonaizedPayload[userId];
+            if (userData.tokens != undefined) {
+                clientAdmin.messaging().sendToDevice(userData.tokens, userData.payload, options)
+                    .then(function (fcmResults) {
+                        fcmBulkResults.push({
+                            fcmResults,
+                            userData
+                        });
+                        // See the MessagingDevicesResponse reference documentation for
+                        // the contents of response.
+                        console.log("sendPromissedPersonalizedPN: Successfully sent message:", fcmResults);
+                        resolve(fcmResults);
+                    })
+                    .catch(function (errorResponse) {
+                        failedCounter++;
+                        console.log("sendPromissedPersonalizedPN: Error sending message:", errorResponse);
+                        console.log("sendPromissedPersonalizedPN: Error failedCounter = ", errorRfailedCounteresponse);
+                        if (failedCounter > 20) {
+
+                            reject(errorResponse);
+                        }
+
+                    });
+            }
+
+        });
     });
 }
 
@@ -605,6 +910,43 @@ var createCampaignSubscriber = function (topicName, subscriptionName) {
 
 
 // ----------------------------------------------------------------
+// function: getUsersTokensForPersonalizedCampaign
+// args:campaignDoc, usersPersonaizedPayload
+// return: respons registration_ids for the PN along with the appropriate personalized payload.
+// We first check if subscription exist if not we failed and then we create it.
+// Process:
+// we need to go to the appropriate users Database (Visitors/Customers).
+// And find by the ID's the different Users Document.
+// Go uver the Document and in the Targeted apps (in the devices) get the appropriate tokens.
+// ----------------------------------------------------------------
+var getUsersTokensForPersonalizedCampaign = function (campaignDoc, usersPersonaizedPayload) {
+    return new Promise(function (resolve, reject) {
+        var usres_id = Object.keys(usersPersonaizedPayload);
+        if (usres_id.length == 0) {
+            console.log("getUsersTokensForPersonalizedCampaign: supplied usersPersonaizedPayload is empty");
+            reject(false);
+        } else {
+            if (campaignDoc.audience == 1) { // Cutomers
+
+                getCustomersPersonalizedCampaignTokens(campaignDoc, usersPersonaizedPayload)
+                    .then((usersPersonaizedPayload) => {
+                        resolve(usersPersonaizedPayload);
+                    })
+                    .catch((error) => {
+                        reject(error);
+                    })
+
+            } else if (campaignDoc.audience == 2) { // Visitors
+
+            }
+
+        }
+
+    });
+}
+
+
+// ----------------------------------------------------------------
 // function: getUsersTokens
 // args:campaignDoc, users_ids
 // return: respons registration_ids for the PN.
@@ -638,6 +980,52 @@ var getUsersTokens = function (campaignDoc, users_ids) {
     });
 }
 
+// ----------------------------------------------------------------
+// function: getCustomersPersonalizedCampaignTokens
+// args:campaignDoc, usersPersonaizedPayload
+// return: respons registration_ids for the Customers PN Campaign.
+// We first check if subscription exist if not we failed and then we create it.
+// Process:
+// we need to go to the appropriate users Database (Visitors/Customers).
+// And find by the ID's the different Users Document.
+// Go over the Document and in the Targeted apps (in the devices) get the appropriate tokens.
+// ----------------------------------------------------------------
+var getCustomersPersonalizedCampaignTokens = function (campaignDoc, usersPersonaizedPayload) {
+    return new Promise(function (resolve, reject) {
+        var usersCollectionName = undefined;
+        var registration_ids_tokens = undefined;
+        usersCollectionName = tenantCustomersTokens + campaignDoc.tenant_id;
+        var prefixDocId = "tid-" + campaignDoc.tenant_id + "-pcid-";
+        var users_ids = Object.keys(usersPersonaizedPayload);
+        var documentsIds = getDocumentsIdsByUsersIds(prefixDocId, users_ids, campaignDoc.audience);
+        if (dataBaseClient != undefined) {
+            try {
+                var usersCollection = dataBaseClient.collection(usersCollectionName);
+                getUsersBatchDocument(documentsIds, usersCollection)
+                    .then((result) => {
+                        console.log(result.status);
+                        if (result.status == 1 && result.data.length > 0) {
+                            usersPersonaizedPayload = getTokensFromCustomerDocForPersonalizedCampaign(campaignDoc, result.data, usersPersonaizedPayload)
+                            resolve(usersPersonaizedPayload);
+                        }
+                    })
+                    .catch((error) => {
+                        console.log("getCustomersCampaignTokens: error " + error);
+                        reject(error);
+                    })
+
+            } catch (error) {
+                console.log(error);
+                reject(error);
+            }
+
+        } else {
+            var error = "dataBaseClient is not defined";
+            console.log(error);
+            reject(error);
+        }
+    });
+}
 
 // ----------------------------------------------------------------
 // function: getCustomersCampaignTokens
@@ -729,6 +1117,56 @@ var getUsersBatchDocument = function (documentsIds, usersCollection) {
         });
     });
 
+}
+
+// ----------------------------------------------------------------
+// function: getTokensFromCustomerDocForPersonalizedCampaign
+// args:campaignDoc, customersDocs, usersPersonaizedPayload
+// return: the Tokens from the Customer Documents
+// We add all the relevant Tokensof a user to the array
+// ----------------------------------------------------------------
+var getTokensFromCustomerDocForPersonalizedCampaign = function (campaignDoc, customersDocs, usersPersonaizedPayload) {
+    var targetedAndroidApps = undefined;
+    var targetedIOSApps = undefined;
+    var registration_id_tokens = [];
+    if (campaignDoc.apps != undefined) {
+        if (campaignDoc.apps.android != undefined) {
+            targetedAndroidApps = campaignDoc.apps.android;
+        }
+        if (campaignDoc.apps.ios != undefined) {
+            targetedIOSApps = campaignDoc.apps.ios;
+        }
+    }
+
+    customersDocs.forEach((doc) => {
+        var id = doc.public_customer_id;
+        var userData = usersPersonaizedPayload[id];
+
+        if (doc.opt_in == true) { // other wise we will not use tokens from this usersDocument
+            if (targetedAndroidApps != undefined && doc.android_tokens != undefined) {
+                if (userData.tokens == undefined) {
+                    userData.tokens = [];
+                }
+                // we check that there are apps targeted and that ther are exist in the current doc
+                var devices = doc.android_tokens; // get the devices
+                var targetedAppsObj = targetedAndroidApps; // the Android Targeted Apps by the Campaign
+                userData.tokens = updateTokensArrayWithDevicesTokens(targetedAppsObj, devices, userData.tokens);
+            }
+
+            if (targetedIOSApps != undefined && doc.ios_tokens != undefined) {
+                if (userData.tokens == undefined) {
+                    userData.tokens = [];
+                }
+                // we check that there are apps targeted and that ther are exist in the current doc
+                var devices = doc.ios_tokens; // get the devices
+                var targetedAppsObj = targetedAndroidApps; // the Android Targeted Apps by the Campaign
+                userData.tokens = updateTokensArrayWithDevicesTokens(targetedAppsObj, devices, userData.tokens);
+            }
+        }
+
+    })
+
+    return usersPersonaizedPayload;
 }
 
 
@@ -925,31 +1363,92 @@ var UpdateCampaignExecutionMetrics = function (campaignDoc, updateMetrics) {
 // ----------------------------------------------------------------
 var getFirebaseClientAdmin = function (campaignDoc) {
     return new Promise(function (resolve, reject) {
-        var rtRefName = "tenant-" + campaignDoc.tenant_id;
-        var ref = rtDB.ref(rtRefName);
-        var clientAdmin = undefined;
-        // Attach an asynchronous callback to read the data at our posts reference
-        ref.on("value", function (snapshot) {
-            var cred = snapshot.val();
-            clientAdmin = admin.initializeApp({
-                credential: admin.credential.cert(cred),
 
-            }, rtRefName);
+        try {
+            var rtRefName = "tenant-" + campaignDoc.tenant_id;
+
+            var clientAdmin = undefined;
+            clientAdmin = adminClients[rtRefName];
             if (clientAdmin != undefined) {
-                resolve(clientAdmin)
+                resolve(clientAdmin);
             } else {
-                reject("cannot create client admin for " + rtRefName);
+                var ref = rtDB.ref(rtRefName);
+                // Attach an asynchronous callback to read the data at our posts reference
+                ref.on("value", function (snapshot) {
+                    var cred = snapshot.val();
+                    clientAdmin = admin.initializeApp({
+                        credential: admin.credential.cert(cred),
+
+                    }, rtRefName);
+                    if (clientAdmin != undefined) {
+                        adminClients[rtRefName] = clientAdmin;
+                        resolve(clientAdmin);
+                    } else {
+                        reject("getFirebaseClientAdmin: cannot create client admin for " + rtRefName);
+                    }
+
+
+                }, function (errorObject) {
+                    console.log("getFirebaseClientAdmin: The from RealTime DB failed: rtRefName= " + rtRefName + "error obj:  " + errorObject.code);
+                    reject(errorObject);
+                });
             }
-
-
-        }, function (errorObject) {
-            console.log("The from RealTime DB failed: rtRefName= " + rtRefName + "error obj:  " + errorObject.code);
-            reject(errorObject);
-        });
+        } catch (error) {
+            console.log("getFirebaseClientAdmin: The from RealTime DB failed: rtRefName= " + rtRefName + "error obj:  " + error);
+            reject(error);
+        }
 
     });
 
 }
+
+// ----------------------------------------------------------------
+// function: createPersonalizedPayload
+// args: campaignPayload, targetedUser
+// return: response object.
+// ----------------------------------------------------------------
+var clonePayload = function (campaignPayload) {
+
+    var clone = {};
+
+    return clone;
+}
+
+// ----------------------------------------------------------------
+// function: createPersonalizedPayload
+// args: campaignPayload, targetedUser
+// return: response object.
+// ----------------------------------------------------------------
+var createPersonalizedPayload = function (campaignPayload, targetedUser) {
+
+    var userId = targetedUser.Id;
+
+    if (targetedUser.PersonalizeValues != undefined) {
+
+        var personalizedKeys = Object.keys(targetedUser.PersonalizeValues);
+        personalizedKeys.forEach(function (personalKey) {
+            var value = targetedUser.PersonalizeValues[personalKey];
+            var regpersonalKey = personalKey.replace("[%", "(\\[%"); //add left brackets (\[%
+            regpersonalKey = regpersonalKey.replace("%]", "%\\])"); //add right brackets %\])
+            var reg = new RegExp(regpersonalKey, "g"); //  /(\[%FIRST_NAME%\])+/g;
+
+            campaignPayload.data.title = campaignPayload.data.title.replace(reg, value);
+            campaignPayload.data.content = campaignPayload.data.content.replace(reg, value)
+        });
+
+        console.log("personalizedTitla =" + campaignPayload.data.title);
+        console.log("personalizedContent =" + campaignPayload.data.content);
+    }
+
+    var data = {
+        tokens: undefined,
+        payload: campaignPayload
+    };
+
+    return data;
+}
+
+
 // ----------------------------------------------------------------
 // function: createResponse
 // args: campaignDoc, updateMetrics, status, error

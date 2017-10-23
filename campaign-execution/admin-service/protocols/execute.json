@@ -56,3 +56,27 @@ http://localhost:3001/executeCampaign \
     \"engagement_id\": 12346666
 }
 "
+
+
+
+curl --header "Content-Type: application/json" \
+http://localhost:3001/executeCampaign \
+-d "{
+    \"command_name\": \"execute\",
+    \"tenant_id\": 85,
+    \"campaign_id\": 86,
+    \"action_serial\": 85,
+    \"template_id\": 88,
+    \"engagement_id\": 1234
+}"
+
+curl --header "Content-Type: application/json" \
+http://localhost:3001/executeTest \
+-d "{
+    \"command_name\": \"execute\",
+    \"tenant_id\": 85,
+    \"campaign_id\": 86,
+    \"action_serial\": 85,
+    \"template_id\": 88,
+    \"engagement_id\": 1234
+}"

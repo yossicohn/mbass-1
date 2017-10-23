@@ -6,8 +6,8 @@ module.exports = function(app) {
 
 
     //  Routes
-    // app.route('/executeTest')
-    //     .post(functions_api.executeTest);
+    app.route('/executeTest')
+        .post(functions_api.executeTest);
 
     //  Routes
     // app.route('/executePersonalizedCampaign')
