@@ -217,7 +217,8 @@ exports.executeCampaign = function (req, res) {
                         priority: "high",
                         contentAvailable: true,
                         timeToLive: campaignDoc.time_to_live,
-                        dryRun: createReq.dryRun
+                        dryRun: createReq.dryRun,
+                        collapseKey: campaignDoc._id
                     };
                     var topicName = campaignDoc.data_queue_name;;
                     var subscriptionName = "sub_" + topicName;
@@ -1281,6 +1282,7 @@ var handlePNCampaignResults = function (fcmResults, campaignDoc) {
             successCount: fcmResults.successCount,
             bulkSize: bulkSize
         }
+        console.log("updateMetrics:" + JSON.stringify(updateMetrics));
         UpdateCampaignExecutionMetrics(campaignDoc, updateMetrics)
             .then((doc) => {
                 resolve(doc);
