@@ -39,13 +39,15 @@ var adminClients = {};
 
 var serviceAccountSDKoController = require("../mobilesdk-master-dev-firebase-adminsdk-etwd8-bb7913dce1.json");
 var serviceAccountAppController = require("../appcontrollerproject-developer-firebase-adminsdk-xv10y-853771a0b1.json");
+
 admin.initializeApp({
     credential: admin.credential.cert(serviceAccountSDKoController),
     databaseURL: "https://mobilesdk-master-dev.firebaseio.com",
 
 });
-var rtDB = admin.database();
 
+
+var rtDB = admin.database();
 
 /**
  * Report an error to StackDriver Error Reporting. Writes the minimum data
@@ -1426,10 +1428,10 @@ var getFirebaseClientAdmin = function (campaignDoc) {
     return new Promise(function (resolve, reject) {
 
         try {
-            var rtRefName = "tenant-" + campaignDoc.tenant_id;
-
+            var rtRefName = "tenants-data/tenant-" + campaignDoc.tenant_id;
+            var clientName = "tenant-" + campaignDoc.tenant_id;
             var clientAdmin = undefined;
-            clientAdmin = adminClients[rtRefName];
+            clientAdmin = adminClients[clientName];
             if (clientAdmin != undefined) {
                 resolve(clientAdmin);
             } else {
@@ -1442,7 +1444,7 @@ var getFirebaseClientAdmin = function (campaignDoc) {
 
                     }, rtRefName);
                     if (clientAdmin != undefined) {
-                        adminClients[rtRefName] = clientAdmin;
+                        adminClients[clientName] = clientAdmin;
                         resolve(clientAdmin);
                     } else {
                         reject("getFirebaseClientAdmin: cannot create client admin for " + rtRefName);
