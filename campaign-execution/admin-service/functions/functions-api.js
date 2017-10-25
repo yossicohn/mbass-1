@@ -7,7 +7,7 @@ var MongoClient = require('mongodb').MongoClient,
     assert = require('assert');
 const uuidV4 = require('uuid/v4');
 var url = 'mongodb://104.198.223.2:27017/mbassdb';
-
+var dbRef = undefined;
 //var url = 'mongodb://104.198.223.2:27017,35.202.175.206:27017,146.148.105.234:27017/mbassdb?replicaSet=mbass&slaveOk=true&connectTimeoutMS=2000&socketTimeoutMS=0';
 
 var tenantCampaignsDataCollectionNameBase = 'CampaignsData_';
@@ -247,6 +247,22 @@ var getScheduledCampaign = function (createReq, deltaFromNow) {
 }
 
 
+var processNonPersonalizedCampaignExecution = function (db, campaignDoc, clientAdmin, options) {
+    return new Promise(function (resolve, reject) {
+
+        handleNonPersonalizedCampaignExecutionPromised(db, campaignDoc, clientAdmin, options)
+            .then((result) => {
+                //console.log(result);
+                resolve(result);
+            })
+            .catch((error) => {
+                reject(error);
+            });
+    });
+}
+
+
+
 // ----------------------------------------------------------------
 // function: handleCampaignExecution
 // args: db, campaignDoc, clientAdmin, options
@@ -255,28 +271,42 @@ var getScheduledCampaign = function (createReq, deltaFromNow) {
 var handleCampaignExecution = function (db, campaignDoc, clientAdmin, options) {
 
     return new Promise(function (resolve, reject) {
-        var shouldLoop = true;
-        while (shouldLoop) {
-            sleep.sleep(2);
+        var promises = [];
+        var i = 0;
+        for (i = 0; i < 10; i++) {
+            console.log("count=" + i);
+
             if (campaignDoc.personalized == false) {
-                handleNonPersonalizedCampaignExecutionPromised(db, campaignDoc, clientAdmin, options)
-                    .then((result) => {
-                        shouldLoop = result.shouldLoop;
-                        resolve(result);
-                    })
-                    .catch((error) => {
-                        reject(error);
-                    })
+                var currPromis = processNonPersonalizedCampaignExecution(db, campaignDoc, clientAdmin, options);
+                promises.push(currPromis);
+                // handleNonPersonalizedCampaignExecutionPromised(db, campaignDoc, clientAdmin, options)
+                //     .then((result) => {
+                //         console.log(result);
+                //         resolve(result);
+                //     })
+                //     .catch((error) => {
+                //         reject(error);
+                //     });
+
             } else if (campaignDoc.personalized == true) {
                 handlePersonalizedCampaignExecution(db, campaignDoc, clientAdmin, options)
                     .then((result) => {
-                        shouldLoop = result.shouldLoop;
                         resolve(result);
                     })
                     .catch((error) => {
                         reject(error);
                     })
             }
+
+            Promise.all(promises)
+                .then((results) => {
+                    //  console.log(results);
+                    resolve(results);
+                })
+                .catch((error) => {
+                    //console.log(error);
+                    reject(error);
+                })
         }
 
     })
@@ -293,7 +323,7 @@ var handleNonPersonalizedCampaignExecutionPromised = function (db, campaignDoc, 
 
         var topicName = campaignDoc.data_queue_name;
         var subscription = "sub_" + topicName;
-        getTargetedUserBulkArray(projectId, subscription, 10)
+        getTargetedUserBulkArray(projectId, subscription, 2)
             .then(function (responses) {
                 if (responses.receivedMessages.length > 0) {
                     var registartion_ids = [];
@@ -371,7 +401,8 @@ var handleNonPersonalizedCampaignExecutionPromised = function (db, campaignDoc, 
         var topicName = campaignDoc.data_queue_name;
         var subscription = "sub_" + topicName;
         getTargetedUserBulkArray(projectId, subscription, 10)
-            .then(function (responses) {
+            .then(function (results) {
+                var responses = results.response;
                 if (responses.receivedMessages.length > 0) {
                     var registartion_ids = [];
                     var users_ids = [];
@@ -418,7 +449,7 @@ var handleNonPersonalizedCampaignExecutionPromised = function (db, campaignDoc, 
                     })
                 } else {
                     var resultedExecution = {
-                        doc: updatedDoc,
+                        doc: campaignDoc,
                         numOfUsersMessages: responses.receivedMessages.length
                     };
                     resolve(resultedExecution);
@@ -444,71 +475,71 @@ var handleNonPersonalizedCampaignExecutionPromised = function (db, campaignDoc, 
 // return: response dataPayload.
 // ----------------------------------------------------------------
 var handleNonPersonalizedCampaignExecution = function (db, campaignDoc, clientAdmin) {
-    
-            var topicName = campaignDoc.data_queue_name;
-            var subscription = "sub_" + topicName;
-            getTargetedUserBulkArray(projectId, subscription, 10)
-                .then(function (responses) {
-                    if (responses.receivedMessages.length > 0) {
-                        var registartion_ids = [];
-                        var users_ids = [];
-                        var campaignPayload = buildNonPerolalizedCampaignPayload(campaignDoc);
-                        responses.receivedMessages.forEach(function (response) {
-                            console.log("attributes.description = " + response.message.attributes.description);
-                            console.log("messageId = " + response.message.messageId);
-                            console.log("byteLength = " + response.message.data.byteLength);
-                            var message = Buffer.from(response.message.data, 'base64').toString();
-                            var targetedUserDataArray = JSON.parse(message);
-                            targetedUserDataArray.forEach(function (targetedUser) {
-                                users_ids.push(targetedUser.Id);
-                            });
-    
-                            console.log("message: targetedUserDataArray Length = " + targetedUserDataArray.length);
-                            getUsersTokens(db, campaignDoc, users_ids)
-                                .then((registartion_ids) => {
-                                    sendPromissedPN(registartion_ids, campaignPayload, clientAdmin)
-                                        .then((fcmResults) => {
-                                            handlePNCampaignResults(db, fcmResults, campaignDoc)
-                                                .then((updatedDoc) => {
-                                                    var resultedExecution = {
-                                                        doc: updatedDoc.value,
-                                                        numOfUsersMessages: responses.receivedMessages.length
-                                                    };
-                                                    resolve(resultedExecution);
-                                                })
-                                                .catch((error) => {
-                                                    console.log("handlePNCampaignResults: Failed errorResponse = " + error);
-                                                    reject(error);
-                                                })
-    
+
+    var topicName = campaignDoc.data_queue_name;
+    var subscription = "sub_" + topicName;
+    getTargetedUserBulkArray(projectId, subscription, 10)
+        .then(function (responses) {
+            if (responses.receivedMessages.length > 0) {
+                var registartion_ids = [];
+                var users_ids = [];
+                var campaignPayload = buildNonPerolalizedCampaignPayload(campaignDoc);
+                responses.receivedMessages.forEach(function (response) {
+                    console.log("attributes.description = " + response.message.attributes.description);
+                    console.log("messageId = " + response.message.messageId);
+                    console.log("byteLength = " + response.message.data.byteLength);
+                    var message = Buffer.from(response.message.data, 'base64').toString();
+                    var targetedUserDataArray = JSON.parse(message);
+                    targetedUserDataArray.forEach(function (targetedUser) {
+                        users_ids.push(targetedUser.Id);
+                    });
+
+                    console.log("message: targetedUserDataArray Length = " + targetedUserDataArray.length);
+                    getUsersTokens(db, campaignDoc, users_ids)
+                        .then((registartion_ids) => {
+                            sendPromissedPN(registartion_ids, campaignPayload, clientAdmin)
+                                .then((fcmResults) => {
+                                    handlePNCampaignResults(db, fcmResults, campaignDoc)
+                                        .then((updatedDoc) => {
+                                            var resultedExecution = {
+                                                doc: updatedDoc.value,
+                                                numOfUsersMessages: responses.receivedMessages.length
+                                            };
+                                            resolve(resultedExecution);
                                         })
                                         .catch((error) => {
-                                            console.log("sendPromissedPN: Failed errorResponse = " + error);
-                                            reject(errorResponse);
+                                            console.log("handlePNCampaignResults: Failed errorResponse = " + error);
+                                            reject(error);
                                         })
+
                                 })
                                 .catch((error) => {
-                                    reject(error);
+                                    console.log("sendPromissedPN: Failed errorResponse = " + error);
+                                    reject(errorResponse);
                                 })
-    
-    
                         })
-                    } else {
-                        var resultedExecution = {
-                            doc: updatedDoc,
-                            numOfUsersMessages: responses.receivedMessages.length
-                        };
-                        resolve(resultedExecution);
-                    }
-    
-    
+                        .catch((error) => {
+                            reject(error);
+                        })
+
+
                 })
-                .catch((error) => {
-                    console.log("handleCampaignExecution: failed:-" + error);
-                    reject(error);
-                });
-    
-    }
+            } else {
+                var resultedExecution = {
+                    doc: updatedDoc,
+                    numOfUsersMessages: responses.receivedMessages.length
+                };
+                resolve(resultedExecution);
+            }
+
+
+        })
+        .catch((error) => {
+            console.log("handleCampaignExecution: failed:-" + error);
+            reject(error);
+        });
+
+}
 
 // ----------------------------------------------------------------
 // ----------------------------------------------------------------
@@ -1638,18 +1669,22 @@ var startExecuteCampaign = function (db, campaignDoc, subscription, clientAdmin,
     return new Promise(function (resolve, reject) {
         console.log("startExecuteCampaign: Call  handleCampaignExecution : subscriptionName = " + subscription.name);
         handleCampaignExecution(db, campaignDoc, clientAdmin, options)
-            .then((resultedExecution) => {
-                console.log("startExecuteCampaign: Succeeded Campaign Id = " + resultedExecution.doc._id)
-                console.log("startExecuteCampaign: Update  numOfUsersMessages = " + resultedExecution.numOfUsersMessages)
+            .then((resultedExecutionArray) => {
+
                 var updateMetrics = {
-                    failurupdateMetricseCount: resultedExecution.doc.campaign_stats.successfull_push,
-                    successCount: resultedExecution.doc.campaign_stats.failed_push,
-                    bulkSize: resultedExecution.doc.campaign_stats.push_bulk_size
+                    failurCount: resultedExecutionArray[0].doc.campaign_stats.successfull_push,
+                    successCount: resultedExecutionArray[0].doc.campaign_stats.failed_push,
+                    bulkSize: resultedExecutionArray[0].doc.campaign_stats.push_bulk_size
                 }
+                resultedExecutionArray.forEach((resultedExecution) => {
+                    console.log("startExecuteCampaign: Succeeded Campaign Id = " + resultedExecution.doc._id)
+                    console.log("startExecuteCampaign: Update  numOfUsersMessages = " + resultedExecution.numOfUsersMessages)
+
+                })
 
                 var result = {
                     updateMetrics: updateMetrics,
-                    doc: resultedExecution.doc
+                    doc: resultedExecutionArray[0].doc
                 };
                 resolve(result);
             })
@@ -1683,15 +1718,20 @@ var UpdateCampaignStatusAndSendResponse = function (db, res, updatedDoc, updateM
 
     } else {
         res.status(400);
-        UpdateCampaignStatus(db, updatedDoc, CampaignStatus.failed)
-            .then((updatedDoc) => {
-                response = createResponse(updatedDoc, updateMetrics, "failed", error);
-                res.json(response);
-            })
-            .catch((error) => {
-                response = createResponse(updatedDoc, updateMetrics, "failed", error);
-                res.json(response);
-            });
+        if (db != undefined) {
+            UpdateCampaignStatus(db, updatedDoc, CampaignStatus.failed)
+                .then((updatedDoc) => {
+                    response = createResponse(updatedDoc, updateMetrics, "failed", error);
+                    res.json(response);
+                })
+                .catch((error) => {
+                    response = createResponse(updatedDoc, updateMetrics, "failed", error);
+                    res.json(response);
+                });
+
+        } else {
+            response = createResponse(updatedDoc, updateMetrics, "failed", error);
+        }
 
     }
 
@@ -1721,6 +1761,7 @@ exports.executeCampaign = function (req, res) {
     getScheduledCampaign(createReq, 10000)
         .then(function (result) {
             var db = result.db;
+            dbRef = db;
             var campaignDoc = result.doc;
             console.log('getScheduledCampaign Succeeded' + campaignDoc._id);
 
@@ -1749,7 +1790,6 @@ exports.executeCampaign = function (req, res) {
                 })
         })
         .catch(function (error) {
-            cleanup(db);
             console.log('getScheduledCampaign Failed');
             UpdateCampaignStatusAndSendResponse(db, res, createReq, failedMetrics, false, undefined);
 
