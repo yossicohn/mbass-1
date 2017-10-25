@@ -49,6 +49,13 @@ admin.initializeApp({
 
 var rtDB = admin.database();
 
+var scheduled = 1,
+    started = 2,
+    halted = 3,
+    completed = 4,
+    aborted = 5,
+    deleted = 6,
+    failed = 7;
 /**
  * Report an error to StackDriver Error Reporting. Writes the minimum data
  * required for the error to be picked up by StackDriver Error Reporting.
@@ -189,114 +196,6 @@ exports.executeTest = function (req, res) {
 
 
 
-//-----------------------------------------------------------------------------
-// functions: executeCampaign
-// args: campaign meta data
-// description:mock for the register
-// format example:
-// {
-//     "command_name": "get_campaign_data",
-//     "tenant_id": "int",
-//     "campaign_id": "int",
-//     "action_serial": "int",
-//     "template_id": "int"
-//   }
-// //---------------------------------------------------------------------------
-exports.executeCampaign1 = function (req, res) {
-
-    var err = undefined;
-    var status = undefined;
-
-    var createReq = req.body;
-    //First we take  the Campaign from the DB.
-    getScheduledCampaign(createReq, 10000)
-        .then(function (campaignDoc) {
-            //Campaign was found, now we can get build the Payload.
-            console.log('getScheduledCampaign Succeeded' + campaignDoc._id);
-            getFirebaseClientAdmin(campaignDoc)
-                .then((clientAdmin) => {
-                    var options = {
-                        priority: "high",
-                        contentAvailable: true,
-                        timeToLive: campaignDoc.time_to_live,
-                        dryRun: createReq.dryRun,
-                        collapseKey: campaignDoc._id
-                    };
-                    var topicName = campaignDoc.data_queue_name;;
-                    var subscriptionName = "sub_" + topicName;
-                    createCampaignSubscriber(topicName, subscriptionName)
-                        .then(() => { // new we can get the data of the Users and extract it.
-                            handleCampaignExecution(campaignDoc, clientAdmin, options)
-                                .then((resultedExecution) => {
-                                    console.log("executeCampaign: Succeeded subscriptionName = " + subscriptionName);
-                                    var updateMetrics = {
-                                        failureCount: resultedExecution.doc.campaign_stats.successfull_push,
-                                        successCount: resultedExecution.doc.campaign_stats.failed_push,
-                                        bulkSize: resultedExecution.doc.campaign_stats.push_bulk_size
-                                    }
-                                    var response = createResponse(resultedExecution.doc, updateMetrics, true, undefined);
-                                    res.json(response);
-                                })
-                                .catch((error) => {
-                                    console.log("executeCampaign: Failed " + error);
-                                    var updateMetrics = {
-                                        failureCount: -1,
-                                        successCount: -1,
-                                        bulkSize: -1
-                                    }
-                                    var response = createResponse(createReq, updateMetrics, "failed", error);
-                                    res.status(400);
-                                    res.json(response);
-                                })
-                        })
-                        .catch((error) => {
-                            console.log("executeCampaign: createCampaignSubscriber Failed " + error);
-
-                            var updateMetrics = {
-                                failureCount: -1,
-                                successCount: -1,
-                                bulkSize: -1
-                            }
-                            var response = createResponse(createReq, updateMetrics, "failed", error);
-                            res.status(400);
-                            res.json(response);
-
-                        });
-                })
-                .catch((error) => {
-                    console.log('getScheduledCampaign - getFirebaseClientAdmin Failed');
-                    var updateMetrics = {
-                        failureCount: -1,
-                        successCount: -1,
-                        bulkSize: -1
-                    }
-
-                    var response = createResponse(createReq, updateMetrics, "failed", error);
-                    res.status(400);
-                    res.json(response);
-
-                });
-
-
-        })
-        .catch(function (error) {
-            console.log('getScheduledCampaign Failed');
-            var updateMetrics = {
-                failureCount: -1,
-                successCount: -1,
-                bulkSize: -1
-            }
-            var response = createResponse(createReq, updateMetrics, "failed", error);
-            res.status(400);
-            res.json(response);
-
-        })
-
-}
-
-
-
-
 // ----------------------------------------------------------------------------
 // ----------------------------------------------------------------
 // function: getScheduledCampaign
@@ -323,18 +222,15 @@ var getScheduledCampaign = function (createReq, deltaFromNow) {
                     })
                     .then(function (exisitingDoc) {
                         if (exisitingDoc == null) {
-                            cleanup(db);
+
                             reject("Campaign Don't Exisit");
                         } else {
-                            resolve({
-                                db: db,
-                                doc: exisitingDoc
-                            });
+                            resolve(exisitingDoc);
                         }
                     })
                     .catch(function (error) {
                         console.log("getScheduledCampaign: findOne Failed error= " + error)
-                        cleanup(db);
+
                         reject(error);
                     })
             })
@@ -349,14 +245,14 @@ var getScheduledCampaign = function (createReq, deltaFromNow) {
 
 // ----------------------------------------------------------------
 // function: handleCampaignExecution
-// args: db, campaignDoc, clientAdmin, options
+// args: campaignDoc, clientAdmin, options
 // return: response dataPayload.
 // ----------------------------------------------------------------
-var handleCampaignExecution = function (db, campaignDoc, clientAdmin, options) {
+var handleCampaignExecution = function (campaignDoc, clientAdmin, options) {
 
     return new Promise(function (resolve, reject) {
         if (campaignDoc.personalized == false) {
-            handleNonPersonalizedCampaignExecution(db, campaignDoc, clientAdmin, options)
+            handleNonPersonalizedCampaignExecution(campaignDoc, clientAdmin, options)
                 .then((result) => {
                     resolve(result);
                 })
@@ -364,7 +260,7 @@ var handleCampaignExecution = function (db, campaignDoc, clientAdmin, options) {
                     reject(error);
                 })
         } else if (campaignDoc.personalized == true) {
-            handlePersonalizedCampaignExecution(db, campaignDoc, clientAdmin, options)
+            handlePersonalizedCampaignExecution(campaignDoc, clientAdmin, options)
                 .then((result) => {
                     resolve(result);
                 })
@@ -378,10 +274,10 @@ var handleCampaignExecution = function (db, campaignDoc, clientAdmin, options) {
 
 // ----------------------------------------------------------------
 // function: handleNonPersonalizedCampaignExecution
-// args: db,campaignDoc, clientAdmin, options
+// args: campaignDoc, clientAdmin, options
 // return: response dataPayload.
 // ----------------------------------------------------------------
-var handleNonPersonalizedCampaignExecution = function (db, campaignDoc, clientAdmin, options) {
+var handleNonPersonalizedCampaignExecution = function (campaignDoc, clientAdmin, options) {
 
     return new Promise(function (resolve, reject) {
 
@@ -404,7 +300,7 @@ var handleNonPersonalizedCampaignExecution = function (db, campaignDoc, clientAd
                         });
 
                         console.log("message: targetedUserDataArray Length = " + targetedUserDataArray.length);
-                        getUsersTokens(db, campaignDoc, users_ids)
+                        getUsersTokens(campaignDoc, users_ids)
                             .then((registartion_ids) => {
                                 sendPromissedPN(registartion_ids, campaignPayload, clientAdmin, options)
                                     .then((fcmResults) => {
@@ -454,11 +350,11 @@ var handleNonPersonalizedCampaignExecution = function (db, campaignDoc, clientAd
 
 
 // ----------------------------------------------------------------
-// function: handleNonPersonalizedCampaignExecution
-// args: db, campaignDoc, clientAdmin
+// function: handlePersonalizedCampaignExecution
+// args: campaignDoc, clientAdmin
 // return: response dataPayload.
 // ----------------------------------------------------------------
-var handleNonPersonalizedCampaignExecution = function (db, campaignDoc, clientAdmin) {
+var handleNonPersonalizedCampaignExecution = function (campaignDoc, clientAdmin) {
 
     return new Promise(function (resolve, reject) {
 
@@ -533,10 +429,10 @@ var handleNonPersonalizedCampaignExecution = function (db, campaignDoc, clientAd
 // ----------------------------------------------------------------
 // ----------------------------------------------------------------
 // function: handlePersonalizedCampaignExecution
-// args: db, campaignDoc, clientAdmin,options
+// args: campaignDoc, clientAdmin,options
 // return: response dataPayload.
 // ----------------------------------------------------------------
-var handlePersonalizedCampaignExecution = function (db, campaignDoc, clientAdmin, options) {
+var handlePersonalizedCampaignExecution = function (campaignDoc, clientAdmin, options) {
 
     return new Promise(function (resolve, reject) {
 
@@ -559,11 +455,11 @@ var handlePersonalizedCampaignExecution = function (db, campaignDoc, clientAdmin
                             usersPersonaizedPayload[targetedUser.Id] = data;
                         });
                         console.log("handlePersonalizedCampaignExecution: message: targetedUserDataArray Length = " + targetedUserDataArray.length);
-                        getUsersTokensForPersonalizedCampaign(db, campaignDoc, usersPersonaizedPayload)
+                        getUsersTokensForPersonalizedCampaign(campaignDoc, usersPersonaizedPayload)
                             .then((usersPersonaizedPayload) => {
                                 sendPromissedPersonalizedPN(usersPersonaizedPayload, clientAdmin, options)
                                     .then((fcmResults) => {
-                                        handlePersonalizedPNCampaignResults(db, fcmResults, campaignDoc)
+                                        handlePersonalizedPNCampaignResults(fcmResults, campaignDoc)
                                             .then((updatedDoc) => {
                                                 var resultedExecution = {
                                                     doc: updatedDoc.value,
@@ -924,7 +820,7 @@ var createCampaignSubscriber = function (topicName, subscriptionName) {
 
 // ----------------------------------------------------------------
 // function: getUsersTokensForPersonalizedCampaign
-// args:db, campaignDoc, usersPersonaizedPayload
+// args:campaignDoc, usersPersonaizedPayload
 // return: respons registration_ids for the PN along with the appropriate personalized payload.
 // We first check if subscription exist if not we failed and then we create it.
 // Process:
@@ -932,7 +828,7 @@ var createCampaignSubscriber = function (topicName, subscriptionName) {
 // And find by the ID's the different Users Document.
 // Go uver the Document and in the Targeted apps (in the devices) get the appropriate tokens.
 // ----------------------------------------------------------------
-var getUsersTokensForPersonalizedCampaign = function (db, campaignDoc, usersPersonaizedPayload) {
+var getUsersTokensForPersonalizedCampaign = function (campaignDoc, usersPersonaizedPayload) {
     return new Promise(function (resolve, reject) {
         var usres_id = Object.keys(usersPersonaizedPayload);
         if (usres_id.length == 0) {
@@ -941,7 +837,7 @@ var getUsersTokensForPersonalizedCampaign = function (db, campaignDoc, usersPers
         } else {
             if (campaignDoc.audience == 1) { // Cutomers
 
-                getCustomersPersonalizedCampaignTokens(db, campaignDoc, usersPersonaizedPayload)
+                getCustomersPersonalizedCampaignTokens(campaignDoc, usersPersonaizedPayload)
                     .then((usersPersonaizedPayload) => {
                         resolve(usersPersonaizedPayload);
                     })
@@ -961,7 +857,7 @@ var getUsersTokensForPersonalizedCampaign = function (db, campaignDoc, usersPers
 
 // ----------------------------------------------------------------
 // function: getUsersTokens
-// args:db, campaignDoc, users_ids
+// args:campaignDoc, users_ids
 // return: respons registration_ids for the PN.
 // We first check if subscription exist if not we failed and then we create it.
 // Process:
@@ -969,7 +865,7 @@ var getUsersTokensForPersonalizedCampaign = function (db, campaignDoc, usersPers
 // And find by the ID's the different Users Document.
 // Go uver the Document and in the Targeted apps (in the devices) get the appropriate tokens.
 // ----------------------------------------------------------------
-var getUsersTokens = function (db, campaignDoc, users_ids) {
+var getUsersTokens = function (campaignDoc, users_ids) {
     return new Promise(function (resolve, reject) {
         if (users_ids.length == 0) {
             console.log("getUsersTokens: supplied users_ids is empty");
@@ -977,7 +873,7 @@ var getUsersTokens = function (db, campaignDoc, users_ids) {
         } else {
             if (campaignDoc.audience == 1) { // Cutomers
 
-                getCustomersCampaignTokens(db, campaignDoc, users_ids)
+                getCustomersCampaignTokens(campaignDoc, users_ids)
                     .then((registration_id_tokens) => {
                         resolve(registration_id_tokens);
                     })
@@ -995,7 +891,7 @@ var getUsersTokens = function (db, campaignDoc, users_ids) {
 
 // ----------------------------------------------------------------
 // function: getCustomersPersonalizedCampaignTokens
-// args:db, campaignDoc, usersPersonaizedPayload
+// args:campaignDoc, usersPersonaizedPayload
 // return: respons registration_ids for the Customers PN Campaign.
 // We first check if subscription exist if not we failed and then we create it.
 // Process:
@@ -1003,7 +899,7 @@ var getUsersTokens = function (db, campaignDoc, users_ids) {
 // And find by the ID's the different Users Document.
 // Go over the Document and in the Targeted apps (in the devices) get the appropriate tokens.
 // ----------------------------------------------------------------
-var getCustomersPersonalizedCampaignTokens = function (db, campaignDoc, usersPersonaizedPayload) {
+var getCustomersPersonalizedCampaignTokens = function (campaignDoc, usersPersonaizedPayload) {
     return new Promise(function (resolve, reject) {
         var usersCollectionName = undefined;
         var registration_ids_tokens = undefined;
@@ -1011,9 +907,9 @@ var getCustomersPersonalizedCampaignTokens = function (db, campaignDoc, usersPer
         var prefixDocId = "tid-" + campaignDoc.tenant_id + "-pcid-";
         var users_ids = Object.keys(usersPersonaizedPayload);
         var documentsIds = getDocumentsIdsByUsersIds(prefixDocId, users_ids, campaignDoc.audience);
-        if (db != undefined) {
+        if (dataBaseClient != undefined) {
             try {
-                var usersCollection = db.collection(usersCollectionName);
+                var usersCollection = dataBaseClient.collection(usersCollectionName);
                 getUsersBatchDocument(documentsIds, usersCollection)
                     .then((result) => {
                         console.log(result.status);
@@ -1033,7 +929,7 @@ var getCustomersPersonalizedCampaignTokens = function (db, campaignDoc, usersPer
             }
 
         } else {
-            var error = "db is not defined";
+            var error = "dataBaseClient is not defined";
             console.log(error);
             reject(error);
         }
@@ -1042,7 +938,7 @@ var getCustomersPersonalizedCampaignTokens = function (db, campaignDoc, usersPer
 
 // ----------------------------------------------------------------
 // function: getCustomersCampaignTokens
-// args:db, campaignDoc, users_ids
+// args:campaignDoc, users_ids
 // return: respons registration_ids for the Customers PN Campaign.
 // We first check if subscription exist if not we failed and then we create it.
 // Process:
@@ -1050,16 +946,16 @@ var getCustomersPersonalizedCampaignTokens = function (db, campaignDoc, usersPer
 // And find by the ID's the different Users Document.
 // Go over the Document and in the Targeted apps (in the devices) get the appropriate tokens.
 // ----------------------------------------------------------------
-var getCustomersCampaignTokens = function (db, campaignDoc, users_ids) {
+var getCustomersCampaignTokens = function (campaignDoc, users_ids) {
     return new Promise(function (resolve, reject) {
         var usersCollectionName = undefined;
         var registration_ids_tokens = undefined;
         usersCollectionName = tenantCustomersTokens + campaignDoc.tenant_id;
         var prefixDocId = "tid-" + campaignDoc.tenant_id + "-pcid-";
         var documentsIds = getDocumentsIdsByUsersIds(prefixDocId, users_ids, campaignDoc.audience);
-        if (db != undefined) {
+        if (dataBaseClient != undefined) {
             try {
-                var usersCollection = db.collection(usersCollectionName);
+                var usersCollection = dataBaseClient.collection(usersCollectionName);
                 getUsersBatchDocument(documentsIds, usersCollection)
                     .then((result) => {
                         console.log(result.status);
@@ -1080,7 +976,7 @@ var getCustomersCampaignTokens = function (db, campaignDoc, users_ids) {
             }
 
         } else {
-            var error = "db is not defined";
+            var error = "dataBaseClient is not defined";
             console.log(error);
             reject(error);
         }
@@ -1302,7 +1198,7 @@ var handlePNCampaignResults = function (fcmResults, campaignDoc) {
 
 // ----------------------------------------------------------------
 // function: handlePersonalizedPNCampaignResults
-// args:db, fcmResults, campaignDoc
+// args:fcmResults, campaignDoc
 // return: fcmResults
 // description:
 // This function should go over the results and update the
@@ -1319,7 +1215,7 @@ var handlePNCampaignResults = function (fcmResults, campaignDoc) {
 //     "sleep_time_between_bulks" : -1
 // }
 // ----------------------------------------------------------------
-var handlePersonalizedPNCampaignResults = function (db, fcmResults, campaignDoc) {
+var handlePersonalizedPNCampaignResults = function (fcmResults, campaignDoc) {
 
     return new Promise(function (resolve, reject) {
         var failureCount = 0;
@@ -1342,7 +1238,7 @@ var handlePersonalizedPNCampaignResults = function (db, fcmResults, campaignDoc)
         }
 
         console.log("updateMetrics:" + JSON.stringify(updateMetrics));
-        UpdateCampaignExecutionMetrics(db, campaignDoc, updateMetrics)
+        UpdateCampaignExecutionMetrics(campaignDoc, updateMetrics)
             .then((doc) => {
                 resolve(doc);
             })
@@ -1355,7 +1251,7 @@ var handlePersonalizedPNCampaignResults = function (db, fcmResults, campaignDoc)
 
 // ----------------------------------------------------------------
 // function: UpdateCampaignExecutionMetrics
-// args:db, fcmResults, campaignDoc
+// args:fcmResults, campaignDoc
 // return: fcmResults
 // description:
 // This function should go over the results and update the
@@ -1372,15 +1268,15 @@ var handlePersonalizedPNCampaignResults = function (db, fcmResults, campaignDoc)
 //     "sleep_time_between_bulks" : -1
 // }
 // ----------------------------------------------------------------
-var UpdateCampaignExecutionMetrics = function (db, campaignDoc, updateMetrics) {
+var UpdateCampaignExecutionMetrics = function (campaignDoc, updateMetrics) {
 
     return new Promise(function (resolve, reject) {
-        if (db != undefined) {
+        if (dataBaseClient != undefined) {
             try {
                 var status = true;
                 var tenantId = campaignDoc.tenant_id;
                 var tenantCampaignCollectionName = tenantCampaignsDataCollectionNameBase + tenantId;
-                var tenantCampaignsDataCollection = db.collection(tenantCampaignCollectionName);
+                var tenantCampaignsDataCollection = dataBaseClient.collection(tenantCampaignCollectionName);
                 var docId = campaignDoc._id;
                 tenantCampaignsDataCollection.updateOne
                 tenantCampaignsDataCollection.findOneAndUpdate({
@@ -1398,13 +1294,12 @@ var UpdateCampaignExecutionMetrics = function (db, campaignDoc, updateMetrics) {
                     })
                     .then(function (exisitingDoc) {
                         if (exisitingDoc == null) {
-
-                            reject("Campaign Don't Exisit");
+                            reject("Campaign Don't Exist");
                         } else {
                             resolve(exisitingDoc);
                         }
                     })
-                    .catch(function (error) {
+                    .catch(function (errorerror) {
 
                         reject(error);
                     })
@@ -1414,7 +1309,7 @@ var UpdateCampaignExecutionMetrics = function (db, campaignDoc, updateMetrics) {
                 reject("UpdateCampaignExecutionMetrics: Failed error = " + error);
             }
         } else {
-            reject("UpdateCampaignExecutionMetrics: db is undefined")
+            reject("UpdateCampaignExecutionMetrics: dataBaseClient is undefined")
         }
 
 
@@ -1514,6 +1409,44 @@ var createPersonalizedPayload = function (campaignPayload, targetedUser) {
     return data;
 }
 
+// ----------------------------------------------------------------
+// function: UpdateCampaignStatus
+// args: db, campaignDoc, status
+// return: response object. 
+// ----------------------------------------------------------------
+var UpdateCampaignStatus = function (db, campaignDoc, status) {
+
+    return new Promise(function (resolve, reject) {
+
+        var tenantId = campaignDoc.tenant_id;
+        var tenantCampaignCollectionName = tenantCampaignsDataCollectionNameBase + tenantId;
+        var tenantCampaignsDataCollection = db.collection(tenantCampaignCollectionName);
+        var docId = campaignDoc._id;
+
+
+        tenantCampaignsDataCollection.findOneAndUpdate({
+                _id: docId
+            }, {
+                $set: {
+                    "campaign_status": status
+                }
+            }, {
+                returnNewDocument: true
+            })
+            .then(function (exisitingDoc) {
+                if (exisitingDoc == null) {
+                    reject("Campaign Don't Exist");
+                } else {
+                    resolve(exisitingDoc);
+                }
+            })
+            .catch(function (error) {
+                reject(error);
+            })
+    });
+
+}
+
 
 // ----------------------------------------------------------------
 // function: createResponse
@@ -1554,229 +1487,5 @@ var createResponse = function (campaignDoc, updateMetrics, status, error) {
 
 
     return response;
-
-}
-
-
-// ----------------------------------------------------------------
-// function: UpdateCampaignStatus
-// args: db, campaignDoc, status
-// return: response object. 
-// ----------------------------------------------------------------
-var UpdateCampaignStatus = function (db, campaignDoc, status) {
-
-    return new Promise(function (resolve, reject) {
-
-        var tenantId = campaignDoc.tenant_id;
-        var tenantCampaignCollectionName = tenantCampaignsDataCollectionNameBase + tenantId;
-        var tenantCampaignsDataCollection = db.collection(tenantCampaignCollectionName);
-        var docId = campaignDoc._id;
-
-
-        tenantCampaignsDataCollection.findOneAndUpdate({
-                _id: docId
-            }, {
-                $set: {
-                    "campaign_status": status
-                }
-            }, {
-                returnNewDocument: true
-            })
-            .then(function (exisitingDoc) {
-                if (exisitingDoc == null) {
-                    reject("Campaign Don't Exist");
-                } else {
-                    resolve(exisitingDoc);
-                }
-            })
-            .catch(function (error) {
-                reject(error);
-            })
-    });
-
-}
-
-//-----------------------------------------------------------------------------
-// functions: prepareExecutionResources
-// args: createReq, db, campaignDoc
-// description: perpare Process Resources.
-// //---------------------------------------------------------------------------
-var prepareExecutionResources = function (createReq, db, campaignDoc) {
-    return new Promise(function (resolve, reject) {
-        //Campaign was found, now we can get build the Payload.
-        console.log('prepareExecutionResources : Started');
-        getFirebaseClientAdmin(campaignDoc)
-            .then((clientAdmin) => {
-                var options = {
-                    priority: "high",
-                    contentAvailable: true,
-                    timeToLive: campaignDoc.time_to_live,
-                    dryRun: createReq.dryRun,
-                    collapseKey: campaignDoc._id
-                };
-                var topicName = campaignDoc.data_queue_name;;
-                var subscriptionName = "sub_" + topicName;
-                createCampaignSubscriber(topicName, subscriptionName)
-                    .then((subscription) => { // new we can get the data of the Users and extract it.
-
-                        var resourcers = {
-                            clientAdmin: clientAdmin,
-                            subscription: subscription,
-                            db: db
-                        };
-                        resolve(resourcers);
-                    })
-                    .cathc((error) => {
-                        reject(error);
-                    });
-            });
-    });
-}
-
-//-----------------------------------------------------------------------------
-// functions: startExecuteCampaign
-// args: db, campaignDoc, subscriptionName, clientAdmin, options
-// description: Main Process
-// //---------------------------------------------------------------------------
-var startExecuteCampaign = function (db, campaignDoc, subscriptionName, clientAdmin, options) {
-    return new Promise(function (resolve, reject) {
-        console.log("startExecuteCampaign: Call  handleCampaignExecution : subscriptionName = " + subscriptionName);
-        handleCampaignExecution(db, campaignDoc, clientAdmin, options)
-            .then((resultedExecution) => {
-                console.log("startExecuteCampaign: Succeeded Campaign Id = " + campaignDoc._id)
-                UpdateCampaignStatus(db, resultedExecution.doc, status)
-                    .then((updatedDoc) => {
-                        console.log("startExecuteCampaign: Update  status = " + status)
-                        var updateMetrics = {
-                            failurupdateMetricseCount: updatedDoc.campaign_stats.successfull_push,
-                            successCount: updatedDoc.campaign_stats.failed_push,
-                            bulkSize: updatedDoc.campaign_stats.push_bulk_size
-                        }
-
-                        var result = {
-                            updateMetrics: updateMetrics,
-                            doc: resultedExecution.doc
-                        };
-                        resolve(result);
-                    })
-                    .catch((error) => {
-                        reject(error);
-                    });
-            })
-            .catch((error) => {
-                console.log("executeCampaign: Failed " + error);
-                reject(error);
-
-            })
-    });
-
-}
-
-
-//-----------------------------------------------------------------------------
-// functions: executeCampaign
-// args: campaign meta data
-// description:mock for the register
-// format example:
-// {
-//     "command_name": "get_campaign_data",
-//     "tenant_id": "int",
-//     "campaign_id": "int",
-//     "action_serial": "int",
-//     "template_id": "int"
-//   }
-// //---------------------------------------------------------------------------
-exports.executeCampaign = function (req, res) {
-
-    var err = undefined;
-    var status = undefined;
-
-    var createReq = req.body;
-    //First we take  the Campaign from the DB.
-    getScheduledCampaign(createReq, 10000)
-        .then(function (result) {
-            var db = result.db;
-            var campaignDoc = result.doc;
-            // getExecutionResources(createReq, db, campaignDoc)
-            // .then((resources) => {
-
-            // })
-            // .catch((error) => {
-
-            // })
-            //Campaign was found, now we can get build the Payload.
-            console.log('getScheduledCampaign Succeeded' + campaignDoc._id);
-            getFirebaseClientAdmin(campaignDoc)
-                .then((clientAdmin) => {
-                    var options = {
-                        priority: "high",
-                        contentAvailable: true,
-                        timeToLive: campaignDoc.time_to_live,
-                        dryRun: createReq.dryRun,
-                        collapseKey: campaignDoc._id
-                    };
-                    var topicName = campaignDoc.data_queue_name;;
-                    var subscriptionName = "sub_" + topicName;
-                    createCampaignSubscriber(topicName, subscriptionName)
-                        .then(() => { // new we can get the data of the Users and extract it.
-                            startExecuteCampaign(db, campaignDoc, subscriptionName, clientAdmin, options)
-                                .then((result) => {
-                                    var response = createResponse(result.doc, result.updateMetrics, true, undefined);
-                                    res.json(response);
-                                })
-                                .catch((error) => {
-                                    console.log("executeCampaign: Failed " + error);
-                                    var updateMetrics = {
-                                        failureCount: -1,
-                                        successCount: -1,
-                                        bulkSize: -1
-                                    }
-                                    var response = createResponse(createReq, updateMetrics, "failed", error);
-                                    res.status(400);
-                                    res.json(response);
-                                })
-                        })
-                        .catch((error) => {
-                            console.log("executeCampaign: createCampaignSubscriber Failed " + error);
-
-                            var updateMetrics = {
-                                failureCount: -1,
-                                successCount: -1,
-                                bulkSize: -1
-                            }
-                            var response = createResponse(createReq, updateMetrics, "failed", error);
-                            res.status(400);
-                            res.json(response);
-
-                        });
-                })
-                .catch((error) => {
-                    console.log('getScheduledCampaign - getFirebaseClientAdmin Failed');
-                    var updateMetrics = {
-                        failureCount: -1,
-                        successCount: -1,
-                        bulkSize: -1
-                    }
-
-                    var response = createResponse(createReq, updateMetrics, "failed", error);
-                    res.status(400);
-                    res.json(response);
-
-                });
-
-
-        })
-        .catch(function (error) {
-            console.log('getScheduledCampaign Failed');
-            var updateMetrics = {
-                failureCount: -1,
-                successCount: -1,
-                bulkSize: -1
-            }
-            var response = createResponse(createReq, updateMetrics, "failed", error);
-            res.status(400);
-            res.json(response);
-
-        })
 
 }
