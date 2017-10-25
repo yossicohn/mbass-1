@@ -15,7 +15,6 @@ var tenantCustomersTokens = 'CustomersTokens_';
 var tenantVisitorsTokens = 'VisitorsTokens_';
 var tenantCampaignsDataCollectionNameBase = 'CampaignsData_';
 
-var dataBaseClient = undefined;
 
 const campaignControlTopicName = "campaign-control";
 const campaignQueueTopicName = "campaign-queue";
@@ -49,6 +48,15 @@ admin.initializeApp({
 
 var rtDB = admin.database();
 
+var CampaignStatus = {
+    scheduled: 1,
+    started: 2,
+    halted: 3,
+    completed: 4,
+    aborted: 5,
+    deleted: 6,
+    failed: 7
+};
 /**
  * Report an error to StackDriver Error Reporting. Writes the minimum data
  * required for the error to be picked up by StackDriver Error Reporting.
@@ -85,7 +93,11 @@ var rtDB = admin.database();
 //     // Write the error log entry
 //     log.write(log.entry(metadata, errorEvent), callback);
 //   }
-
+var failedMetrics = {
+    failureCount: -1,
+    successCount: -1,
+    bulkSize: -1
+};
 
 var PNPayloadTemplate = {
     "data": {
@@ -116,7 +128,7 @@ var PNPayloadTemplate = {
 var cleanup = function (db) {
     if (db != undefined) {
         db.close();
-        dataBaseClient = undefined;
+        db = undefined;
     }
 }
 
@@ -311,7 +323,6 @@ var getScheduledCampaign = function (createReq, deltaFromNow) {
 
         MongoClient.connect(url)
             .then(function (db) {
-                dataBaseClient = db;
                 console.log("getScheduledCampaign: Connected correctly to server");
                 var status = true;
                 var tenantId = createReq.tenant_id;
@@ -323,7 +334,6 @@ var getScheduledCampaign = function (createReq, deltaFromNow) {
                     })
                     .then(function (exisitingDoc) {
                         if (exisitingDoc == null) {
-                            cleanup(db);
                             reject("Campaign Don't Exisit");
                         } else {
                             resolve({
@@ -333,8 +343,7 @@ var getScheduledCampaign = function (createReq, deltaFromNow) {
                         }
                     })
                     .catch(function (error) {
-                        console.log("getScheduledCampaign: findOne Failed error= " + error)
-                        cleanup(db);
+                        console.log("getScheduledCampaign: findOne Failed error= " + error);
                         reject(error);
                     })
             })
@@ -481,11 +490,11 @@ var handleNonPersonalizedCampaignExecution = function (db, campaignDoc, clientAd
                         });
 
                         console.log("message: targetedUserDataArray Length = " + targetedUserDataArray.length);
-                        getUsersTokens(campaignDoc, users_ids)
+                        getUsersTokens(db, campaignDoc, users_ids)
                             .then((registartion_ids) => {
                                 sendPromissedPN(registartion_ids, campaignPayload, clientAdmin)
                                     .then((fcmResults) => {
-                                        handlePNCampaignResults(fcmResults, campaignDoc)
+                                        handlePNCampaignResults(db, fcmResults, campaignDoc)
                                             .then((updatedDoc) => {
                                                 var resultedExecution = {
                                                     doc: updatedDoc.value,
@@ -1273,7 +1282,7 @@ var updateTokensArrayWithDevicesTokens = function (targetedAppsObj, devices, reg
 //     "sleep_time_between_bulks" : -1
 // }
 // ----------------------------------------------------------------
-var handlePNCampaignResults = function (fcmResults, campaignDoc) {
+var handlePNCampaignResults = function (db, fcmResults, campaignDoc) {
 
     return new Promise(function (resolve, reject) {
         console.log(fcmResults);
@@ -1288,7 +1297,7 @@ var handlePNCampaignResults = function (fcmResults, campaignDoc) {
             bulkSize: bulkSize
         }
         console.log("updateMetrics:" + JSON.stringify(updateMetrics));
-        UpdateCampaignExecutionMetrics(campaignDoc, updateMetrics)
+        UpdateCampaignExecutionMetrics(db, campaignDoc, updateMetrics)
             .then((doc) => {
                 resolve(doc);
             })
@@ -1626,7 +1635,7 @@ var prepareExecutionResources = function (createReq, db, campaignDoc) {
                         };
                         resolve(resourcers);
                     })
-                    .cathc((error) => {
+                    .catch((error) => {
                         reject(error);
                     });
             });
@@ -1635,33 +1644,27 @@ var prepareExecutionResources = function (createReq, db, campaignDoc) {
 
 //-----------------------------------------------------------------------------
 // functions: startExecuteCampaign
-// args: db, campaignDoc, subscriptionName, clientAdmin, options
+// args: db, campaignDoc, subscription, clientAdmin, options
 // description: Main Process
 // //---------------------------------------------------------------------------
-var startExecuteCampaign = function (db, campaignDoc, subscriptionName, clientAdmin, options) {
+var startExecuteCampaign = function (db, campaignDoc, subscription, clientAdmin, options) {
     return new Promise(function (resolve, reject) {
-        console.log("startExecuteCampaign: Call  handleCampaignExecution : subscriptionName = " + subscriptionName);
+        console.log("startExecuteCampaign: Call  handleCampaignExecution : subscriptionName = " + subscription.name);
         handleCampaignExecution(db, campaignDoc, clientAdmin, options)
             .then((resultedExecution) => {
-                console.log("startExecuteCampaign: Succeeded Campaign Id = " + campaignDoc._id)
-                UpdateCampaignStatus(db, resultedExecution.doc, status)
-                    .then((updatedDoc) => {
-                        console.log("startExecuteCampaign: Update  status = " + status)
-                        var updateMetrics = {
-                            failurupdateMetricseCount: updatedDoc.campaign_stats.successfull_push,
-                            successCount: updatedDoc.campaign_stats.failed_push,
-                            bulkSize: updatedDoc.campaign_stats.push_bulk_size
-                        }
+                console.log("startExecuteCampaign: Succeeded Campaign Id = " + resultedExecution.doc._id)
+                console.log("startExecuteCampaign: Update  numOfUsersMessages = " + resultedExecution.numOfUsersMessages)
+                var updateMetrics = {
+                    failurupdateMetricseCount: resultedExecution.doc.campaign_stats.successfull_push,
+                    successCount: resultedExecution.doc.campaign_stats.failed_push,
+                    bulkSize: resultedExecution.doc.campaign_stats.push_bulk_size
+                }
 
-                        var result = {
-                            updateMetrics: updateMetrics,
-                            doc: resultedExecution.doc
-                        };
-                        resolve(result);
-                    })
-                    .catch((error) => {
-                        reject(error);
-                    });
+                var result = {
+                    updateMetrics: updateMetrics,
+                    doc: resultedExecution.doc
+                };
+                resolve(result);
             })
             .catch((error) => {
                 console.log("executeCampaign: Failed " + error);
@@ -1669,6 +1672,41 @@ var startExecuteCampaign = function (db, campaignDoc, subscriptionName, clientAd
 
             })
     });
+
+}
+
+//-----------------------------------------------------------------------------
+// functions: UpdateCampaignStatusAndSendResponse
+// args: db, res, updatedDoc, updateMetrics, status, error
+// description: Main Process
+// //---------------------------------------------------------------------------
+var UpdateCampaignStatusAndSendResponse = function (db, res, updatedDoc, updateMetrics, status, error) {
+    var response = undefined;
+    if (status == true) {
+        UpdateCampaignStatus(db, updatedDoc, CampaignStatus.completed)
+            .then((updatedDoc) => {
+                response = createResponse(updatedDoc, updateMetrics, "completed", error);
+                res.json(response);
+            })
+            .catch((error) => {
+                response = createResponse(updatedDoc, updateMetrics, "completed", "Campaign Completed, but Failed Updating Campaign Status");
+                res.status(400);
+                res.json(response);
+            });
+
+    } else {
+        res.status(400);
+        UpdateCampaignStatus(db, updatedDoc, CampaignStatus.failed)
+            .then((updatedDoc) => {
+                response = createResponse(updatedDoc, updateMetrics, "failed", error);
+                res.json(response);
+            })
+            .catch((error) => {
+                response = createResponse(updatedDoc, updateMetrics, "failed", error);
+                res.json(response);
+            });
+
+    }
 
 }
 
@@ -1697,85 +1735,36 @@ exports.executeCampaign = function (req, res) {
         .then(function (result) {
             var db = result.db;
             var campaignDoc = result.doc;
-            // getExecutionResources(createReq, db, campaignDoc)
-            // .then((resources) => {
-
-            // })
-            // .catch((error) => {
-
-            // })
-            //Campaign was found, now we can get build the Payload.
             console.log('getScheduledCampaign Succeeded' + campaignDoc._id);
-            getFirebaseClientAdmin(campaignDoc)
-                .then((clientAdmin) => {
-                    var options = {
-                        priority: "high",
-                        contentAvailable: true,
-                        timeToLive: campaignDoc.time_to_live,
-                        dryRun: createReq.dryRun,
-                        collapseKey: campaignDoc._id
-                    };
-                    var topicName = campaignDoc.data_queue_name;;
-                    var subscriptionName = "sub_" + topicName;
-                    createCampaignSubscriber(topicName, subscriptionName)
-                        .then(() => { // new we can get the data of the Users and extract it.
-                            startExecuteCampaign(db, campaignDoc, subscriptionName, clientAdmin, options)
-                                .then((result) => {
-                                    var response = createResponse(result.doc, result.updateMetrics, true, undefined);
-                                    res.json(response);
-                                })
-                                .catch((error) => {
-                                    console.log("executeCampaign: Failed " + error);
-                                    var updateMetrics = {
-                                        failureCount: -1,
-                                        successCount: -1,
-                                        bulkSize: -1
-                                    }
-                                    var response = createResponse(createReq, updateMetrics, "failed", error);
-                                    res.status(400);
-                                    res.json(response);
-                                })
+
+            var options = {
+                priority: "high",
+                contentAvailable: true,
+                timeToLive: campaignDoc.time_to_live,
+                dryRun: createReq.dryRun,
+                collapseKey: campaignDoc._id
+            };
+            prepareExecutionResources(createReq, db, campaignDoc)
+                .then((resources) => {
+                    startExecuteCampaign(db, campaignDoc, resources.subscription, resources.clientAdmin, options)
+                        .then((result) => {
+                            UpdateCampaignStatusAndSendResponse(db, res, result.doc, result.updateMetrics, true, undefined);
+                            cleanup(db);
                         })
                         .catch((error) => {
-                            console.log("executeCampaign: createCampaignSubscriber Failed " + error);
-
-                            var updateMetrics = {
-                                failureCount: -1,
-                                successCount: -1,
-                                bulkSize: -1
-                            }
-                            var response = createResponse(createReq, updateMetrics, "failed", error);
-                            res.status(400);
-                            res.json(response);
-
-                        });
+                            cleanup(db);
+                            UpdateCampaignStatusAndSendResponse(db, res, updatedDoc, failedMetrics, false, undefined);
+                        })
                 })
                 .catch((error) => {
-                    console.log('getScheduledCampaign - getFirebaseClientAdmin Failed');
-                    var updateMetrics = {
-                        failureCount: -1,
-                        successCount: -1,
-                        bulkSize: -1
-                    }
-
-                    var response = createResponse(createReq, updateMetrics, "failed", error);
-                    res.status(400);
-                    res.json(response);
-
-                });
-
-
+                    cleanup(db);
+                    UpdateCampaignStatusAndSendResponse(db, res, campaignDoc, failedMetrics, false, error);
+                })
         })
         .catch(function (error) {
+            cleanup(db);
             console.log('getScheduledCampaign Failed');
-            var updateMetrics = {
-                failureCount: -1,
-                successCount: -1,
-                bulkSize: -1
-            }
-            var response = createResponse(createReq, updateMetrics, "failed", error);
-            res.status(400);
-            res.json(response);
+            UpdateCampaignStatusAndSendResponse(db, res, createReq, failedMetrics, false, undefined);
 
         })
 
