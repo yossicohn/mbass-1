@@ -280,42 +280,27 @@ var handleCampaignExecution = function (db, campaignDoc, clientAdmin, options) {
     return new Promise(function (resolve, reject) {
         var promises = [];
         var i = 0;
-        for (i = 0; i < 2; i++) {
+        for (i = 0; i < 1; i++) {
             console.log("count=" + i);
 
             if (campaignDoc.personalized == false) {
                 var currPromis = processNonPersonalizedCampaignExecution(db, campaignDoc, clientAdmin, options);
                 promises.push(currPromis);
-                // handleNonPersonalizedCampaignExecutionPromised(db, campaignDoc, clientAdmin, options)
-                //     .then((result) => {
-                //         console.log(result);
-                //         resolve(result);
-                //     })
-                //     .catch((error) => {
-                //         reject(error);
-                //     });
 
             } else if (campaignDoc.personalized == true) {
-                handlePersonalizedCampaignExecution(db, campaignDoc, clientAdmin, options)
-                    .then((result) => {
-                        resolve(result);
-                    })
-                    .catch((error) => {
-                        reject(error);
-                    })
+                var currPromis = handlePersonalizedCampaignExecution(db, campaignDoc, clientAdmin, options);
+                promises.push(currPromis);
             }
-
-            Promise.all(promises)
-                .then((results) => {
-                    //  console.log(results);
-                    resolve(results);
-                })
-                .catch((error) => {
-                    //console.log(error);
-                    reject(error);
-                })
         }
-
+        Promise.all(promises)
+            .then((results) => {
+                //  console.log(results);
+                resolve(results);
+            })
+            .catch((error) => {
+                //console.log(error);
+                reject(error);
+            })
     })
 }
 
@@ -345,38 +330,27 @@ var handleNonPersonalizedCampaignExecutionPromised = function (db, campaignDoc, 
                         targetedUserDataArray.forEach(function (targetedUser) {
                             users_ids.push(targetedUser.Id);
                         });
-
                         console.log("message: targetedUserDataArray Length = " + targetedUserDataArray.length);
                         getUsersTokens(db, campaignDoc, users_ids)
                             .then((registartion_ids) => {
                                 sendPromissedPN(registartion_ids, campaignPayload, clientAdmin, options)
                                     .then((fcmResults) => {
-                                        handlePNCampaignResults(fcmResults, campaignDoc)
-                                            .then((updatedDoc) => {
-                                                var resultedExecution = {
-                                                    doc: updatedDoc.value,
-                                                    numOfUsersMessages: responses.receivedMessages.length
-                                                };
-                                                resolve(resultedExecution);
-                                            })
-                                            .catch((error) => {
-                                                console.log("handlePNCampaignResults: Failed errorResponse = " + error);
-                                                reject(errorResponse);
-                                            })
-
+                                        resolve({fcmResults, users_ids: users_ids});
                                     })
-                                    .catch((errorResponse) => {
-                                        console.log("sendPromissedPN: Failed errorResponse = " + errorResponse);
-                                        reject(errorResponse);
+                                    .catch((error) => {
+                                        console.log("sendPromissedPN: Failed errorResponse = " + error);
+                                        reject(error);
                                     })
                             })
                             .catch((error) => {
-                                reject(errorResponse);
+                                console.log("getUsersTokens: Failed errorResponse = " + error);
+                                reject(error);
                             })
 
 
                     })
                 } else {
+                    console.log("getTargetedUserBulkArray: Returened with no messages" );
                     var resultedExecution = {
                         doc: updatedDoc,
                         numOfUsersMessages: responses.receivedMessages.length
@@ -429,18 +403,13 @@ var handleNonPersonalizedCampaignExecutionPromised = function (db, campaignDoc, 
                             .then((registartion_ids) => {
                                 sendPromissedPN(registartion_ids, campaignPayload, clientAdmin, options)
                                     .then((fcmResults) => {
-                                        handlePNCampaignResults(db, fcmResults, campaignDoc)
-                                            .then((updatedDoc) => {
-                                                var resultedExecution = {
-                                                    doc: updatedDoc.value,
-                                                    numOfUsersMessages: responses.receivedMessages.length
-                                                };
-                                                resolve(resultedExecution);
-                                            })
-                                            .catch((error) => {
-                                                console.log("handlePNCampaignResults: Failed errorResponse = " + error);
-                                                reject(error);
-                                            })
+                                        var resultedExecution = {
+                                            fcmResults: fcmResults,
+                                            users_ids: users_ids,
+                                            registartion_ids: registartion_ids,
+                                            numOfTargetedUsers: responses.receivedMessages.length
+                                        };
+                                        resolve(resultedExecution);
 
                                     })
                                     .catch((error) => {
@@ -456,7 +425,6 @@ var handleNonPersonalizedCampaignExecutionPromised = function (db, campaignDoc, 
                     })
                 } else {
                     var resultedExecution = {
-                        doc: campaignDoc,
                         numOfUsersMessages: responses.receivedMessages.length
                     };
                     resolve(resultedExecution);
@@ -476,77 +444,6 @@ var handleNonPersonalizedCampaignExecutionPromised = function (db, campaignDoc, 
 
 
 
-// ----------------------------------------------------------------
-// function: handleNonPersonalizedCampaignExecution
-// args: db, campaignDoc, clientAdmin
-// return: response dataPayload.
-// ----------------------------------------------------------------
-var handleNonPersonalizedCampaignExecution = function (db, campaignDoc, clientAdmin) {
-
-    var topicName = campaignDoc.data_queue_name;
-    var subscription = "sub_" + topicName;
-    getTargetedUserBulkArray(projectId, subscription, 10)
-        .then(function (responses) {
-            if (responses.receivedMessages.length > 0) {
-                var registartion_ids = [];
-                var users_ids = [];
-                var campaignPayload = buildNonPerolalizedCampaignPayload(campaignDoc);
-                responses.receivedMessages.forEach(function (response) {
-                    console.log("attributes.description = " + response.message.attributes.description);
-                    console.log("messageId = " + response.message.messageId);
-                    console.log("byteLength = " + response.message.data.byteLength);
-                    var message = Buffer.from(response.message.data, 'base64').toString();
-                    var targetedUserDataArray = JSON.parse(message);
-                    targetedUserDataArray.forEach(function (targetedUser) {
-                        users_ids.push(targetedUser.Id);
-                    });
-
-                    console.log("message: targetedUserDataArray Length = " + targetedUserDataArray.length);
-                    getUsersTokens(db, campaignDoc, users_ids)
-                        .then((registartion_ids) => {
-                            sendPromissedPN(registartion_ids, campaignPayload, clientAdmin)
-                                .then((fcmResults) => {
-                                    handlePNCampaignResults(db, fcmResults, campaignDoc)
-                                        .then((updatedDoc) => {
-                                            var resultedExecution = {
-                                                doc: updatedDoc.value,
-                                                numOfUsersMessages: responses.receivedMessages.length
-                                            };
-                                            resolve(resultedExecution);
-                                        })
-                                        .catch((error) => {
-                                            console.log("handlePNCampaignResults: Failed errorResponse = " + error);
-                                            reject(error);
-                                        })
-
-                                })
-                                .catch((error) => {
-                                    console.log("sendPromissedPN: Failed errorResponse = " + error);
-                                    reject(errorResponse);
-                                })
-                        })
-                        .catch((error) => {
-                            reject(error);
-                        })
-
-
-                })
-            } else {
-                var resultedExecution = {
-                    doc: updatedDoc,
-                    numOfUsersMessages: responses.receivedMessages.length
-                };
-                resolve(resultedExecution);
-            }
-
-
-        })
-        .catch((error) => {
-            console.log("handleCampaignExecution: failed:-" + error);
-            reject(error);
-        });
-
-}
 
 // ----------------------------------------------------------------
 // ----------------------------------------------------------------
@@ -1099,7 +996,8 @@ var getCustomersCampaignTokens = function (db, campaignDoc, users_ids) {
                         console.log(result.status);
                         if (result.status == 1 && result.data.length > 0) {
 
-                            registration_ids_tokens = getTokensFromCustomerDoc(campaignDoc, result.data)
+                            registration_ids_tokens = getTokensFromCustomerDoc(campaignDoc, result.data);
+
                             resolve(registration_ids_tokens);
                         }
                     })
@@ -1420,7 +1318,7 @@ var UpdateCampaignExecutionMetrics = function (db, campaignDoc, updateMetrics) {
                 tenantCampaignsDataCollection.findOneAndUpdate({
                         _id: docId
                     }, {
-                        $set:{
+                        $set: {
                             timestamp: now
                         },
                         $inc: {
