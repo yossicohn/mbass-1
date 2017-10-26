@@ -57,6 +57,13 @@ var CampaignStatus = {
     deleted: 6,
     failed: 7
 };
+
+
+var mongoDBOptions = {
+    keepAlive: 10000,
+    poolSize: 10,
+    connectTimeoutMS: 50000
+};
 /**
  * Report an error to StackDriver Error Reporting. Writes the minimum data
  * required for the error to be picked up by StackDriver Error Reporting.
@@ -212,7 +219,7 @@ var getScheduledCampaign = function (createReq, deltaFromNow) {
     return new Promise(function (resolve, reject) {
 
 
-        MongoClient.connect(url)
+        MongoClient.connect(url, mongoDBOptions)
             .then(function (db) {
                 console.log("getScheduledCampaign: Connected correctly to server");
                 var status = true;
@@ -273,7 +280,7 @@ var handleCampaignExecution = function (db, campaignDoc, clientAdmin, options) {
     return new Promise(function (resolve, reject) {
         var promises = [];
         var i = 0;
-        for (i = 0; i < 10; i++) {
+        for (i = 0; i < 2; i++) {
             console.log("count=" + i);
 
             if (campaignDoc.personalized == false) {
@@ -394,7 +401,7 @@ var handleNonPersonalizedCampaignExecutionPromised = function (db, campaignDoc, 
 // args: db, campaignDoc, clientAdmin
 // return: response dataPayload.
 // ----------------------------------------------------------------
-var handleNonPersonalizedCampaignExecutionPromised = function (db, campaignDoc, clientAdmin) {
+var handleNonPersonalizedCampaignExecutionPromised = function (db, campaignDoc, clientAdmin, options) {
 
     return new Promise(function (resolve, reject) {
 
@@ -420,7 +427,7 @@ var handleNonPersonalizedCampaignExecutionPromised = function (db, campaignDoc, 
                         console.log("message: targetedUserDataArray Length = " + targetedUserDataArray.length);
                         getUsersTokens(db, campaignDoc, users_ids)
                             .then((registartion_ids) => {
-                                sendPromissedPN(registartion_ids, campaignPayload, clientAdmin)
+                                sendPromissedPN(registartion_ids, campaignPayload, clientAdmin, options)
                                     .then((fcmResults) => {
                                         handlePNCampaignResults(db, fcmResults, campaignDoc)
                                             .then((updatedDoc) => {
@@ -438,7 +445,7 @@ var handleNonPersonalizedCampaignExecutionPromised = function (db, campaignDoc, 
                                     })
                                     .catch((error) => {
                                         console.log("sendPromissedPN: Failed errorResponse = " + error);
-                                        reject(errorResponse);
+                                        reject(error);
                                     })
                             })
                             .catch((error) => {
@@ -763,7 +770,7 @@ var initNonPersonalizedrDataPayload = function (exisitingCampaignDoc) {
     // Template Content
     dataPayload.data.title = exisitingCampaignDoc.template_data.title.toString();
     dataPayload.data.content = exisitingCampaignDoc.template_data.content.toString();
-    dataPayload.data.dynamic_links = exisitingCampaignDoc.dynamic_links.toString();
+    dataPayload.data.dynamic_links = JSON.stringify(exisitingCampaignDoc.dynamic_links);
 
     if (exisitingCampaignDoc.audience == 1) { // 1 = Customers, 2 = Visitors
 
@@ -1409,10 +1416,13 @@ var UpdateCampaignExecutionMetrics = function (db, campaignDoc, updateMetrics) {
                 var tenantCampaignCollectionName = tenantCampaignsDataCollectionNameBase + tenantId;
                 var tenantCampaignsDataCollection = db.collection(tenantCampaignCollectionName);
                 var docId = campaignDoc._id;
-                tenantCampaignsDataCollection.updateOne
+                var now = new Date().getTime();
                 tenantCampaignsDataCollection.findOneAndUpdate({
                         _id: docId
                     }, {
+                        $set:{
+                            timestamp: now
+                        },
                         $inc: {
                             "campaign_stats.successfull_push": updateMetrics.successCount,
                             "campaign_stats.failed_push": updateMetrics.failureCount,
@@ -1703,37 +1713,47 @@ var startExecuteCampaign = function (db, campaignDoc, subscription, clientAdmin,
 // description: Main Process
 // //---------------------------------------------------------------------------
 var UpdateCampaignStatusAndSendResponse = function (db, res, updatedDoc, updateMetrics, status, error) {
-    var response = undefined;
-    if (status == true) {
-        UpdateCampaignStatus(db, updatedDoc, CampaignStatus.completed)
-            .then((updatedDoc) => {
-                response = createResponse(updatedDoc, updateMetrics, "completed", error);
-                res.json(response);
-            })
-            .catch((error) => {
-                response = createResponse(updatedDoc, updateMetrics, "completed", "Campaign Completed, but Failed Updating Campaign Status");
-                res.status(400);
-                res.json(response);
-            });
 
-    } else {
-        res.status(400);
-        if (db != undefined) {
-            UpdateCampaignStatus(db, updatedDoc, CampaignStatus.failed)
+    return new Promise(function (resol, reject) {
+        var response = undefined;
+        if (status == true) {
+            UpdateCampaignStatus(db, updatedDoc, CampaignStatus.completed)
                 .then((updatedDoc) => {
-                    response = createResponse(updatedDoc, updateMetrics, "failed", error);
+                    cleanup(db);
+                    response = createResponse(updatedDoc, updateMetrics, "completed", error);
                     res.json(response);
+
                 })
                 .catch((error) => {
-                    response = createResponse(updatedDoc, updateMetrics, "failed", error);
+                    cleanup(db);
+                    response = createResponse(updatedDoc, updateMetrics, "completed", "Campaign Completed, but Failed Updating Campaign Status");
+                    res.status(400);
                     res.json(response);
+
                 });
 
         } else {
-            response = createResponse(updatedDoc, updateMetrics, "failed", error);
+            res.status(400);
+            if (db != undefined) {
+                UpdateCampaignStatus(db, updatedDoc, CampaignStatus.failed)
+                    .then((updatedDoc) => {
+                        cleanup(db);
+                        response = createResponse(updatedDoc, updateMetrics, "failed", error);
+                        res.json(response);
+                    })
+                    .catch((error) => {
+                        cleanup(db);
+                        response = createResponse(updatedDoc, updateMetrics, "failed", error);
+                        res.json(response);
+                    });
+
+            } else {
+                response = createResponse(updatedDoc, updateMetrics, "failed", error);
+            }
+
         }
 
-    }
+    })
 
 }
 
@@ -1777,16 +1797,18 @@ exports.executeCampaign = function (req, res) {
                     startExecuteCampaign(db, campaignDoc, resources.subscription, resources.clientAdmin, options)
                         .then((result) => {
                             UpdateCampaignStatusAndSendResponse(db, res, result.doc, result.updateMetrics, true, undefined);
-                            cleanup(db);
+
                         })
                         .catch((error) => {
-                            cleanup(db);
+
                             UpdateCampaignStatusAndSendResponse(db, res, campaignDoc, failedMetrics, false, undefined);
+
                         })
                 })
                 .catch((error) => {
-                    cleanup(db);
+
                     UpdateCampaignStatusAndSendResponse(db, res, campaignDoc, failedMetrics, false, error);
+
                 })
         })
         .catch(function (error) {

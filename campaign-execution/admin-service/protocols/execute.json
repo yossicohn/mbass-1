@@ -4,6 +4,7 @@
     "campaign_id": "int",
     "action_serial": "int",
     "template_id": "int",
+    "template_id": "int",
     "dryRun": "boolean"
 }
 
