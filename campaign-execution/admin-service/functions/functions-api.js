@@ -279,16 +279,17 @@ var handleCampaignExecution = function (db, campaignDoc, clientAdmin, options) {
 
     return new Promise(function (resolve, reject) {
         var promises = [];
-        var i = 0;
-        for (i = 0; i < 1; i++) {
-            console.log("count=" + i);
+        var bulkCounter = 0;
+        var numOfDataMessages = campaignDoc.campaign_process.number_of_data_messages;
+        for (bulkCounter = 0; bulkCounter < numOfDataMessages; bulkCounter++) {
+            console.log("count=" + bulkCounter);
 
             if (campaignDoc.personalized == false) {
                 var currPromis = processNonPersonalizedCampaignExecution(db, campaignDoc, clientAdmin, options);
                 promises.push(currPromis);
 
             } else if (campaignDoc.personalized == true) {
-                var currPromis = handlePersonalizedCampaignExecution(db, campaignDoc, clientAdmin, options);
+                var currPromis = processPersonalizedCampaignExecution(db, campaignDoc, clientAdmin, options);
                 promises.push(currPromis);
             }
         }
@@ -335,7 +336,10 @@ var handleNonPersonalizedCampaignExecutionPromised = function (db, campaignDoc, 
                             .then((registartion_ids) => {
                                 sendPromissedPN(registartion_ids, campaignPayload, clientAdmin, options)
                                     .then((fcmResults) => {
-                                        resolve({fcmResults, users_ids: users_ids});
+                                        resolve({
+                                            fcmResults,
+                                            users_ids: users_ids
+                                        });
                                     })
                                     .catch((error) => {
                                         console.log("sendPromissedPN: Failed errorResponse = " + error);
@@ -350,7 +354,7 @@ var handleNonPersonalizedCampaignExecutionPromised = function (db, campaignDoc, 
 
                     })
                 } else {
-                    console.log("getTargetedUserBulkArray: Returened with no messages" );
+                    console.log("getTargetedUserBulkArray: Returened with no messages");
                     var resultedExecution = {
                         doc: updatedDoc,
                         numOfUsersMessages: responses.receivedMessages.length
@@ -400,8 +404,8 @@ var handleNonPersonalizedCampaignExecutionPromised = function (db, campaignDoc, 
 
                         console.log("message: targetedUserDataArray Length = " + targetedUserDataArray.length);
                         getUsersTokens(db, campaignDoc, users_ids)
-                            .then((registartion_ids) => {
-                                sendPromissedPN(registartion_ids, campaignPayload, clientAdmin, options)
+                            .then((tokensResult) => {
+                                sendPromissedPN(tokensResult, campaignPayload, clientAdmin, options)
                                     .then((fcmResults) => {
                                         var resultedExecution = {
                                             fcmResults: fcmResults,
@@ -447,22 +451,19 @@ var handleNonPersonalizedCampaignExecutionPromised = function (db, campaignDoc, 
 
 // ----------------------------------------------------------------
 // ----------------------------------------------------------------
-// function: handlePersonalizedCampaignExecution
+// function: processPersonalizedCampaignExecution
 // args: db, campaignDoc, clientAdmin,options
 // return: response dataPayload.
 // ----------------------------------------------------------------
-var handlePersonalizedCampaignExecution = function (db, campaignDoc, clientAdmin, options) {
+var processPersonalizedCampaignExecution = function (db, campaignDoc, clientAdmin, options) {
 
     return new Promise(function (resolve, reject) {
 
         var topicName = campaignDoc.data_queue_name;
         var subscription = "sub_" + topicName;
-        var shouldLoop = true;
-
-        getTargetedUserBulkArray(projectId, subscription, 10, shouldLoop)
+        getTargetedUserBulkArray(projectId, subscription, 10)
             .then(function (result) {
-                var responses = result.reponse;
-                shouldLoop = result.shouldLoop
+                var responses = result.response;
                 if (responses.receivedMessages.length > 0) {
                     var registartion_ids = [];
                     var usersPersonaizedPayload = {};
@@ -477,10 +478,10 @@ var handlePersonalizedCampaignExecution = function (db, campaignDoc, clientAdmin
                             var data = createPersonalizedPayload(campaignPayload, targetedUser);
                             usersPersonaizedPayload[targetedUser.Id] = data;
                         });
-                        console.log("handlePersonalizedCampaignExecution: message: targetedUserDataArray Length = " + targetedUserDataArray.length);
+                        console.log("processPersonalizedCampaignExecution: message: targetedUserDataArray Length = " + targetedUserDataArray.length);
                         getUsersTokensForPersonalizedCampaign(db, campaignDoc, usersPersonaizedPayload)
                             .then((usersPersonaizedPayload) => {
-                                sendPromissedPersonalizedPN(usersPersonaizedPayload, clientAdmin, options)
+                                sendPromissedPersonalizedMessages(usersPersonaizedPayload, clientAdmin, options)
                                     .then((fcmResults) => {
                                         handlePersonalizedPNCampaignResults(db, fcmResults, campaignDoc)
                                             .then((updatedDoc) => {
@@ -490,21 +491,20 @@ var handlePersonalizedCampaignExecution = function (db, campaignDoc, clientAdmin
                                                 };
                                                 resolve({
                                                     resultedExecution: resultedExecution,
-                                                    shouldLoop: shouldLoop
                                                 });
                                             })
                                             .catch((error) => {
-                                                console.log("handlePersonalizedCampaignExecution: Failed errorResponse = " + error);
+                                                console.log("processPersonalizedCampaignExecution: Failed errorResponse = " + error);
                                                 reject(error);
                                             })
                                     })
                                     .catch((error) => {
-                                        console.log("handlePersonalizedCampaignExecution:: Failed errorResponse = " + error);
+                                        console.log("processPersonalizedCampaignExecution:: Failed errorResponse = " + error);
                                         reject(error);
                                     })
                             })
                             .catch((error) => {
-                                console.log("handlePersonalizedCampaignExecution:: Failed errorResponse = " + errorResponse);
+                                console.log("processPersonalizedCampaignExecution:: Failed errorResponse = " + errorResponse);
                                 reject(error);
                             })
                     })
@@ -702,19 +702,23 @@ var getDocId = function (createReq) {
 
 //-----------------------------------------------------------------------------
 // functions: sendPromissedPN
-// args: registrationTokens, payload
+// args: tokensData = {registrationTokens, mapping}, payload
 // Return: response/error
 //-----------------------------------------------------------------------------
-var sendPromissedPN = function (registrationTokens, payload, clientAdmin, options) {
+var sendPromissedPN = function (tokensData, payload, clientAdmin, options) {
     return new Promise(function (resolve, reject) {
 
-
+        var registrationTokens = tokensData.registration_id_tokens;
         clientAdmin.messaging().sendToDevice(registrationTokens, payload, options)
             .then(function (fcmResults) {
                 // See the MessagingDevicesResponse reference documentation for
                 // the contents of response.
                 console.log("sendPromissedPN: Successfully sent message:", fcmResults);
-                resolve(fcmResults);
+                var result = {
+                    fcmResults: fcmResults,
+                    tokensData: tokensData
+                };
+                resolve(result);
             })
             .catch(function (errorResponse) {
                 console.log("sendPromissedPN: Error sending message:", errorResponse);
@@ -725,11 +729,11 @@ var sendPromissedPN = function (registrationTokens, payload, clientAdmin, option
 }
 
 // ----------------------------------------------------------------
-// function: sendPromissedPersonalizedPN
+// function: sendPromissedPersonalizedMessages
 // arguments: usersPersonaizedPayload, clientAdmin, options
 // return: respons Array.
 // ----------------------------------------------------------------
-var sendPromissedPersonalizedPN = function (usersPersonaizedPayload, clientAdmin, options) {
+var sendPromissedPersonalizedMessages = function (usersPersonaizedPayload, clientAdmin, options) {
     return new Promise(function (resolve, reject) {
         var failedCounter = 0;
         var fcmBulkResults = [];
@@ -738,7 +742,8 @@ var sendPromissedPersonalizedPN = function (usersPersonaizedPayload, clientAdmin
         userss_ids.forEach((userId) => {
             var userData = usersPersonaizedPayload[userId];
             if (userData.tokens != undefined) {
-                var currPromise = sendMessagePromise(clientAdmin, userData.tokens, userData.payload, options);
+                userData.userId = userId;
+                var currPromise = sendSinglePersonalizedMessagePromise(clientAdmin, userData, options);
                 promises.push(currPromise);
             }
         });
@@ -754,22 +759,23 @@ var sendPromissedPersonalizedPN = function (usersPersonaizedPayload, clientAdmin
 }
 
 // ----------------------------------------------------------------
-// function: sendMessagePromise
-// args: clientAdmin,tokens, payload, options
+// function: sendSinglePersonalizedMessagePromise
+// args: clientAdmin,userData, options
 // return: fcmResult.
 // this promissed is used in the Promis.all array
 // ----------------------------------------------------------------
-var sendMessagePromise = function (clientAdmin, tokens, payload, options) {
+var sendSinglePersonalizedMessagePromise = function (clientAdmin, userData, options) {
     return new Promise(function (resolve, reject) {
-        var currPromise = clientAdmin.messaging().sendToDevice(tokens, payload, options)
+        var currPromise = clientAdmin.messaging().sendToDevice(userData.tokens, userData.payload, options)
             .then(function (fcmResults) {
                 // See the MessagingDevicesResponse reference documentation for
                 // the contents of response.
-                console.log("sendPromissedPersonalizedPN: Successfully sent message:", fcmResults);
-                resolve(fcmResults);
+                console.log("sendSinglePersonalizedMessagePromise: Successfully sent message:", fcmResults);
+                var result = {fcmResults: fcmResults , userId: userData.userId, userTokens: userData.tokens};
+                resolve(result);
             })
             .catch(function (error) {
-                console.log("sendPromissedPersonalizedPN: Error sending message:", error);
+                console.log("sendSinglePersonalizedMessagePromise: Error sending message:", error);
                 reject(error);
             });
     });
@@ -797,16 +803,16 @@ var getTargetedUserBulkArray = function (projectId, subscription, maxMessages) {
         };
         client.pull(request, options)
             .then(function (responses) {
-                var shouldLoop = true;
+
                 var response = responses[0];
                 if (response.receivedMessages.length == 0) {
-                    shouldLoop = false;
+                    console.log("receivedMessages=0");
                 } else {
-                    shouldLoop = true;
+
                 }
                 resolve({
                     response: response,
-                    shouldLoop: shouldLoop
+
                 });
             })
             .catch(function (err) {
@@ -909,8 +915,8 @@ var getUsersTokens = function (db, campaignDoc, users_ids) {
             if (campaignDoc.audience == 1) { // Cutomers
 
                 getCustomersCampaignTokens(db, campaignDoc, users_ids)
-                    .then((registration_id_tokens) => {
-                        resolve(registration_id_tokens);
+                    .then((tokensResult) => {
+                        resolve(tokensResult);
                     })
                     .catch((error) => {
                         reject(error);
@@ -984,7 +990,7 @@ var getCustomersPersonalizedCampaignTokens = function (db, campaignDoc, usersPer
 var getCustomersCampaignTokens = function (db, campaignDoc, users_ids) {
     return new Promise(function (resolve, reject) {
         var usersCollectionName = undefined;
-        var registration_ids_tokens = undefined;
+        var tokensResult = undefined;
         usersCollectionName = tenantCustomersTokens + campaignDoc.tenant_id;
         var prefixDocId = "tid-" + campaignDoc.tenant_id + "-pcid-";
         var documentsIds = getDocumentsIdsByUsersIds(prefixDocId, users_ids, campaignDoc.audience);
@@ -996,9 +1002,9 @@ var getCustomersCampaignTokens = function (db, campaignDoc, users_ids) {
                         console.log(result.status);
                         if (result.status == 1 && result.data.length > 0) {
 
-                            registration_ids_tokens = getTokensFromCustomerDoc(campaignDoc, result.data);
+                            tokensResult = getTokensFromCustomerDoc(campaignDoc, result.data);
 
-                            resolve(registration_ids_tokens);
+                            resolve(tokensResult);
                         }
                     })
                     .catch((error) => {
@@ -1118,13 +1124,16 @@ var getTokensFromCustomerDocForPersonalizedCampaign = function (campaignDoc, cus
 // ----------------------------------------------------------------
 // function: getTokensFromCustomerDoc
 // args:campaignDoc, customersDocs
-// return: the Tokens from the Customer Documents
+// return: the Tokens from the Customer Documents + the Mapping of Tokens to Users.
+// Which should be used for the Invalidation of Tokens and other scenarios.
 // ----------------------------------------------------------------
 var getTokensFromCustomerDoc = function (campaignDoc, customersDocs) {
 
     var targetedAndroidApps = undefined;
     var targetedIOSApps = undefined;
     var registration_id_tokens = [];
+    var tokensUsersMap = {};
+
     if (campaignDoc.apps != undefined) {
         if (campaignDoc.apps.android != undefined) {
             targetedAndroidApps = campaignDoc.apps.android;
@@ -1135,33 +1144,48 @@ var getTokensFromCustomerDoc = function (campaignDoc, customersDocs) {
     }
 
     customersDocs.forEach((doc) => {
+
         if (doc.opt_in == true) { // other wise we will not use tokens from this usersDocument
+            var currUserId = undefined;
+            if (doc.public_customer_id != undefined) {
+                currUserId = doc.public_customer_id;
+            } else {
+                currUserId = doc.visitor_id;
+            }
+
             if (targetedAndroidApps != undefined && doc.android_tokens != undefined) {
                 // we check that there are apps targeted and that ther are exist in the current doc
                 var devices = doc.android_tokens; // get the devices
                 var targetedAppsObj = targetedAndroidApps; // the Android Targeted Apps by the Campaign
-                registration_id_tokens = updateTokensArrayWithDevicesTokens(targetedAppsObj, devices, registration_id_tokens);
+                var result = updateTokensArrayWithDevicesTokens(targetedAppsObj, devices, registration_id_tokens, tokensUsersMap, currUserId);
+                registration_id_tokens = result.registration_id_tokens;
+                tokensUsersMap = result.tokensUsersMap;
             }
 
             if (targetedIOSApps != undefined && doc.ios_tokens != undefined) {
                 // we check that there are apps targeted and that ther are exist in the current doc
                 var devices = doc.ios_tokens; // get the devices
                 var targetedAppsObj = targetedAndroidApps; // the Android Targeted Apps by the Campaign
-                registration_id_tokens = updateTokensArrayWithDevicesTokens(targetedAppsObj, devices, registration_id_tokens);
+                var result = updateTokensArrayWithDevicesTokens(targetedAppsObj, devices, registration_id_tokens, tokensUsersMap, currUserId);
+                registration_id_tokens = result.registration_id_tokens;
+                tokensUsersMap = result.tokensUsersMap;
             }
         }
 
     })
-
-    return registration_id_tokens;
+    var result = {
+        registration_id_tokens: registration_id_tokens,
+        tokensUsersMap: tokensUsersMap
+    };
+    return result;
 }
 
 // ----------------------------------------------------------------
 // function: updateTokensArrayWithDevicesTokens
-// args:targetedAppsObj, devicesIds, registration_id_tokens
+// args:targetedAppsObj, devicesIds, registration_id_tokens, tokensUsersMap, currUserId
 // return: the Tokens from the Customer Documents
 // ----------------------------------------------------------------
-var updateTokensArrayWithDevicesTokens = function (targetedAppsObj, devices, registration_id_tokens) {
+var updateTokensArrayWithDevicesTokens = function (targetedAppsObj, devices, registration_id_tokens, tokensUsersMap, currUserId) {
     try {
         var devicesIds = Object.keys(devices);
         devicesIds.forEach((deviceId) => {
@@ -1172,13 +1196,27 @@ var updateTokensArrayWithDevicesTokens = function (targetedAppsObj, devices, reg
                     var appObj = device.apps[appNameSpace];
                     if (appObj.opt_in == true) {
                         var token = appObj.token;
+                        if (tokensUsersMap != undefined) { // personalized Campaign
+                            tokensUsersMap[token] = currUserId;
+                        }
+
                         registration_id_tokens.push(token);
                     }
                 }
             })
         })
+        if (tokensUsersMap != undefined) // Non-Personalized Campaign
+        {
+            var result = {
+                registration_id_tokens: registration_id_tokens,
+                tokensUsersMap: tokensUsersMap
+            };
 
-        return registration_id_tokens;
+        } else { // Personalized Campaign
+            var result = registration_id_tokens;
+        }
+
+        return result;
     } catch (error) {
 
         throw "Failed updateTokensArrayWithDevices- error = " + error;

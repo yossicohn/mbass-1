@@ -32,7 +32,7 @@ http://localhost:3001/execute \
     \"action_serial\": 85,
     \"template_id\": 85,
     \"engagement_id\": 85,
-    \"dryRun\": false
+    \"dryRun\": true
 }
 "
 
@@ -45,7 +45,7 @@ http://localhost:3001/executeCampaign \
     \"action_serial\": 85,
     \"template_id\": 88,
     \"engagement_id\": 1234,
-    \"dryRun\": false
+    \"dryRun\": true
 }
 "
 
@@ -59,7 +59,7 @@ http://localhost:3001/executeCampaign \
     \"action_serial\": 85,
     \"template_id\": 88,
     \"engagement_id\": 1234,
-    \"dryRun\": false
+    \"dryRun\": true
 }
 "
 
