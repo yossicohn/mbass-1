@@ -497,3 +497,45 @@ exports.getDocumentsIdsByUsersIds = function (prefixDocId, users_ids, userType) 
     });
     return docsIds;
 }
+
+// ----------------------------------------------------------------
+// function: createResponse
+// args: campaignDoc, updateMetrics, status, error
+// return: response object. 
+// ----------------------------------------------------------------
+// {
+//    "id": "tid-85-cid-85-acsl-85-tplid-88-eng-1234",
+//     "tenant_id": "int",
+//     "campaign_id": "int",
+//     "action_serial": "int",
+//     "template_id": "int",
+//     "template_type": "normal|personalized",
+//     "schedule": "unix epic timestamp",
+//     "response_status": "scheduled/failed",
+//     "bulk_size" : "int",
+//     "succeeded": "int",
+//     "failed": "int",
+//     "error": "campaign already exist"
+//   }
+// ---------------------------------------------------------------- 
+exports.createResponse = function (campaignDoc, updateMetrics, status, error) {
+
+    var response = {
+        "id": campaignDoc._id,
+        "tenant_id": campaignDoc.tenant_id,
+        "campaign_id": campaignDoc.campaign_id,
+        "action_serial": campaignDoc.action_serial,
+        "template_id": campaignDoc.template_id,
+        "engagement_id": campaignDoc.engagement_id,
+        "schedule": campaignDoc.schedule,
+        "response_status": status,
+        "bulk_size": updateMetrics.bulkSize,
+        "succeeded": updateMetrics.successCount,
+        "failed": updateMetrics.failureCount,
+        "error": error
+    };
+
+
+    return response;
+
+}

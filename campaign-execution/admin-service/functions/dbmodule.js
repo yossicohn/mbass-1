@@ -18,7 +18,17 @@ var tenantCampaignsDataCollectionNameBase = 'CampaignsData_';
 var tenantCustomersTokens = 'CustomersTokens_';
 var tenantVisitorsTokens = 'VisitorsTokens_';
 
-
+//-----------------------------------------------------------------------------
+// functions: cleanup
+// args: db
+// description: Clean up.
+//---------------------------------------------------------------------------
+exports.cleanup = function (db) {
+    if (db != undefined) {
+        db.close();
+        db = undefined;
+    }
+}
 
 exports.getBaseCustomersCollectionName = function(){
     return tenantCustomersTokens;

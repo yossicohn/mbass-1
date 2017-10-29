@@ -8,18 +8,23 @@ const campaignQueueTopicName = "campaign-queue";
 // Imports the Google Cloud client library
 
 // Your Google Cloud Platform project ID
-const projectId = 'mobilepush-161510';
+
 
 // Instantiates a client
-const pubsubClient = PubSub({
-    projectId: projectId
-});
+var pubsubClient =undefined;
 
 var pubsubV1 = require('@google-cloud/pubsub').v1({
     // optional auth parameters.
 });
 
+var currentProjectId = undefined;
 
+exports.setProjectId = function (projectId){
+    currentProjectId = projectId;
+    pubsubClient = PubSub({
+        projectId: projectId
+    });
+}
 
 // ----------------------------------------------------------------
 // function: createCampaignSubscriber
@@ -31,7 +36,7 @@ exports.createCampaignSubscriber = function (topicName, subscriptionName) {
     return new Promise(function (resolve, reject) {
 
         var client = pubsubV1.subscriberClient();
-        var formattedSubscription = client.subscriptionPath(projectId, subscriptionName);
+        var formattedSubscription = client.subscriptionPath(currentProjectId, subscriptionName);
         client.getSubscription({
                 subscription: formattedSubscription
             })
@@ -59,13 +64,13 @@ exports.createCampaignSubscriber = function (topicName, subscriptionName) {
 
 // ----------------------------------------------------------------
 // function: getTargetedUserBulkArray
-// args: projectId, subscription, maxMessages
+// args:  subscription, maxMessages
 // return: respons Array.
 // ----------------------------------------------------------------
-exports.getTargetedUserBulkArray = function (projectId, subscription, maxMessages) {
+exports.getTargetedUserBulkArray = function (subscription, maxMessages) {
     return new Promise(function (resolve, reject) {
         var client = pubsubV1.subscriberClient();
-        var formattedSubscription = client.subscriptionPath(projectId, subscription);
+        var formattedSubscription = client.subscriptionPath(currentProjectId, subscription);
         //var maxMessages = 0;
 
         var options = {
