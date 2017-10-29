@@ -1,7 +1,7 @@
 'use strict';
 //const Logging = require('@google-cloud/logging');
 //const logging = Logging();
-
+var dbModule = require('./dbmodule.js');
 var readJson = require('read-package-json');
 var MongoClient = require('mongodb').MongoClient,
     assert = require('assert');
@@ -78,59 +78,20 @@ exports.scheduleCampaign = function (req, res) {
 
     var err = undefined;
     var status = undefined;
-   
     var createReq = req.body;
     var response;
+    dbModule.getScheduledCampaign(createReq)
+        .then((result) => {
+            console.log(result);
+        })
+        .catch((error) => {
+            console.log(error);
+        })
     res.json(response);
 
 }
 
 
-// ----------------------------------------------------------------------------
-// ----------------------------------------------------------------
-// function: getScheduledCampaign
-// args: deltaFromNow
-// return: response campaign document.
-// ----------------------------------------------------------------
-// ----------------------------------------------------------------
-var getScheduledCampaign = function (createReq, deltaFromNow) {
-
-    return new Promise(function (resolve, reject) {
-
-
-        MongoClient.connect(url)
-            .then(function (db) {
-                dataBaseClient = db;
-                console.log("getScheduledCampaign: Connected correctly to server");
-                var status = true;
-                var tenantId = createReq.tenant_id;
-                var tenantCampaignCollectionName = tenantCampaignsDataCollectionNameBase + tenantId;
-                var tenantCampaignsDataCollection = db.collection(tenantCampaignCollectionName);
-                var docId = getDocId(createReq);
-                tenantCampaignsDataCollection.findOne({
-                        _id: docId
-                    })
-                    .then(function (exisitingDoc) {
-                        if (exisitingDoc == null) {
-                            cleanup(db);
-                            reject("Campaign Don't Exisit");
-                        } else {
-                            resolve(exisitingDoc);
-                        }
-                    })
-                    .catch(function (error) {
-                        console.log("getScheduledCampaign: findOne Failed error= " + error)
-                        cleanup(db);
-                        reject(error);
-                    })
-            })
-            .catch(function (error) {
-                console.log("connection Failed error= " + error)
-                reject(error);
-            })
-    });
-
-}
 
 
 // ----------------------------------------------------------------
