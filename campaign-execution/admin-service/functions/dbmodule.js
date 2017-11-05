@@ -3,9 +3,9 @@
 var utils = require("./general-utils.js")
 var MongoClient = require('mongodb').MongoClient;
 var assert = require('assert');
-var url = 'mongodb://104.198.223.2:27017/mbassdb';
+var url = '';//'mongodb://104.198.223.2:27017/mbassdb';
 var dbRef = undefined;
-//var url = 'mongodb://104.198.223.2:27017,35.202.175.206:27017,146.148.105.234:27017/mbassdb?replicaSet=mbass&slaveOk=true&connectTimeoutMS=2000&socketTimeoutMS=0';
+var urlTemplate = 'mongodb://atlaswriter:ztgBHSx7b3Vl7mHj@mbassdb-shard-00-00-qzfeo.gcp.mongodb.net:27017,mbassdb-shard-00-01-qzfeo.gcp.mongodb.net:27017,mbassdb-shard-00-02-qzfeo.gcp.mongodb.net:27017/mbassdb_[%TENANT_ID%]?ssl=true&replicaSet=mbassdb-shard-0&authSource=admin';
 
 // --------------------- static data ---------------------
 var mongoDBOptions = {
@@ -54,6 +54,7 @@ exports.getBaseCampaignCollectionName = function(){
 exports.getScheduledCampaign = function (createReq) {
 
     return new Promise(function (resolve, reject) {
+        var url = utils.getDBConnectionString(urlTemplate, createReq.tenant_id);
         MongoClient.connect(url, mongoDBOptions)
             .then(function (db) {
                 console.log("getScheduledCampaign: Connected correctly to server");

@@ -14,6 +14,22 @@ admin.initializeApp({
 var rtDB = admin.database();
 
 //-----------------------------------------------------------------------------
+// functions: cleanup
+// args: urlTemplate,tenantId
+// return url + specific Db Connection String
+// description: Clean up.
+//---------------------------------------------------------------------------
+exports.getDBConnectionString = function (currURLTemplate,tenantId) {
+    var regexpress = "(\\[%TENANT_ID%\\])";
+    var reg = new RegExp(regexpress, "g"); //  /(\[%FIRST_NAME%\])+/g;
+
+    var connectionString = currURLTemplate.replace(reg, tenantId);
+
+    return connectionString
+}
+
+
+//-----------------------------------------------------------------------------
 // functions: sendPromissedPN
 // args: tokensData = {registrationTokens, mapping}, payload
 // Return: response/error

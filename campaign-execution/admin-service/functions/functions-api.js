@@ -303,7 +303,7 @@ var UpdateCampaignStatusAndSendResponse = function (db, res, updatedDoc, updateM
 
         } else {
             res.status(400);
-            if (db != undefined) {
+            if (db != undefined && db != undefined) {
                 dbModule.UpdateCampaignStatus(db, updatedDoc, CampaignStatus.failed)
                     .then((updatedDoc) => {
                         dbModule.cleanup(db);
@@ -318,6 +318,7 @@ var UpdateCampaignStatusAndSendResponse = function (db, res, updatedDoc, updateM
 
             } else {
                 response = utils.createResponse(updatedDoc, updateMetrics, "failed", error);
+                res.json(response);
             }
 
         }
@@ -346,10 +347,11 @@ exports.executeCampaign = function (req, res) {
 
     var createReq = req.body;
     pubsubUtil.setProjectId(gcpProjectId);
+    var db = undefined;
     //First we take  the Campaign from the DB.
     dbModule.getScheduledCampaign(createReq, 10000)
         .then(function (result) {
-            var db = result.db;
+            db = result.db;
             var campaignDoc = result.doc;
             console.log('getScheduledCampaign Succeeded' + campaignDoc._id);
 
